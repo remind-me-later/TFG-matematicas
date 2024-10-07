@@ -1,0 +1,122 @@
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+Tomamos prestado el lenguaje \texttt{IMP} de~\cite{winskel1993formal}.
+Es un pequeño lenguaje \enquote{imperativo}, en el sentido de que tiene variables, que 
+conservan el \emph{estado} del programa, y \emph{comandos} que modifican
+este estado.
+
+Presentamos un ejemplo de programa en \texttt{IMP} que calcula el factorial de un número \texttt{n}:
+
+\begin{minted}{c}
+n = 5; i = 2; res = 1;
+
+while i <= n {
+    res = res * i;
+    i = i + 1;
+}
+\end{minted}
+
+Utilizaremos Lean como nuestro \enquote{metalenguaje} para definir la sintaxis y la semántica
+de \texttt{IMP}.
+
+\section{Sintaxis}
+
+Para definir la sintaxis de \texttt{IMP} utilizaremos los tipos inductivos de Lean,
+de este modo obtendremos primero el \enquote{árbol de sintaxis abstracta} del lenguaje.
+Distinguimos entre expresiones aritméticas, expresiones booleanas y comandos.
+La distinción intuitiva entre expresiones y comandos es que las primeras
+\enquote{devuelven} un valor, mientras que los segundos \enquote{modifican} el estado.
+Veremos que en realidad, esto no es del todo cierto.
+
+Comenzamos por la expresiones aritméticas, solo dependen de \texttt{Int} y \texttt{String}.
+
+\begin{minted}{lean4}
+inductive Aexp where
+  | val : Int → Aexp
+  | var : String → Aexp
+  -- arithmetic
+  | add : Aexp → Aexp → Aexp
+  | sub : Aexp → Aexp → Aexp
+  | mul : Aexp → Aexp → Aexp
+\end{minted}
+
+Podemos interpretar la anterior definición como sigue, el tipo \texttt{Aexp} tiene
+cinco constructores, a los que Intuitivamente asociamos los siguientes significados:
+\begin{itemize}
+  \item [\texttt{val}:] construye la expresión formada por una única constante entera.
+  \item [\texttt{var}:] construye la expresión formada por una única variable.
+  \item [\texttt{add}:] construye la expresión formada por la suma de dos expresiones aritméticas.
+  \item [\texttt{sub}:] construye la expresión formada por la resta de dos expresiones aritméticas.
+  \item [\texttt{mul}:] construye la expresión formada por la multiplicación de dos expresiones aritméticas.
+\end{itemize}
+
+En realidad el \enquote{constructor de suma} \texttt{add} solo es \enquote{de suma} en
+el nombre, ya que hasta que no definamos una semántica para las expresiones
+aritméticas lo único que expresa este es que se puede formar una
+nueva expresión a partir de dos expresiones ya existentes.
+
+Lo mismo podemos decir del constructor \texttt{var}, que nos permitirá
+\enquote{acceder} al contenido de una variable. En realidad, sintacticamente,
+solo nos permite \enquote{construir} una expresión aritmética a partir de un \texttt{String}.
+
+Por ejemplo podemos representar la expresión aritmética \(x + 3\) como 
+\begin{minted}{lean4}
+#check Aexp.add (Aexp.var "x") (Aexp.val 3)
+\end{minted}
+
+Seguimos con las expresiones booleanas.
+
+\begin{minted}{lean4}
+inductive Bexp where
+  -- constants
+  | tt
+  | ff
+  -- boolean
+  | not : Bexp → Bexp
+  | and : Bexp → Bexp → Bexp
+  | or  : Bexp → Bexp → Bexp
+  -- comparison
+  | eq : Aexp → Aexp → Bexp
+  | le : Aexp → Aexp → Bexp
+\end{minted}
+
+Tenemos los siguientes constructores:
+\begin{itemize}
+  \item [\texttt{tt}:] representa el valor de verdad \(\top\).
+  \item [\texttt{ff}:] representa el valor de verdad \(\bot\).
+  \item [\texttt{not}:] construye la expresión booleana formada por la negación de otra expresión booleana.
+  \item [\texttt{and}:] construye la expresión booleana formada por la conjunción de dos expresiones booleanas.
+  \item [\texttt{or}:] construye la expresión booleana formada por la disyunción de dos expresiones booleanas.
+  \item [\texttt{eq}:] construye la expresión booleana formada por la comparación de igualdad entre dos expresiones aritméticas.
+  \item [\texttt{le}:] construye la expresión booleana formada por la comparación de menor o igual entre dos expresiones aritméticas.
+\end{itemize}
+
+Por ejemplo, podemos representar la expresión booleana \(!(x \le 3)\) como
+\begin{minted}{lean4}
+#check Bexp.not (Bexp.le (Aexp.var "x") (Aexp.val 3))
+\end{minted}
+
+Pasamos al tipo más complicado, los comandos. Esto se debe a que todo programa 
+de \text{IMP} tendrá tipo \texttt{Com}, en efecto, todos los programas son una 
+concatenación de comandos.
+
+\begin{minted}{lean4}
+inductive Com where
+  | skip
+  | cat   : Com → Com → Com
+  | ass   : String → Aexp → Com
+  | cond  : Bexp → Com → Com → Com
+  | loop  : Bexp → Com → Com
+\end{minted}
+
+Tenemos los constructores:
+\begin{itemize}
+  \item[\texttt{skip}:] construye el programa vacío.
+  \item[\texttt{cat}:] concatena comandos para formar uno nuevo.
+  \item[\texttt{ass}:] corresponde a la asignación de expresiones a variables.
+  \item[\texttt{cond}:] corresponde al constructo de flujo de control \texttt{if}.
+\end{itemize}
+
+\end{document}
