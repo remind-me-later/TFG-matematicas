@@ -12,10 +12,10 @@ Presentamos un ejemplo de programa en \texttt{IMP} que calcula el factorial de u
 \begin{minted}{c}
 n = 5; i = 2; res = 1;
 
-while i <= n {
+while i <= n loop
     res = res * i;
     i = i + 1;
-}
+end
 \end{minted}
 
 Utilizaremos Lean como nuestro \enquote{metalenguaje} para definir la sintaxis y la semántica
@@ -30,26 +30,28 @@ La distinción intuitiva entre expresiones y comandos es que las primeras
 \enquote{devuelven} un valor, mientras que los segundos \enquote{modifican} el estado.
 Veremos que en realidad, esto no es del todo cierto.
 
+\subsection{Árbol de sintáxis abstracta}
+
 Comenzamos por la expresiones aritméticas, solo dependen de \texttt{Int} y \texttt{String}.
 
 \begin{minted}{lean4}
 inductive Aexp where
-  | val : Int → Aexp
-  | var : String → Aexp
+  | val₁ : Int → Aexp
+  | var₁ : String → Aexp
   -- arithmetic
-  | add : Aexp → Aexp → Aexp
-  | sub : Aexp → Aexp → Aexp
-  | mul : Aexp → Aexp → Aexp
+  | add₁ : Aexp → Aexp → Aexp
+  | sub₁ : Aexp → Aexp → Aexp
+  | mul₁ : Aexp → Aexp → Aexp
 \end{minted}
 
 Podemos interpretar la anterior definición como sigue, el tipo \texttt{Aexp} tiene
 cinco constructores, a los que Intuitivamente asociamos los siguientes significados:
 \begin{itemize}
-  \item [\texttt{val}:] construye la expresión formada por una única constante entera.
-  \item [\texttt{var}:] construye la expresión formada por una única variable.
-  \item [\texttt{add}:] construye la expresión formada por la suma de dos expresiones aritméticas.
-  \item [\texttt{sub}:] construye la expresión formada por la resta de dos expresiones aritméticas.
-  \item [\texttt{mul}:] construye la expresión formada por la multiplicación de dos expresiones aritméticas.
+  \item [\texttt{val₁}:] construye la expresión formada por una única constante entera.
+  \item [\texttt{var₁}:] construye la expresión formada por una única variable.
+  \item [\texttt{add₁}:] construye la expresión formada por la suma de dos expresiones aritméticas.
+  \item [\texttt{sub₁}:] construye la expresión formada por la resta de dos expresiones aritméticas.
+  \item [\texttt{mul₁}:] construye la expresión formada por la multiplicación de dos expresiones aritméticas.
 \end{itemize}
 
 En realidad el \enquote{constructor de suma} \texttt{add} solo es \enquote{de suma} en
@@ -66,36 +68,68 @@ Por ejemplo podemos representar la expresión aritmética \(x + 3\) como
 #check Aexp.add (Aexp.var "x") (Aexp.val 3)
 \end{minted}
 
+O mejor aún usar las coerciones de tipos incluidas en el \enquote{núcleo} de Lean para
+obtener los abusos de notación habituales:
+
+\begin{minted}{lean4}
+instance: OfNat Aexp n := ⟨Aexp.val₁ n⟩
+instance: Add Aexp := ⟨Aexp.add₁⟩
+instance: Sub Aexp := ⟨Aexp.sub₁⟩
+instance: Neg Aexp := ⟨λ a => Aexp.sub₁ 0 a⟩
+instance: Mul Aexp := ⟨Aexp.mul₁⟩
+
+-- x + 3
+#check Aexp.var₁ "x" + 3
+
+-- x * -3
+#check Aexp.var₁ "x" * -3
+\end{minted}
+
+Podríamos incluso implementar una coerción de \texttt{String} a \texttt{Aexp.var₁},
+aunque en este caso Lean no sería capaz de inferir el tipo de las expresiones.
+
 Seguimos con las expresiones booleanas.
 
 \begin{minted}{lean4}
 inductive Bexp where
   -- constants
-  | tt
-  | ff
+  | true₁
+  | false₁
   -- boolean
-  | not : Bexp → Bexp
-  | and : Bexp → Bexp → Bexp
-  | or  : Bexp → Bexp → Bexp
+  | not₁ : Bexp → Bexp
+  | and₁ : Bexp → Bexp → Bexp
+  | or₁  : Bexp → Bexp → Bexp
   -- comparison
-  | eq : Aexp → Aexp → Bexp
-  | le : Aexp → Aexp → Bexp
+  | eq₁ : Aexp → Aexp → Bexp
+  | le₁ : Aexp → Aexp → Bexp
 \end{minted}
 
 Tenemos los siguientes constructores:
 \begin{itemize}
-  \item [\texttt{tt}:] representa el valor de verdad \(\top\).
-  \item [\texttt{ff}:] representa el valor de verdad \(\bot\).
-  \item [\texttt{not}:] construye la expresión booleana formada por la negación de otra expresión booleana.
-  \item [\texttt{and}:] construye la expresión booleana formada por la conjunción de dos expresiones booleanas.
-  \item [\texttt{or}:] construye la expresión booleana formada por la disyunción de dos expresiones booleanas.
-  \item [\texttt{eq}:] construye la expresión booleana formada por la comparación de igualdad entre dos expresiones aritméticas.
-  \item [\texttt{le}:] construye la expresión booleana formada por la comparación de menor o igual entre dos expresiones aritméticas.
+  \item [\texttt{true₁}:] representa el valor de verdad \(\top\).
+  \item [\texttt{false₁}:] representa el valor de verdad \(\bot\).
+  \item [\texttt{not₁}:] construye la expresión booleana formada por la negación de otra expresión booleana.
+  \item [\texttt{and₁}:] construye la expresión booleana formada por la conjunción de dos expresiones booleanas.
+  \item [\texttt{or₁}:] construye la expresión booleana formada por la disyunción de dos expresiones booleanas.
+  \item [\texttt{eq₁}:] construye la expresión booleana formada por la comparación de igualdad entre dos expresiones aritméticas.
+  \item [\texttt{le₁}:] construye la expresión booleana formada por la comparación de menor o igual entre dos expresiones aritméticas.
 \end{itemize}
 
 Por ejemplo, podemos representar la expresión booleana \(!(x \le 3)\) como
 \begin{minted}{lean4}
-#check Bexp.not (Bexp.le (Aexp.var "x") (Aexp.val 3))
+#check Bexp.not₁ (Bexp.le₁ (Aexp.var₁ "x") 3)
+\end{minted}
+
+En este caso Lean también cuenta con los operadores de complemento, conjunción y
+disjunción.
+
+\begin{minted}{lean4}
+instance: Complement Bexp := ⟨Bexp.not₁⟩
+instance: AndOp Bexp := ⟨Bexp.and₁⟩
+instance: OrOp Bexp := ⟨Bexp.or₁⟩
+
+-- !(x <= 3) || false
+#check ~~~(Bexp.le₁ (Aexp.var₁ "x") 3) ||| false₁
 \end{minted}
 
 Pasamos al tipo más complicado, los comandos. Esto se debe a que todo programa 
@@ -104,19 +138,112 @@ concatenación de comandos.
 
 \begin{minted}{lean4}
 inductive Com where
-  | skip
-  | cat   : Com → Com → Com
-  | ass   : String → Aexp → Com
-  | cond  : Bexp → Com → Com → Com
-  | loop  : Bexp → Com → Com
+  | skip₁
+  | cat₁   : Com → Com → Com
+  | ass₁   : String → Aexp → Com
+  | if₁    : Bexp → Com → Com → Com
+  | while₁ : Bexp → Com → Com
 \end{minted}
 
 Tenemos los constructores:
 \begin{itemize}
-  \item[\texttt{skip}:] construye el programa vacío.
-  \item[\texttt{cat}:] concatena comandos para formar uno nuevo.
-  \item[\texttt{ass}:] corresponde a la asignación de expresiones a variables.
-  \item[\texttt{cond}:] corresponde al constructo de flujo de control \texttt{if}.
+  \item[\texttt{skip₁}:] construye el programa vacío.
+  \item[\texttt{cat₁}:] concatena comandos para formar uno nuevo.
+  \item[\texttt{ass₁}:] corresponde a la asignación de expresiones a variables.
+  \item[\texttt{if₁}:] corresponde al constructo de flujo de control \texttt{if}.
+  \item{\texttt{while₁}:} corresponde al constructo de flujo de control \texttt{while}.
 \end{itemize}
+
+Igual que antes, nuestro \texttt{cat₁} es una instancia de la concatenación
+genérica:
+
+\begin{minted}{lean4}
+instance: Append Com := ⟨Com.cat₁⟩
+\end{minted}
+
+Introducimos también las siguientes notaciones para el \texttt{if₁} y el
+\texttt{while₁}:
+
+\begin{minted}{lean4}
+notation "if " c " then " a " else " b " end" => Com.if₁ c a b
+notation "while " c " loop " a " end" => Com.while₁ c a
+\end{minted}
+
+Esto nos permitirá usar las notaciones del lenguaje en el propio Lean.
+
+\subsection{Parser}
+
+Lean nos permite además crear un \enquote{parser} para \texttt{IMP}, gracias
+a su sistema de macros. Primero declaramos todos los constructos sintácticos:
+
+\begin{minted}{lean4}
+declare_syntax_cat imp
+
+-- general
+syntax "(" imp ")" : imp
+-- aexp
+syntax num: imp
+syntax ident: imp
+syntax:55 imp:55 "*" imp:56 : imp
+syntax:60 imp:60 "+" imp:61 : imp
+syntax:60 imp:60 "-" imp:61 : imp
+-- bexp
+syntax:65 imp:65 "&&" imp:66 : imp
+syntax:65 imp:65 "||" imp:66 : imp
+syntax:70 imp:70 "==" imp:71 : imp
+syntax:70 imp:70 "<=" imp:71 : imp
+syntax:80 "!" imp:81 : imp
+-- com
+syntax:40 imp:40 ";" imp:41 : imp
+syntax:50 imp:50 "=" imp:51 : imp
+syntax "if" imp "then" imp "else" imp " end" : imp
+syntax "while" imp "loop" imp " end" : imp
+-- meta
+syntax "⦃" imp "⦄" : term
+\end{minted}
+
+Ahora podemos asociar cada uno de estos constructos con su constructor en el
+AST:
+
+\begin{minted}{lean4}
+macro_rules
+  -- keywords
+  | `(⦃skip⦄) => `(Com.skip₁)
+  | `(⦃true⦄) => `(Bexp.true₁)
+  | `(⦃false⦄) => `(Bexp.false₁)
+  -- general
+  | `(⦃($x)⦄) => `(⦃$x⦄)
+  -- aexp
+  | `(⦃$x:ident⦄) => `(Aexp.var₁ $(Lean.quote (toString x.getId)))
+  | `(⦃$n:num⦄)   => `($n)
+  | `(⦃$x + $y⦄)  => `(⦃$x⦄ + ⦃$y⦄)
+  | `(⦃$x - $y⦄)  => `(⦃$x⦄ - ⦃$y⦄)
+  | `(⦃$x * $y⦄)  => `(⦃$x⦄ * ⦃$y⦄)
+  -- bexp
+  | `(⦃!$x⦄)      => `(~~~⦃$x⦄)
+  | `(⦃$x && $y⦄) => `(⦃$x⦄ &&& ⦃$y⦄)
+  | `(⦃$x || $y⦄) => `(⦃$x⦄ ||| ⦃$y⦄)
+  | `(⦃$x == $y⦄) => `(Bexp.eq₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x <= $y⦄) => `(Bexp.le₁ ⦃$x⦄ ⦃$y⦄)
+  -- com
+  | `(⦃$x:ident = $y⦄) => `(Com.ass₁ $(Lean.quote (toString x.getId)) ⦃$y⦄)
+  | `(⦃$x ; $y⦄)       => `(Com.cat₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃if $b then $x else $y end⦄) => `(Com.if₁ ⦃$b⦄ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃while $b loop $x end⦄) => `(Com.while₁ ⦃$b⦄ ⦃$x⦄)
+\end{minted}
+
+Con esto podemos introducir en Lean el ejemplo con el que hemos empezado el
+capítulo:
+
+\begin{minted}{lean4}
+#check ⦃
+  n = 5; i = 2; res = 1;
+
+  while i <= n loop
+      res = res * i;
+      i = i + 1;
+  end
+⦄
+\end{minted}
 
 \end{document}
