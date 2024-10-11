@@ -14,7 +14,7 @@ n = 5; i = 2; res = 1;
 
 while i <= n loop
     res = res * i;
-    i = i + 1;
+    i = i + 1
 end
 \end{minted}
 
@@ -241,9 +241,109 @@ capítulo:
 
   while i <= n loop
       res = res * i;
-      i = i + 1;
+      i = i + 1
   end
 ⦄
 \end{minted}
+
+\section{Estados}
+
+Antes de poder darle significado a estos constructos sintácticos, necesitamos
+\emph{estados} que guarden el valor de las variables del programa. Un estado
+no es más que un mapa de \texttt{String} a \texttt{Int}. Lo definiremos
+de una forma que nos permita demostrar facilmente algunas propiedades deseables.
+Definimos un \emph{Mapa Total} genérico, por simplicidad, todas las variables
+de nuestro lenguaje estarán inicializadas a 0.
+
+\begin{minted}{lean4}
+def TotalMap A := String → A
+
+def TotalMap.default (v: A): TotalMap A := λ _ => v
+
+def TotalMap.update (m: TotalMap A) (k: String) (v: A) :=
+  λ k' => bif k == k' then v else m k'
+
+notation m "[" k " ← " v "]" => TotalMap.update m k v
+\end{minted}
+
+Como se puede ver un mapa total no es más que una función de \texttt{String} a \texttt{A},
+donde \texttt{A} es el tipo de los valores que queremos guardar. El truco para
+definir el mapa está en la función \texttt{update}, que nos permite modificar
+el \enquote{contenido} de una variable.
+
+Nos detenemos un momento a explicar lo que es la función \texttt{bif}, 
+es simplemente el \texttt{if} tradicional para valores booleanos, en vez
+de para proposiciones, esto es, la condición toma un valor booleano decidible.
+Puesto que la comparación de strings es decidible, podemos usarla en la definición.
+Podríamos haber hecho lo mismo con el \texttt{if} tradicional, pero esto permite
+a Lean inferir mejor los tipos.
+
+Introducimos también la notación \texttt{m[k ← v]} que indica que se ha
+asignado a la variable \texttt{k} el valor \texttt{v} en el mapa \texttt{m}.
+Esto nos permite concatenar asignaciones:
+
+\begin{minted}{lean4}
+m[k ← v₂][k ← v₁]
+\end{minted}
+
+Indica que primero se asigna a \texttt{k} el valor \texttt{v₂} y luego el valor \texttt{v₁}.
+Uno podría esperar que esto sea equivalente a \texttt{m[k ← v₁]}, y así es,
+como demostraremos en el siguiente lema.
+
+\begin{minted}{lean4}
+theorem eval_last:
+  m[k ← v₂][k ← v₁] = m[k ← v₁] := by
+  funext k'
+  match h: k == k' with
+  | true =>
+    unfold TotalMap.update
+    rw [h, cond_true, cond_true]
+  | false =>
+    unfold TotalMap.update
+    rw [h, cond_false, cond_false, cond_false]
+\end{minted}
+
+Otra propiedad razonable es que no importa el orden en el que se hagan las asignaciones
+a dos variables distintas.
+
+\begin{minted}{lean4}
+theorem eval_swap (hneq : k₁ != k₂):
+  m[k₂ ← v₂][k₁ ← v₁] = m[k₁ ← v₁][k₂ ← v₂] := by
+  funext k'
+  match h: k₁ == k' with
+  | true =>
+    unfold TotalMap.update
+    rw [h, cond_true]
+    match h': k₂ == k' with
+    | true =>
+      rw [eq_of_beq h, eq_of_beq h', bne_iff_ne] at hneq
+      contradiction
+    | false =>
+      rw [cond_false, cond_true]
+  | false =>
+    unfold TotalMap.update
+    rw [h, cond_false, cond_false]
+\end{minted}
+
+Definimos ahora las \emph{configuraciones} que son pares formados por un 
+\enquote{constructo} y un estado, para cada uno
+de los tipos que acabamos de definir tendremos un tipo de configuración.
+
+\begin{minted}{lean4}
+def AConfig := Aexp × State
+def BConfig := Bexp × State
+def Config := Com × State
+\end{minted}
+
+La importancia de las configuraciones radica en que dado un constructo y un estado
+podremos \enquote{evaluar} el constructo en el estado, obteniendo un nuevo estado.
+Esto es lo que estudiaremos cuando veamos la \emph{semántica} de \texttt{IMP}.
+
+\section{Semántica de \texttt{Aexp}}
+
+Comenzamos definiendo la semántica de las expresiones aritméticas, partiendo por
+la de \emph{paso largo} o \emph{natural}.
+
+
 
 \end{document}
