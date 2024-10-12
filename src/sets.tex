@@ -14,7 +14,7 @@ conjunto.
 def Set (α: Type u) := α → Prop
 
 def setOf (p: α → Prop): Set α :=
-	p
+  p
 \end{minted}
 
 
@@ -25,8 +25,8 @@ el de extensionalidad funcional y el de extensionalidad proposicional.
 
 \begin{minted}{lean4}
 theorem ext {a b: Set α} (h: ∀(x: α), x ∈ a ↔ x ∈ b):
-	a = b :=
-	funext (λ x ↦ propext (h x))
+  a = b :=
+  funext (λ x ↦ propext (h x))
 \end{minted}
 
 \end{document}

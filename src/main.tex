@@ -22,7 +22,7 @@
 
 \usepackage{fontspec}
 % switch to a monospace font supporting more Unicode characters
-% \setmonofont{FreeMono}
+\setmonofont{JetBrains Mono}[Scale=MatchLowercase]
 \usepackage[outputdir=../build]{minted}
 \newmintinline[lean]{lean4}{bgcolor=white}
 % \newminted[leancode]{lean4}{fontsize=\footnotesize}
@@ -119,6 +119,9 @@
 %   Activa a toas' sus amigas con un call
 % }{Lean --- Superiority}
 \subfile{lean.tex}
+
+\chapter{Teoría de tipos vs teoría de conjuntos}\label{CHAP:SETS}
+\subfile{sets.tex}
 
 \chapter{El lenguaje \texttt{IMP}}\label{CHAP:IMP}
 \subfile{imp.tex}

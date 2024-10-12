@@ -1,4 +1,7 @@
 {
     "cSpell.enabled": true,
-    "cSpell.language": "en,es-ES"
+    "cSpell.language": "en,es-ES",
+    // indent using 2 spaces
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
 }
