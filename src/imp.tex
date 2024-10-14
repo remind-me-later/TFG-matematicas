@@ -304,6 +304,16 @@ theorem eval_last:
     rw [h, cond_false, cond_false, cond_false]
 \end{minted}
 
+En la demnostración empezamos aplicando la extensionalidad funcional para introducir
+un argumento anónimo de la aplicación de la función, con esto obtenemos la
+proposición equivalente:
+
+\begin{minted}{lean4}
+m[k ← v₂][k ← v₁] k' = m[k ← v₁] k'
+\end{minted}
+
+Ahora basta distinguir casos, cuando \texttt{k == k'} se cumple y cuando no.
+
 Otra propiedad razonable es que no importa el orden en el que se hagan las asignaciones
 a dos variables distintas.
 
@@ -325,6 +335,8 @@ theorem eval_swap (hneq : k₁ != k₂):
     unfold TotalMap.update
     rw [h, cond_false, cond_false]
 \end{minted}
+
+Basta distinguir los casos \texttt{k₁ == k'} y \texttt{k₂ == k'}.
 
 Definimos ahora las \emph{configuraciones} que son pares formados por un 
 \enquote{constructo} y un estado, para cada uno
