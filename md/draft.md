@@ -1,4 +1,10 @@
-# Formal semanantics of Programming Languages in Lean
+---
+title: "Formal semantics of Programming Languages in Lean"
+author: "Ricardo Maurizio Paul"
+date: "01/01/2025"
+geometry: "left=3cm,right=3cm,top=2cm,bottom=2cm"
+output: pdf_document
+---
 
 ## Notation
 
@@ -111,11 +117,11 @@ propositions, and functions to encode proofs.
 
 This makes type theory ==more expressive than set theory, as we can use types to
 encode propositions, and vice versa==. This also means that we can encode sets
-in type theory as a function that takes an arbitary type `α` and returns a
+in type theory as a function that takes an arbitary type `a` and returns a
 proposition:
 
 ```lean
-def Set (α: Type u) := α → Prop
+def Set (a: Type u) := a -> Prop
 ```
 
 ==We use the term proposition to refer to a type that can be either true or
@@ -189,13 +195,13 @@ This is solved using _dependent types_, ==which are types that depend on a
 value==. We can define our list as:
 
 ```lean
-inductive List (α: Type u) : Type u
-| Nil : List α
-| Cons : α -> List α -> List α
+inductive List (a: Type u) : Type u
+| Nil : List a
+| Cons : a -> List a -> List a
 ```
 
-In this definition, `List` is a type constructor that takes a type `α` and
-returns a type `List α`, dependent on the value of `α`. This allows us to define
+In this definition, `List` is a type constructor that takes a type `a` and
+returns a type `List a`, dependent on the value of `a`. This allows us to define
 a list of natural numbers as `List Nat`, a list of booleans as `List Bool`, and
 so on. In this manner dependent types allow us to define our structures in a
 more general way, and avoid repeating proofs for each type.
@@ -219,12 +225,12 @@ or functions that return functions as results. This is the essence of Pi types,
 the ability to define functions as types, and use them to encode complex logic.
 
 ==We can define for example the cartesian product of two types as a function
-that takes a type `α` and returns a function that takes a type `β` and returns
-the type `α x β`, this is the type of pairs of elements of `α` and `β`==. This
+that takes a type `a` and returns a function that takes a type `b` and returns
+the type `a x b`, this is the type of pairs of elements of `a` and `b`==. This
 is
 
 ```lean
-def Prod (α: Type u) (β: Type v) : Type (max u v) := λ (α: Type u), λ (β: Type v), α x β
+def Prod (a: Type u) (b: Type v) : Type (max u v) := fun (a: Type u), fun (b: Type v), a x b
 ```
 
 Pi types can also be used to define _sum types_, _dependent functions_, etc...
