@@ -1,7 +1,7 @@
 ---
 title: "Formal semantics of Programming Languages in Lean (Draft)"
 author: "Ricardo Maurizio Paul"
-date: "01/01/2025"
+date: "January 1, 2025"
 geometry: "left=2cm,right=2cm,top=2cm,bottom=3cm"
 output: pdf_document
 ---
@@ -86,11 +86,11 @@ higher order typed lambda calculus, with dependent types, and a universe
 hierarchy. To understand what all of this means, we must first understand the
 basics of type theory, lambda calculus, and dependent types.
 
-## The basics of type theory[^1]
+## The basics of type theory[^HoTTref]
 
-[^1]:
+[^HoTTref]:
     This section can mostly be copy and pasted from the HoTT book. The only
-    problem is the exposition in the book introduces first all the concepts and
+    problem is the exposition in the book introduce first all the concepts and
     then the examples, while in this text we will introduce the concepts and
     examples together. This means, for example, introducing natural numbers much
     earlier.
@@ -147,6 +147,37 @@ in set theory, and can be used to define the membership of an element $x$ in a
 set $S$ as $\texttt{Set} \ x \ S$, which is true if $x$ is a member of $S$, and
 false otherwise.
 
+### Equality
+
+Equality in type theory is slightly more complex than in classic mathematics,
+the equality that we have by default is _definitional equality_. That is two
+terms are equal if they can be transformed into each other via _rewriting
+rules_. The reduction rules of type theories typically include:
+
+- $\beta$-reduction. Replacing a function application with the function body
+  where the argument is substituted for the bound variable.
+- $\delta$-reduction. Replacing a constant with its definition.
+- $\iota$-reduction. Simplifying expressions involving constructors and pattern
+  matching for inductive data types.
+
+==These rules normally satisfy a series of desirable properties, such as
+_confluence_, _termination_, and _consistency_, that ensure that the reduction
+process is well defined, and that the equality relation is an equivalence
+relation. In some cases other nice properties are added, such as _congruence_,
+_strong normalization_, and _canonicity_==.
+
+Another type of equality is _propositional equality_, which is states that two
+terms are equal if they can be proven to be equal in the type theory. This is
+more akin to the classic notion of equality, and is used to prove properties of
+the terms. ==A special case of propositional equality is _functional
+extensionality_[^funext], which states that two functions are equal if they are
+equal for all arguments, a classic result of set theory that follows from the
+axiom of extensionality, which states that two sets are equal if they contain
+the same elements==. ==(The relationship may depend on axiom K)==.
+
+[^funext]:
+    [Functional extensionality on nLab](https://ncatlab.org/nlab/show/function+extensionality)
+
 ### Universes
 
 But what is this $\texttt{Prop}$ type that we mentioned before? $\texttt{Prop}$
@@ -154,16 +185,24 @@ is, not surprisingly, a type, so it has type $\texttt{Type}$, in fact any type
 has type $\texttt{Type}$, even $\texttt{Type}: \texttt{Type}$. This lead to
 ==_impredicativity_==.
 
-Impredicativity[^2] refers to the ability to define an object by quantifying
-over a collection that includes the object itself. In simpler terms, it's a form
-of circularity where you define something using a set that already contains the
-thing you're defining. This can lead to paradoxes, like the _Russell's paradox_
-in set theory, and the ==_Girard's paradox_== in type theory. ==Historically
-this problem has been solved with System U==. To avoid this, we introduce a
-hyerarchy of _type universes_.
+Impredicativity[^impred] arises when a definition of an object or type relies on
+a quantifier that ranges over a totality encompassing the very object being
+defined. This self-referential aspect can lead to logical paradoxes, akin to
+Russell's Paradox in set theory, where a set is defined to contain all sets that
+do not contain themselves.
 
-[^2]:
+The type theory analosous to Russell's paradox is the ==_Girard's paradox_==, in
+a system that allows impredicativity, we can define a type $U$ that contains all
+types that do not contain themselves, and then ask if $U: U$, if it is, then it
+should not be of type $U$, and if it is not, then it should be. A system that
+shows this paradox is not very useful for theorem proving, as it is
+inconsistent, so any proposition can be proven. [^systemU] To avoid this, we
+introduce a hyerarchy of _type universes_.
+
+[^impred]:
     [Impredicativity on Wikipedia](https://en.wikipedia.org/wiki/Impredicativity)
+
+[^systemU]: ==Historically this problem has been solved with System U==.
 
 Each universe is a ==_collection_ of types, wether they are types or not depends
 on the particular type theory==, in Lean and Coq they are not. Each universe
@@ -177,10 +216,10 @@ $\texttt{Type} \ 1 \to \texttt{Type} \ 2: \texttt{Type} \ 3$.
 The first type universe, $\texttt{Type} \ 0$, contains the types of the
 programming language itself, such as $\mathbb{N}$, $\texttt{Bool}$, and
 $\texttt{List}$. The second type universe, $\texttt{Type} \ 1$, contains the
-types of the first universe, and so on. The type $Prop$ is a special type that
-sits alongside $\texttt{Type} \ 0$ at the bottom of the hierarchy, this prevents
-defining a proposition in terms of itself, or any other type, for that matter,
-and avoids paradoxes.
+types of the first universe, and so on. The type $\texttt{Prop}$ is a special
+type that sits alongside $\texttt{Type} \ 0$ at the bottom of the hierarchy,
+this prevents defining a proposition in terms of itself, or any other type, for
+that matter, and avoids paradoxes.
 
 ### Constructors
 
@@ -247,15 +286,16 @@ To better understand this we introduce an example were $\Pi$-types are used to
 to define a vector of a given length, which type depends on the length of the
 vector:
 
-$$
-  \Pi_{n: \mathbb{N}} \texttt{Vec} \ \alpha \ n
-$$
+$$ \Pi\_{n: \mathbb{N}} \texttt{Vec} \ \alpha \ n $$
 
 with constructors:
 
+$$ \texttt{nil} : \texttt{Vec} \ \alpha \ 0 $$
+
 $$
-  \texttt{nil} : \texttt{Vec} \ \alpha \ 0 \\
-  \texttt{cons} : \Pi_{n: \mathbb{N}} (\alpha \to \texttt{Vec} \ \alpha \ n \to \texttt{Vec} \ \alpha \ (\texttt{succ} \ n))
+  \texttt{cons} : \Pi_{n: \mathbb{N}}
+  (\alpha \to \texttt{Vec} \ \alpha \ n
+    \to \texttt{Vec} \ \alpha \ (\texttt{succ} \ n))
 $$
 
 In this way $\Pi$-types give us a way to type complex data structures, such as
@@ -266,12 +306,16 @@ lists, trees, and graphs, that depend on the values of their elements,
 
 Now, why is type theory so important for proof assistants? As we mentioned
 before, by the Curry-Howard isomorphism, we can use types to encode
-propositions, also called theorems, and type constructors, aka functions, to
-encode proofs. In fact, the way to prove a proposition in these type theories is
-to construct a value of the type that encodes the proposition, this is called
-_proof by construction_. This is the basis of all proof assistants, and is the
-reason why they are so powerful, as we can use the type system to encode complex
-mathematical theorems, and the proof assistant to verify their correctness.
+propositions, also called theorems, and type constructors, also known as
+functions, to encode proofs. In fact, the way to prove a proposition in these
+type theories is to construct a value of the type that encodes the proposition,
+this is called _proof by construction_. This is the basis of all proof
+assistants, and is the reason why they are so powerful, as we can use the type
+system to encode complex mathematical theorems, and the proof assistant to
+verify their correctness.
+
+The process by which we can ensure the constructed term is a valid proof is
+_type checking_,
 
 As we mentioned before, Coq and Lean use the _Calculus of Inductive
 Constructions_ as their logical foundation, while Isabelle uses _Higher Order
@@ -305,3 +349,10 @@ then extract an efficient implementation from the proof. Irrelevancy ensures
 that the extracted code is independent of the proof used. ==Code extraction is
 an area where Lean 4 has made significant improvements over Lean 3, as it
 supports a better compiler backend, and more target languages.==
+
+Proof irrelevance is also supported in Coq, but not as a definitional equality,
+but a set of axioms that ensure that all proofs of a proposition are equal. In
+Coq $\texttt{Prop}$ is a universe, separate from data types which reside in
+$\texttt{Type}$, inside this universe two proofs of the same proposition are
+_propositionally equal_, that is, that is, they are equivalent, but not
+rewriteable in all contexts.
