@@ -2,14 +2,15 @@
 title: "Formal semantics of Programming Languages in Lean (Draft)"
 author: "Ricardo Maurizio Paul"
 date: "01/01/2025"
-geometry: "left=3cm,right=3cm,top=2cm,bottom=2cm"
+geometry: "left=2cm,right=2cm,top=2cm,bottom=3cm"
 output: pdf_document
 ---
 
 ## Notation
 
-The parts of the text that could require further exploration or sources are
-==marked like this==.
+- The parts of the text that could require further exploration or sources are
+  ==marked like this==.
+- We use the lambda calculus notation for functions.
 
 ## Introduction
 
@@ -25,9 +26,7 @@ verification is Hoare logic, a formal system that deconstructs programs into
 components each with a set of pre and post conditions, these conditions and
 components, called commands, are represented as _Hoare triples_ of the form:
 
-```text
-{P} C {Q}
-```
+$$ \{P\} \ C \ \{Q\} $$
 
 where P is the precondition, C is the command, and Q is the postcondition. By
 using inference rules, Hoare logic can be used to prove the correctness of a
@@ -87,7 +86,14 @@ higher order typed lambda calculus, with dependent types, and a universe
 hierarchy. To understand what all of this means, we must first understand the
 basics of type theory, lambda calculus, and dependent types.
 
-## The basics of type theory
+## The basics of type theory[^1]
+
+[^1]:
+    This section can mostly be copy and pasted from the HoTT book. The only
+    problem is the exposition in the book introduces first all the concepts and
+    then the examples, while in this text we will introduce the concepts and
+    examples together. This means, for example, introducing natural numbers much
+    earlier.
 
 Type theory is a branch of mathematical logic that deals with the study of
 types, an abstraction similar in some ways to the more familiar sets, and
@@ -95,13 +101,21 @@ functions, not as defined in set theory, but as a primitive notion.
 
 As an informal introduction to types we can think of them as sets with
 additional structure, this structure dictates with functions can be applied to
-them. For example, we can define a type `Nat` that represents the natural
-numbers, and define a function `add` that takes two natural numbers and returns
-their sum. This ensures that the function `add` can only be applied to natural
-numbers, and not to any other type. This is the essence of type theory, the
-ability to restrict the domain of functions to certain types, and to ensure that
-the functions are applied to the correct types. This is known as _type safety_,
-and is a key feature of type theory.
+them. For example, we can define a type $\mathbb{N}$ that represents the natural
+numbers, and define a function $\texttt{add}$ that takes two natural numbers and
+returns their sum. This ensures that the function $\texttt{add}$ can only be
+applied to natural numbers, and not to any other type. This is the essence of
+type theory, the ability to restrict the domain of functions to certain types,
+and to ensure that the functions are applied to the correct types. ==This is
+known as _type safety_==, and is a key feature of type theory.
+
+A key point to remark is that types don't _contain_ values, they _classify_
+values, while in set theory a value is a _member_ of a set, in type theory a
+value _has_ a type. ==This is a subtle difference, but an important one, as it
+allows us to reason about the properties of values based on their types, and to
+ensure that the values are used correctly in the program==. The analogous to the
+membership notation in set theory is the ==_typing judgement_== in type theory,
+which is written as $x: \alpha$, and reads as "x has type $\alpha$".
 
 Type theory can be used as a foundation of mathematics, in the same way that set
 theory is used. In fact, type theory and set theory are closely related, and
@@ -117,124 +131,122 @@ propositions, and functions to encode proofs.
 
 This makes type theory ==more expressive than set theory, as we can use types to
 encode propositions, and vice versa==. This also means that we can encode sets
-in type theory as a function that takes an arbitary type `a` and returns a
+in type theory as a function that takes an arbitary type $\alpha$ and returns a
 proposition:
 
-```lean
-def Set (a: Type u) := a -> Prop
-```
+$$\texttt{Set} \ (\alpha : \texttt{Type}) := \alpha \to \texttt{Prop}$$
+
+In this definition the precise type of $\texttt{Set}$ depends on the type
+$\alpha$, this is what's commonly known as a ==polymorphic type==, and allows us
+to define a type that depends on another type.
 
 ==We use the term proposition to refer to a type that can be either true or
 false, not to be confused with the propositions of logic, which are statements
 susceptible to proof==. This function corresponds to the concept of _membership_
-in set theory, and can be used to define the membership of an element `x` in a
-set `S` as `Set x S`, which is true if `x` is a member of `S`, and false
-otherwise.
+in set theory, and can be used to define the membership of an element $x$ in a
+set $S$ as $\texttt{Set} \ x \ S$, which is true if $x$ is a member of $S$, and
+false otherwise.
 
-But what is this `Prop` type that we mentioned before? `Prop` is, not
-surprisingly, a type, so it has type `Type`, in fact any type has type `Type`,
-even `Type`, this paradox, known as ==_Girard's paradox_==, is a well known
-problem in type theory and the analogous to _Russell's paradox_ in set theory.
-==Historically this problem has been solved with System U==. To make sense of
-this `Type` and avoid some problems we have to introduce _type universes_.
+But what is this $\texttt{Prop}$ type that we mentioned before? $\texttt{Prop}$
+is, not surprisingly, a type, so it has type $\texttt{Type}$, in fact any type
+has type $\texttt{Type}$, even $\texttt{Type}: \texttt{Type}$, this paradox,
+known as ==_Girard's paradox_==, is a well known problem in type theory and the
+analogous to _Russell's paradox_ in set theory. ==Historically this problem has
+been solved with System U==. To make sense of this $\texttt{Type}$ and avoid
+some problems we have to introduce _type universes_.
 
 To avoid Girard's paradox, a type cannot have itself as its type, to avoid this
 we introduce a hierarchy of types, called _type universes_, each universe
 contains the types of the previous universe, and is contained in the next
-universe. In this case `Type: Type 1`, `Type 1: Type 2`, and so on. The function
-type inhabits the smallest universe that contains the types of its domain and
-codomain. For example, `Nat -> Nat` inhabits `Type 1`, and `Type 1 -> Type 2`
-inhabits `Type 3`.
+universe. In this case $\texttt{Type}: \texttt{Type} \ 1$,
+$\texttt{Type} \ 1: \texttt{Type} \ 2$, and so on. The function type inhabits
+the smallest universe that contains the types of its domain and codomain. For
+example, $\mathbb{N} \to \mathbb{N}: \texttt{Type} \ 1$, and
+$\texttt{Type} \ 1 \to \texttt{Type} \ 2: \texttt{Type} \ 3$.
 
-The first type universe, `Type 0`, contains the types of the programming
-language itself, such as `Nat`, `Bool`, and `List`. The second type universe,
-`Type 1`, contains the types of the first universe, and so on.
+The first type universe, $\texttt{Type} \ 0$, contains the types of the
+programming language itself, such as $\mathbb{N}$, $\texttt{Bool}$, and
+$\texttt{List}$. The second type universe, $\texttt{Type} \ 1$, contains the
+types of the first universe, and so on.
 
 For now we have focused on types, but we need a way to create values of these
-types, this is done using _type constructors_, which are functions that create
-elements of a type and define the possible forms an element of a type can take.
-For example, we can define a type `Bool` that represents the booleans, and
-define two constructors `True` and `False` that create the elements of the type.
-This ensures that the elements of the type are either `True` or `False`, and no
-other value.
+types, this is done using ==_type constructors_==, which are functions that
+create elements of a type and define the possible forms an element of a type can
+take. For example, we can define a type $\texttt{Bool}$ that represents the
+booleans, and define two constructors $\texttt{true}$ and $\texttt{false}$ that
+create the elements of the type. This ensures that the elements of the type are
+either $\texttt{true}$ or $\texttt{false}$, and no other value.
 
-## Inductive types
+### Inductive types
 
-Of course, defining finite types such as `Bool` is not very interesting, we need
-a way to define infinite types, such as the natural numbers. This is done using
-_inductive types_, which are types that are defined by a set of constructors
-that define the possible forms an element of the type can take. For example, we
-can define the natural numbers as an inductive type with two constructors,
-`Zero` and `Succ`, that create the elements of the type, in a way analogous to
-the _Peano axioms_.
+Of course, defining finite types such as $\texttt{Bool}$ is not very
+interesting, we need a way to define infinite types, such as the natural
+numbers. This is done using _inductive types_, which are types that are defined
+by a set of constructors that define the possible forms an element of the type
+can take. For example, we can define the natural numbers as an inductive type
+with two constructors, $\texttt{zero}$ and $\texttt{succ}$, that create the
+elements of the type, in a way analogous to the _Peano axioms_.
 
-```lean
-inductive Nat : Type
-| Zero : Nat
-| Succ : Nat -> Nat
-```
+$$
+\texttt{zero} : \mathbb{N} \qquad
+    \texttt{succ}: \mathbb{N} \to \mathbb{N}
+$$
 
 Similar to the classic principle of induction, we have defined a base case
-`Zero` and an inductive case `Succ`, that creates the successor of a natural
-number. In this way we can create the natural numbers as an inductive type, and
-define functions that operate on them, such as addition, multiplication, and
-exponentiation. This is the essence of inductive types, the ability to define
-types that are created by a set of constructors, and define functions that
-operate on them. And as is the case in classical mathematics, we can use
-induction to prove properties of these types, in this case _structural
-induction_. To use this proof technique we must ensure that the inductive type
-is _well-founded_, that is, that the constructors of the type are applied a
-finite number of times to create an element of the type.
+$\texttt{zero}$ and an inductive case $\texttt{succ}$, that creates the
+successor of a natural number. In this way we can create the natural numbers as
+an inductive type, and define functions that operate on them, such as addition,
+multiplication, and exponentiation. This is the essence of inductive types, the
+ability to define types that are created by a set of constructors, and define
+functions that operate on them. And as is the case in classical mathematics, we
+can use induction to prove properties of these types, ==in this case _structural
+induction_==.
 
-## Dependent types
+Following the natural number example, let's construct a function
+$f: \mathbb{N} \to C$ by recursion on the naturals, it's enough to provide a
+base case $c_0 : C$ and a "next step" function $c_s: \mathbb{N} \to C \to C$,
+then we can define $f$ as:
 
-But what if we want to define a type that depends on a value? For example, a
-list of natural numbers, we could define a different type for each of the types
-of the possible arguments, but this would be cumbersome, and not very useful.
-This is solved using _dependent types_, ==which are types that depend on a
-value==. We can define our list as:
+$$
+  f \ 0 = c_0 \\
+  f \ (\texttt{succ} \ n) = c_s \ n \ (f \ n)
+$$
 
-```lean
-inductive List (a: Type u) : Type u
-| Nil : List a
-| Cons : a -> List a -> List a
-```
+To use this proof technique we must ensure that the inductive type is
+_well-founded_, that is, that the constructors of the type are applied a finite
+number of times to create an element of the type.
 
-In this definition, `List` is a type constructor that takes a type `a` and
-returns a type `List a`, dependent on the value of `a`. This allows us to define
-a list of natural numbers as `List Nat`, a list of booleans as `List Bool`, and
-so on. In this manner dependent types allow us to define our structures in a
-more general way, and avoid repeating proofs for each type.
+### Dependent function type or $\Pi$-type
 
-## Pi types
+In type theory, functions are first class citizens, and can be passed as
+arguments, returned as results, and stored in data structures. In some cases we
+need to define functions whose return type depends on the value of the
+arguments, this is done using _Pi types_, which are types that depend on a
+value.
 
-Dependent types are not only useful for defining data structures, but also for
-defining functions. In type theory, functions are first class citizens, and can
-be passed as arguments, returned as results, and stored in data structures. The
-type of a function is called a _Pi type_, and is a dependent type that depends
-on a value. For example, we can define the type of the function `add` as:
+The notation for a Pi type is $\Pi_{x: \alpha} B \ x$, where $x$ is the argument
+on which the type depends, $A$ is the type of the argument, and $B$ is a family
+of types indexed by $x$ ($B: \alpha \to \texttt{Type}$). For example, we can
+define a function that takes a natural
 
-```lean
-def add : Nat -> Nat -> Nat
-```
+To better understand this we introduce an example were $\Pi$-types are used to
+to define a vector of a given length, which type depends on the length of the
+vector:
 
-This definition states that `add` is a function that takes two natural numbers
-and returns a natural number. This is a simple example of a Pi type, but we can
-define more complex types, such as functions that take functions as arguments,
-or functions that return functions as results. This is the essence of Pi types,
-the ability to define functions as types, and use them to encode complex logic.
+$$
+  \Pi_{n: \mathbb{N}} \texttt{Vec} \ \alpha \ n
+$$
 
-==We can define for example the cartesian product of two types as a function
-that takes a type `a` and returns a function that takes a type `b` and returns
-the type `a x b`, this is the type of pairs of elements of `a` and `b`==. This
-is
+with constructors:
 
-```lean
-def Prod (a: Type u) (b: Type v) : Type (max u v) := fun (a: Type u), fun (b: Type v), a x b
-```
+$$
+  \texttt{nil} : \texttt{Vec} \ \alpha \ 0 \\
+  \texttt{cons} : \Pi_{n: \mathbb{N}} (\alpha \to \texttt{Vec} \ \alpha \ n \to \texttt{Vec} \ \alpha \ (\texttt{succ} \ n))
+$$
 
-Pi types can also be used to define _sum types_, _dependent functions_, etc...
-And are one of the most powerful features of type theory.
+In this way $\Pi$-types give us a way to type complex data structures, such as
+lists, trees, and graphs, that depend on the values of their elements,
+==ensuring type safety==.
 
 ## Type theory and proofs
 
