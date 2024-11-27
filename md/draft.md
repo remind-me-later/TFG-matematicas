@@ -147,18 +147,28 @@ in set theory, and can be used to define the membership of an element $x$ in a
 set $S$ as $\texttt{Set} \ x \ S$, which is true if $x$ is a member of $S$, and
 false otherwise.
 
+### Universes
+
 But what is this $\texttt{Prop}$ type that we mentioned before? $\texttt{Prop}$
 is, not surprisingly, a type, so it has type $\texttt{Type}$, in fact any type
-has type $\texttt{Type}$, even $\texttt{Type}: \texttt{Type}$, this paradox,
-known as ==_Girard's paradox_==, is a well known problem in type theory and the
-analogous to _Russell's paradox_ in set theory. ==Historically this problem has
-been solved with System U==. To make sense of this $\texttt{Type}$ and avoid
-some problems we have to introduce _type universes_.
+has type $\texttt{Type}$, even $\texttt{Type}: \texttt{Type}$. This lead to
+==_impredicativity_==.
 
-To avoid Girard's paradox, a type cannot have itself as its type, to avoid this
-we introduce a hierarchy of types, called _type universes_, each universe
+Impredicativity[^2] refers to the ability to define an object by quantifying
+over a collection that includes the object itself. In simpler terms, it's a form
+of circularity where you define something using a set that already contains the
+thing you're defining. This can lead to paradoxes, like the _Russell's paradox_
+in set theory, and the ==_Girard's paradox_== in type theory. ==Historically
+this problem has been solved with System U==. To avoid this, we introduce a
+hyerarchy of _type universes_.
+
+[^2]:
+    [Impredicativity on Wikipedia](https://en.wikipedia.org/wiki/Impredicativity)
+
+Each universe is a ==_collection_ of types, wether they are types or not depends
+on the particular type theory==, in Lean and Coq they are not. Each universe
 contains the types of the previous universe, and is contained in the next
-universe. In this case $\texttt{Type}: \texttt{Type} \ 1$,
+universe. For example:~ $\texttt{Type}: \texttt{Type} \ 1$,
 $\texttt{Type} \ 1: \texttt{Type} \ 2$, and so on. The function type inhabits
 the smallest universe that contains the types of its domain and codomain. For
 example, $\mathbb{N} \to \mathbb{N}: \texttt{Type} \ 1$, and
@@ -167,7 +177,12 @@ $\texttt{Type} \ 1 \to \texttt{Type} \ 2: \texttt{Type} \ 3$.
 The first type universe, $\texttt{Type} \ 0$, contains the types of the
 programming language itself, such as $\mathbb{N}$, $\texttt{Bool}$, and
 $\texttt{List}$. The second type universe, $\texttt{Type} \ 1$, contains the
-types of the first universe, and so on.
+types of the first universe, and so on. The type $Prop$ is a special type that
+sits alongside $\texttt{Type} \ 0$ at the bottom of the hierarchy, this prevents
+defining a proposition in terms of itself, or any other type, for that matter,
+and avoids paradoxes.
+
+### Constructors
 
 For now we have focused on types, but we need a way to create values of these
 types, this is done using ==_type constructors_==, which are functions that
@@ -207,10 +222,9 @@ $f: \mathbb{N} \to C$ by recursion on the naturals, it's enough to provide a
 base case $c_0 : C$ and a "next step" function $c_s: \mathbb{N} \to C \to C$,
 then we can define $f$ as:
 
-$$
-  f \ 0 = c_0 \\
-  f \ (\texttt{succ} \ n) = c_s \ n \ (f \ n)
-$$
+$$ f \ 0 = c_0 $$
+
+$$ f \ (\texttt{succ} \ n) = c_s \ n \ (f \ n) $$
 
 To use this proof technique we must ensure that the inductive type is
 _well-founded_, that is, that the constructors of the type are applied a finite
@@ -272,8 +286,22 @@ We've seen that Lean and Coq share much of their type theory, so what are the
 key differences between the two? The most important difference is that Lean is
 designed to be proof-irrelevant. Proof-irrelevance is a property of a type
 theory that states that all proofs of a proposition are definitionally equal,
-meaning that they are indistinguishable by the type checker. This aligns with
-the idea that propositions in constructive mathematics are concerned with the
-existence of a proof, not with the specific proof itself. This is in contrast to
-Coq, which is proof-relevant, meaning that the specific proof of a proposition
-matters, and can be used in further proofs.
+meaning that they are indistinguishable by the type checker.
+
+==For example, imagine we have two proofs of the fact that $2 + 2 = 4$, one that
+uses the Peano axioms, and another that uses the definition of addition. In a
+proof-irrelevant type theory, these two proofs would be considered equal, and
+could be used interchangeably==.
+
+Why does this matter? First of all it helps to simplify complex proofs, as we
+don't have to worry about the details of the proof, only that it exists. This
+also has computational benefits, as we can erase the proofs from the final
+program, and only keep the results.
+
+It also aids in ==_code extraction_==, the process of extracting a program from
+proofs and definitions. This is a key feature when using Lean as tool in formal
+verification, as we can first formally prove the correctness of the program, and
+then extract an efficient implementation from the proof. Irrelevancy ensures
+that the extracted code is independent of the proof used. ==Code extraction is
+an area where Lean 4 has made significant improvements over Lean 3, as it
+supports a better compiler backend, and more target languages.==
