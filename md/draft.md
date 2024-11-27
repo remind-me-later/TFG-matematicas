@@ -86,7 +86,21 @@ higher order typed lambda calculus, with dependent types, and a universe
 hierarchy. To understand what all of this means, we must first understand the
 basics of type theory, lambda calculus, and dependent types.
 
-## The basics of type theory[^HoTTref]
+### Historical background
+
+## Type theory
+
+Type theory is not a single theory, but a family of related theories that share
+the same basic principles. We will focus on a family of type theories known as
+Martin-Löf type theory, which was developed by Per Martin-Löf in the 1970s as a
+foundation for constructive mathematics. Since its inception, type theory has
+been strongly connected to $\lambda$-calculus, a formal system for expressing
+computation based on function abstraction and application. This connection
+arises thanks to the works of Alonzo Church, who showed that the
+$\lambda$-calculus is equivalent to the Turing machine, and can be used to
+define computable functions.
+
+### Type theory vs set theory[^HoTTref]
 
 [^HoTTref]:
     This section can mostly be copy and pasted from the HoTT book. The only
@@ -96,18 +110,21 @@ basics of type theory, lambda calculus, and dependent types.
     earlier.
 
 Type theory is a branch of mathematical logic that deals with the study of
-types, an abstraction similar in some ways to the more familiar sets, and
-functions, not as defined in set theory, but as a primitive notion.
+types, an abstraction similar in some ways to the more familiar sets.
+
+Like _sets_ are a primitive notion in set theory, _types_ are a primitive notion
+in type theory, alongside _functions_. This two primitives ensure that functions
+are only applied to the correct types, this is known as _type safety_. This
+concept may be familiar to programmers, as it is the basis of static type
+systems in programming languages, such as Haskell, Rust, and Scala.
 
 As an informal introduction to types we can think of them as sets with
-additional structure, this structure dictates with functions can be applied to
-them. For example, we can define a type $\mathbb{N}$ that represents the natural
-numbers, and define a function $\texttt{add}$ that takes two natural numbers and
-returns their sum. This ensures that the function $\texttt{add}$ can only be
-applied to natural numbers, and not to any other type. This is the essence of
-type theory, the ability to restrict the domain of functions to certain types,
-and to ensure that the functions are applied to the correct types. ==This is
-known as _type safety_==, and is a key feature of type theory.
+additional structure which dictates with functions can be applied to them. For
+example, we can define a type $\mathbb{N}$ that represents the natural numbers,
+and define a function $\texttt{add}: \mathbb{N} \to \mathbb{N} \to \mathbb{N}$
+that takes two natural numbers and returns their sum. This ensures that the
+function $\texttt{add}$ can only be applied to natural numbers, and not to any
+other type.
 
 A key point to remark is that types don't _contain_ values, they _classify_
 values, while in set theory a value is a _member_ of a set, in type theory a
