@@ -3,7 +3,7 @@ title: "Formal semantics of Programming Languages in Lean (Draft)"
 author: "Ricardo Maurizio Paul"
 date: "January 1, 2025"
 geometry: "left=2cm,right=2cm,top=2cm,bottom=3cm"
-output: pdf_document
+# output: "pdf_document"
 ---
 
 ## Observations
@@ -11,7 +11,7 @@ output: pdf_document
 - The parts of the text that could require further exploration or sources are
   ==marked like this==.
 - We use the lambda calculus notation for functions.
-- Typesetting is not final.
+- Typesetting is not final. Use XeLaTex for special characters.
 
 ## Introduction
 
@@ -30,7 +30,7 @@ components, called commands, are represented as _Hoare triples_ of the form:
 $$ \{P\} \ C \ \{Q\} $$
 
 where P is the precondition, C is the command, and Q is the postcondition. By
-using inference rules, Hoare logic can be used to prove the correctness of a
+using inference rules, Hoare logic can be used to show the correctness of a
 program by proving that the postcondition of the program is satisfied given the
 precondition. However, reasoning about loops and recursion can be difficult in
 Hoare logic, as it requires the use of invariants to prove the termination of
@@ -62,6 +62,18 @@ performed, and dead code can be eliminated. Some of these optimizations can be
 performed by modern compilers, using static analysis, but the guarantees
 provided by formal methods are stronger, as we said before we can ensure
 _termination_ in some cases.
+
+==Proof of the relevance that program correctness has gained in recent years is
+the adoption of the _Rust_ programming language, which has a strong type system
+that ensures memory safety and thread safety, and is designed to prevent common
+programming errors, such as null pointer dereferences, buffer overflows, and
+data races. It ensures these properties by using a _borrow checker_ that
+enforces strict rules on the use of memory, and by using a _type system_ that
+ensures correctness of the programs. The borrow checker is based on
+_substructural logic_ and _linear types_, concepts that we will not cover in
+this text, but that encode in the language itself the rules of the type system,
+ensuring that the programs are well-typed, and that the memory is used
+correctly.==
 
 ## Proof assistants
 
@@ -120,6 +132,10 @@ is a modern proof assistant developed by Leonardo de Moura at Microsoft Research
 and based on the CIC. We can see Lean as an evolution of Coq, with a more modern
 syntax, and a more powerful type system, later we will discuss the differences
 in more detail.
+
+Leaving HOL aside, all these systems are based on the Curry-Howard isomorphism,
+a fundamental concept that relates proofs and programs. To understand it we must
+first introduce the basics of type theory.
 
 ## Type theory
 
@@ -362,29 +378,37 @@ In this way $\Pi$-types give us a way to type complex data structures, such as
 lists, trees, and graphs, that depend on the values of their elements,
 ==ensuring type safety==.
 
-## Type theory and proofs
+## The Curry-Howard isomorphism
 
-Now, why is type theory so important for proof assistants? As we mentioned
-before, by the Curry-Howard isomorphism, we can use types to encode
-propositions, also called theorems, and type constructors, also known as
-functions, to encode proofs. In fact, the way to prove a proposition in these
-type theories is to construct a value of the type that encodes the proposition,
-this is called _proof by construction_. This is the basis of all proof
-assistants, and is the reason why they are so powerful, as we can use the type
-system to encode complex mathematical theorems, and the proof assistant to
-verify their correctness.
+The Curry-Howard isomorphism is a result that establishes a correspondence
+between _propositions_ and _types_ and between _terms_ and _proofs_. In broad
+terms, every proposition $P$ in the logic corresponds to a type $\alpha \ P$ in
+the system, every connective in the logic ($\wedge$, $\vee$, $\Rightarrow$, ...)
+corresponds to a _type constructor_ in the system ($\times$, $+$, $\to$, ...),
+and every proof of a proposition corresponds to a term $a : \alpha \ P$ of the
+type.
 
-The process by which we can ensure the constructed term is a valid proof is
-_type checking_,
+==Let's consider the example of implication ($\Rightarrow$) in propositional
+logic, the proposition $P \Rightarrow Q$ states that if $P$ is true, then $Q$
+must be true. In type theory this corresponds to the function type
+$\alpha \ P \to \alpha \ Q$, which states that if we have a proof of $P$, then
+we can construct a proof of $Q$. The proof of the proposition corresponds to a
+term of the type, and the proof of the implication corresponds to a function
+that takes a proof of $P$ and returns a proof of $Q$==.
 
-As we mentioned before, Coq and Lean use the _Calculus of Inductive
-Constructions_ as their logical foundation, while Isabelle uses _Higher Order
-Logic_. ==HOL is not a type theory, so its outside the scope of this text, but
-is also a powerfull proof assistant with a large user base, in fact, we will
-reference the book "Concrete Semantics with Isabelle/HOL" in some parts of this
-text, as the proofs in the book can be easily translated to Lean==.
+This correspondence is not limited to propositional logic, but extends to
+predicate logic, and higher order logics. For example, the universal quantifier
+$\forall$ corresponds to the dependent function type $\Pi$, and the existential
+quantifier $\exists$ corresponds to the ==dependent pair type $\Sigma$==. This
+correspondence is the basis of all modern proof assistants, and allows us to
+reason about programs using the tools of logic, and vice versa.
 
-## Lean vs Coq
+The _type checker_ of the system then allows us to _verify_ the proofs, by
+checking that the terms are well-typed, and that the terms correspond to valid
+proofs. This mechanism ensures that the proofs are correct, and that the
+programs are well-typed.
+
+## Proof irrelevance
 
 We've seen that Lean and Coq share much of their type theory, so what are the
 key differences between the two? The most important difference is that Lean is
@@ -414,5 +438,117 @@ Proof irrelevance is also supported in Coq, but not as a definitional equality,
 but a set of axioms that ensure that all proofs of a proposition are equal. In
 Coq $\texttt{Prop}$ is a universe, separate from data types which reside in
 $\texttt{Type}$, inside this universe two proofs of the same proposition are
-_propositionally equal_, that is, that is, they are equivalent, but not
-rewriteable in all contexts.
+_propositionally equal_. Coq also supports definitional proof irrelevance, by
+using the $\texttt{SProp}$ but it's not the default.
+
+## Semantics[^winskel]
+
+[^winskel]: This section can be mostly copy and pasted from Winskel's book.
+
+Now that we have introduced type theory and proof assistants, we can move on to
+using them to define the semantics of programming languages. Semantics are the
+study of the ==_meaning_ of programs==, and can be defined in different ways, we
+will focus on operational semantics, and denotational semantics.
+
+We first describe a simple imperative language $\texttt{IMP}$ that we will use
+to illustrate the concepts. $\texttt{IMP}$ is a simple language that consists of
+a set of commands, such as assignment, sequencing, conditionals, and loops. It
+is constrained by design to be simple, so that we can focus on introducing the
+techniques of formal semantics, but this approach can be extended to widely used
+languages, such as C, Java, and Python.
+
+### Syntax
+
+As an informal introduction to the syntax of $\texttt{IMP}$ we can define the
+"syntactic sets" of the language as:
+
+- Integers $n \in \mathbb{Z}$.
+- Boolean values $b \in \texttt{Bool} = \{\texttt{true}, \texttt{false}\}$.
+- Variables $x \in \texttt{Var}$, that store integers.
+- Arithmetic expressions $a \in \texttt{Aexp}$, that can be constants,
+  variables, or arithmetic operations.
+- Boolean expressions $b \in \texttt{Bexp}$, that can be constants, variables,
+  or boolean operations.
+- Commands $c \in \texttt{Com}$, that can be assignments, conditionals, loops,
+  or sequences of commands.
+
+Now we could define the syntax of $\texttt{Aexp}$ in Backus-Naur form:
+
+$$
+a ::= n \ | \ x \ | \ a_1 + a_2 \ | \ a_1 - a_2 \ | \ a_1 * a_2
+$$
+
+the syntax of $\texttt{Bexp}$ as:
+
+$$
+b ::= \texttt{true} \ | \ \texttt{false} \ | \ !b \ | \ b_1 \land b_2 \ | \ b_1 \lor b_2 \ | \ a_1 = a_2 \ | \ a_1 \leq a_2
+$$
+
+and the syntax of $\texttt{Com}$ as:
+
+$$
+c ::= skip \ | \ x := a \ | \ c_1; c_2 \ | \
+      \texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end} \ | \
+      \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}
+$$
+
+In the Lean project the syntax of $\texttt{IMP}$ is defined in the file
+[Lang.lean](https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean)
+where the previous definitions are encoded as inductive types, we reproduce here
+the definition of the syntax of arithmetic expressions and commands:
+
+```lean
+inductive Aexp where
+  | val_1 : Int -> Aexp
+  | var_1 : String -> Aexp
+  -- arithmetic
+  | add_1 : Aexp -> Aexp -> Aexp
+  | sub_1 : Aexp -> Aexp -> Aexp
+  | mul_1 : Aexp -> Aexp -> Aexp
+```
+
+```lean
+inductive Com where
+  | skip_1
+  | cat_1   : Com -> Com -> Com
+  | ass_1   : String -> Aexp -> Com
+  | if_1    : Bexp -> Com -> Com -> Com
+  | while_1 : Bexp -> Com -> Com
+```
+
+We can now define some _abuses of notation_ or _coercions_, for example we can
+transform the integers of the meta-language (Lean) into integers of
+$\texttt{IMP}$ we can do this by ==instantiating some classes==:
+
+```lean
+instance: OfNat Aexp n := <Aexp.val_1 n>
+instance: Add Aexp := <Aexp.add_1>
+instance: Sub Aexp := <Aexp.sub_1>
+instance: Neg Aexp := <fun a => Aexp.sub_1 0 a>
+instance: Mul Aexp := <Aexp.mul_1>
+
+-- x + 3
+#check Aexp.var_1 "x" + 3
+
+-- x * -3
+#check Aexp.var_1 "x" * -3
+```
+
+After defining some parsing rules we can typecheck an $\texttt{IMP}$ program
+like this:
+
+```lean
+#check [|
+n = 5; i = 2; res = 1;
+
+while i <= n loop
+    res = res * i;
+    i = i + 1
+end
+|]
+```
+
+### States
+
+As we've seen in the syntax our imperative language supports a feature that
+characterizes
