@@ -22,7 +22,7 @@ critical tasks, the need for formal verification becomes more apparent. Formal
 verification is a technique that uses mathematical logic to prove the
 correctness of a system, usually hardware or software. It involves using formal
 methods and tools to prove that the system satisfies a set of well defined
-properties that model the desired behavior. A classic approach to formal
+properties that model the desired behaviour. A classic approach to formal
 verification is Hoare logic, a formal system that deconstructs programs into
 components each with a set of pre and post conditions, these conditions and
 components, called commands, are represented as _Hoare triples_ of the form:
@@ -57,7 +57,7 @@ correctness gains, formal methods can also improve the performance of programs,
 verified toolchains, ==such as CompCert, have been shown== to produce more
 efficient code than their unverified counterparts. This is due to more
 aggressive optimizations being possible when the correctness of the program is
-guaranteed: runtime checks can be removed, aggresive flow analysis can be
+guaranteed: runtime checks can be removed, aggressive flow analysis can be
 performed, and dead code can be eliminated. Some of these optimizations can be
 performed by modern compilers, using static analysis, but the guarantees
 provided by formal methods are stronger, as we said before we can ensure
@@ -119,7 +119,7 @@ used in academia and industry to this day. We will see that the CIC is also the
 basis of Lean, a more recent proof assistant that has gained significant
 popularity in recent years.
 
-While this asvancements where made with the theories of dependent types another
+While this advancements where made with the theories of dependent types another
 line of research was being developed, the ==_HOL_== family of proof assistants,
 based on _Higher Order Logic_, a logic that extends first-order logic with
 higher order quantifiers. These systems are based on the _LCF_ architecture, and
@@ -197,7 +197,7 @@ propositions, and functions to encode proofs.
 
 This makes type theory ==more expressive than set theory, as we can use types to
 encode propositions, and vice versa==. This also means that we can encode sets
-in type theory as a function that takes an arbitary type $\alpha$ and returns a
+in type theory as a function that takes an arbitrary type $\alpha$ and returns a
 proposition:
 
 $$\texttt{Set} \ (\alpha : \texttt{Type}) := \alpha \to \texttt{Prop}$$
@@ -265,23 +265,23 @@ defined. This self-referential aspect can lead to logical paradoxes, akin to
 Russell's Paradox in set theory, where a set is defined to contain all sets that
 do not contain themselves.
 
-The type theory analosous to Russell's paradox is the ==_Girard's paradox_==, in
+The type theory analogous to Russell's paradox is the ==_Girard's paradox_==, in
 a system that allows impredicativity, we can define a type $U$ that contains all
 types that do not contain themselves, and then ask if $U: U$, if it is, then it
 should not be of type $U$, and if it is not, then it should be. A system that
 shows this paradox is not very useful for theorem proving, as it is
 inconsistent, so any proposition can be proven. [^systemU] To avoid this, we
-introduce a hyerarchy of _type universes_.
+introduce a hierarchy of _type universes_.
 
 [^impred]:
     [Impredicativity on Wikipedia](https://en.wikipedia.org/wiki/Impredicativity)
 
 [^systemU]: ==Historically this problem has been solved with System U==.
 
-Each universe is a ==_collection_ of types, wether they are types or not depends
-on the particular type theory==, in Lean and Coq they are not. Each universe
-contains the types of the previous universe, and is contained in the next
-universe. For example:~ $\texttt{Type}: \texttt{Type} \ 1$,
+Each universe is a ==_collection_ of types, whether they are types or not
+depends on the particular type theory==, in Lean and Coq they are not. Each
+universe contains the types of the previous universe, and is contained in the
+next universe. For example:~ $\texttt{Type}: \texttt{Type} \ 1$,
 $\texttt{Type} \ 1: \texttt{Type} \ 2$, and so on. The function type inhabits
 the smallest universe that contains the types of its domain and codomain. For
 example, $\mathbb{N} \to \mathbb{N}: \texttt{Type} \ 1$, and

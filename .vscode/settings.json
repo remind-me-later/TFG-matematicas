@@ -1,7 +1,24 @@
 {
-    "cSpell.enabled": true,
-    "cSpell.language": "en,es-ES",
-    // indent using 2 spaces
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true,
+  // indent using 2 spaces
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "cSpell.language": "en_GB",
+  "cSpell.words": [
+    "Aexp",
+    "Alonzo",
+    "Automath",
+    "Bexp",
+    "extensionality",
+    "Girard's",
+    "Hoare",
+    "impredicativity",
+    "mathbb",
+    "Maurizio",
+    "Naur",
+    "Nuprl",
+    "provers",
+    "substructural",
+    "texttt",
+    "Winskel's"
+  ]
 }
