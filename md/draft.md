@@ -6,11 +6,12 @@ geometry: "left=2cm,right=2cm,top=2cm,bottom=3cm"
 output: pdf_document
 ---
 
-## Notation
+## Observations
 
 - The parts of the text that could require further exploration or sources are
   ==marked like this==.
 - We use the lambda calculus notation for functions.
+- Typesetting is not final.
 
 ## Introduction
 
@@ -62,31 +63,63 @@ performed by modern compilers, using static analysis, but the guarantees
 provided by formal methods are stronger, as we said before we can ensure
 _termination_ in some cases.
 
-## A variety of proof assistants
-
-Some of the most popular proof assistants are Coq, Isabelle, and Lean. Coq and
-Lean use the _Calculus of Inductive Constructions_ as their logical foundation,
-while Isabelle uses _Higher Order Logic_. To understand the differences between
-the two approaches, we must first understand the _Curry-Howard isomorphism_ that
-is the basis of all proof assistants. ==The Curry-Howard isomorphism states that
-there is a correspondence between proofs and programs, and between propositions
-and types==. This means that we can use the type system of a programming
-language to encode theorems, and the programs as proofs of these theorems, in
-this way we can use the type checker of the programming language to verify the
-correctness of the proofs. This is the basis of all proof assistants, and is the
-reason why they are so powerful, as we can use the type system to encode complex
-mathematical theorems, and the proof assistant to verify their correctness.
-==The proof assistants as we can see are more proof checkers than proof
-assistants, as they do not help in the construction of the proofs, but rather in
-the verification of their correctness.==
-
-The _Calculus of Constructions_ is a _type theory_ that serves as a programming
-language and foundation for ==_constructive_ mathematics==. At its core, is a
-higher order typed lambda calculus, with dependent types, and a universe
-hierarchy. To understand what all of this means, we must first understand the
-basics of type theory, lambda calculus, and dependent types.
+## Proof assistants
 
 ### Historical background
+
+Proof assistants, or interactive theorem provers, are software systems that aid
+in the construction and verification of mathematical proofs using computers. The
+inception of proof assistants can be traced back to the 1950s and 1960s, with
+the _Logic Theorist_[^logictheorist] and ==_Automath_== systems. These were the
+first systems to use a computer to check mathematical proofs. ==They were
+created before the advent of modern type theory and the Curry-Howard
+isomorphism, and used a different logical foundation based on _natural
+deduction_==. Although interesting these systems were limited in scope, and
+could only prove simple theorems.
+
+[^logictheorist]:
+    [Logic Theorist on Wikipedia](https://en.wikipedia.org/wiki/Logic_Theorist)
+
+In the 1970s more powerful systems were developed, such as ==_LCF_==, based on
+Dana Scott's _Logic of Computable Functions_, this was one of the first systems
+to use proofs by induction, a feature fundamental to reason about recursively
+defined functions and that we will see in this text. The creation of the
+programming language ML, ==the father of all functional languages==, is also
+attributed to the development of LCF, ==as it was designed for writing tactics
+in LCF==. The modern approach of "step by step" proof construction, used by all
+modern assistants, was also pioneered by LCF.
+
+The 1970s also saw the development of ideas such as type theory, in particular
+Martin-Löf type theory, and the Curry-Howard isomorphism, two key concepts that
+are the basis of all modern proof assistants. In the 1980s this ideas were
+implemented in systems such as ==_Nuprl_== and ==_Coq_==. Nuprl is one of the
+first systems to use a constructive type theory at its core, were proofs are
+first class objects, emphasizing their computational content and allowing
+==_code extraction_ of programs from verified proofs==. Nuprl also introduced
+dependent types, a powerful feature that allows the type of a value to depend on
+the value itself. With this system a great deal of mathematics can be encoded
+and proved.
+
+A little later came Coq, a system based on the ==CIC (Calculus of Inductive
+Constructions)==, a type theory that extends the Calculus of Constructions with
+inductive types. Coq is one of the most popular proof assistants, and is widely
+used in academia and industry to this day. We will see that the CIC is also the
+basis of Lean, a more recent proof assistant that has gained significant
+popularity in recent years.
+
+While this asvancements where made with the theories of dependent types another
+line of research was being developed, the ==_HOL_== family of proof assistants,
+based on _Higher Order Logic_, a logic that extends first-order logic with
+higher order quantifiers. These systems are based on the _LCF_ architecture, and
+use a _kernel_ to ensure the correctness of the proofs. The most popular system
+in this family is ==_Isabelle_==, a powerful proof assistant that ==is as
+powerful as Coq and Lean==, but with a different logical foundation.
+
+This brings us to Lean, the proof assistant that we will use in this text. Lean
+is a modern proof assistant developed by Leonardo de Moura at Microsoft Research
+and based on the CIC. We can see Lean as an evolution of Coq, with a more modern
+syntax, and a more powerful type system, later we will discuss the differences
+in more detail.
 
 ## Type theory
 
@@ -192,8 +225,16 @@ equal for all arguments, a classic result of set theory that follows from the
 axiom of extensionality, which states that two sets are equal if they contain
 the same elements==. ==(The relationship may depend on axiom K)==.
 
+Another important axiom is ==_propositional extensionality_==[^propext], which
+states that two propositions are definitionally equal if they are equivalent,
+that is, if they imply each other. This is a key property of type theory, as it
+allows us to rewrite propositions in proofs, and simplify the reasoning process.
+
 [^funext]:
     [Functional extensionality on nLab](https://ncatlab.org/nlab/show/function+extensionality)
+
+[^propext]:
+    [Propositional extensionality on nLab](https://ncatlab.org/nlab/show/propositional+extensionality)
 
 ### Universes
 
@@ -303,7 +344,9 @@ To better understand this we introduce an example were $\Pi$-types are used to
 to define a vector of a given length, which type depends on the length of the
 vector:
 
-$$ \Pi\_{n: \mathbb{N}} \texttt{Vec} \ \alpha \ n $$
+$$
+ \Pi_{n: \mathbb{N}} \texttt{Vec} \ \alpha \ n
+$$
 
 with constructors:
 
