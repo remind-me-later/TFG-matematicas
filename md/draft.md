@@ -305,7 +305,10 @@ booleans, and define two constructors $\texttt{true}$ and $\texttt{false}$ that
 create the elements of the type. This ensures that the elements of the type are
 either $\texttt{true}$ or $\texttt{false}$, and no other value.
 
-### Inductive types
+### Inductive types [^inductive]
+
+[^inductive]:
+    This section can be mostly copy and pasted from the HoTT book, chapter 5.
 
 Of course, defining finite types such as $\texttt{Bool}$ is not very
 interesting, we need a way to define infinite types, such as the natural
@@ -494,8 +497,8 @@ $$
 
 In the Lean project the syntax of $\texttt{IMP}$ is defined in the file
 [Lang.lean](https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean)
-where the previous definitions are encoded as inductive types, we reproduce here
-the definition of the syntax of arithmetic expressions and commands:
+where the previous definitions are encoded as inductive types, with the
+following constructors:
 
 ```lean
 inductive Aexp where
@@ -506,6 +509,8 @@ inductive Aexp where
   | sub_1 : Aexp -> Aexp -> Aexp
   | mul_1 : Aexp -> Aexp -> Aexp
 ```
+
+Commands are defined in a similar way:
 
 ```lean
 inductive Com where
@@ -551,4 +556,13 @@ end
 ### States
 
 As we've seen in the syntax our imperative language supports a feature that
-characterizes
+characterizes all imperative languages are states, and assignments, the
+definition of states is more nuanced that one could expect at first. A state is
+a function that maps variables to values, we could define it as:
+
+$$
+\sigma : \texttt{String} \to \mathbb{Z}
+$$
+
+But we will take a more roundabout way, and define first a $\texttt{TotalMap}$
+type.
