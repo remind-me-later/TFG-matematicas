@@ -154,7 +154,7 @@ Proof assistants, or interactive theorem provers, are software systems that aid
 in the construction and verification of mathematical proofs using computers. The
 inception of proof assistants can be traced back to the 1950s and 1960s, with
 the \emph{Logic Theorist}\footnote{\url{https://en.wikipedia.org/wiki/Logic_Theorist}} and \hl{\emph{Automath}} systems. These were the
-first systems to use a computer to check mathematical proofs. \hl{They were
+first systems to use a computer to check mathematical proofs.\ \hl{They were
 created before the advent of modern type theory and the Curry-Howard
 isomorphism, and used a different logical foundation based on \emph{natural
 deduction}}. Although interesting these systems were limited in scope, and
@@ -167,7 +167,7 @@ defined functions and that we will see in this text. The creation of the
 programming language ML, \hl{the father of all functional languages}, is also
 attributed to the development of LCF, \hl{as it was designed for writing tactics
 in LCF}. The modern approach of \enquote{step by step} proof construction, used by all
-modern assistants, was also pioneered by LCF.
+modern assistants, was also pioneered by LCF.\@
 
 The 1970s also saw the development of ideas such as type theory, in particular
 Martin-Löf type theory, and the Curry-Howard isomorphism, two key concepts that
@@ -197,7 +197,7 @@ powerful as Coq and Lean}, but with a different logical foundation.
 
 This brings us to Lean, the proof assistant that we will use in this text. Lean
 is a modern proof assistant developed by Leonardo de Moura at Microsoft Research
-and based on the CIC. We can see Lean as an evolution of Coq, with a more modern
+and based on the CIC.\@ We can see Lean as an evolution of Coq, with a more modern
 syntax, and a more powerful type system, later we will discuss the differences
 in more detail.
 
@@ -242,7 +242,7 @@ other type.
 
 A key point to remark is that types don't \emph{contain} values, they \emph{classify}
 values, while in set theory a value is a \emph{member} of a set, in type theory a
-value \emph{has} a type. \hl{This is a subtle difference, but an important one, as it
+value \emph{has} a type.\ \hl{This is a subtle difference, but an important one, as it
 allows us to reason about the properties of values based on their types, and to
 ensure that the values are used correctly in the program}. The analogous to the
 membership notation in set theory is the \hl{\emph{typing judgement}} in type theory,
@@ -302,11 +302,11 @@ relation. In some cases other nice properties are added, such as \emph{congruenc
 Another type of equality is \emph{propositional equality}, which is states that two
 terms are equal if they can be proven to be equal in the type theory. This is
 more akin to the classic notion of equality, and is used to prove properties of
-the terms. \hl{A special case of propositional equality is \emph{functional
+the terms.\ \hl{A special case of propositional equality is \emph{functional
 extensionality}}\footnote{\url{https://ncatlab.org/nlab/show/function+extensionality}}, which states that two functions are equal if they are
 equal for all arguments, a classic result of set theory that follows from the
 axiom of extensionality, which states that two sets are equal if they contain
-the same elements. \hl{(The relationship may depend on axiom K)}.
+the same elements.\ \hl{(The relationship may depend on axiom K)}.
 
 Another important axiom is \hl{\emph{propositional extensionality}}\footnote{\url{https://ncatlab.org/nlab/show/propositional+extensionality}}, which
 states that two propositions are definitionally equal if they are equivalent,
@@ -337,7 +337,7 @@ introduce a hierarchy of \emph{type universes}.
 Each universe is a \hl{\emph{collection} of types, whether they are types or not
 depends on the particular type theory}, in Lean and Coq they are not. Each
 universe contains the types of the previous universe, and is contained in the
-next universe. For example:~ \(\texttt{Type}: \texttt{Type} \ 1\),
+next universe. For example: \(\texttt{Type}: \texttt{Type} \ 1\),
 \(\texttt{Type} \ 1: \texttt{Type} \ 2\), and so on. The function type inhabits
 the smallest universe that contains the types of its domain and codomain. For
 example, \(\mathbb{N} \to \mathbb{N}: \texttt{Type} \ 1\), and
@@ -437,8 +437,8 @@ lists, trees, and graphs, that depend on the values of their elements,
 The Curry-Howard isomorphism is a result that establishes a correspondence
 between \emph{propositions} and \emph{types} and between \emph{terms} and \emph{proofs}. In broad
 terms, every proposition \(P\) in the logic corresponds to a type \(\alpha \ P\) in
-the system, every connective in the logic (\(\wedge\), \(\vee\), \(\Rightarrow\), ...)
-corresponds to a \emph{type constructor} in the system (\(\times\), \(+\), \(\to\), ...),
+the system, every connective in the logic (\(\wedge\), \(\vee\), \(\Rightarrow\), \ldots)
+corresponds to a \emph{type constructor} in the system (\(\times\), \(+\), \(\to\), \ldots),
 and every proof of a proposition corresponds to a term \(a : \alpha \ P\) of the
 type.
 
@@ -484,7 +484,7 @@ It also aids in \hl{\emph{code extraction}}, the process of extracting a program
 proofs and definitions. This is a key feature when using Lean as tool in formal
 verification, as we can first formally prove the correctness of the program, and
 then extract an efficient implementation from the proof. Irrelevancy ensures
-that the extracted code is independent of the proof used. \hl{Code extraction is
+that the extracted code is independent of the proof used.\ \hl{Code extraction is
 an area where Lean 4 has made significant improvements over Lean 3, as it
 supports a better compiler backend, and more target languages.}
 
@@ -504,7 +504,7 @@ study of the \hl{\emph{meaning} of programs}, and can be defined in different wa
 will focus on operational semantics, and denotational semantics.
 
 We first describe a simple imperative language \(\texttt{IMP}\) that we will use
-to illustrate the concepts. \(\texttt{IMP}\) is a simple language that consists of
+to illustrate the concepts.\ \(\texttt{IMP}\) is a simple language that consists of
 a set of commands, such as assignment, sequencing, conditionals, and loops. It
 is constrained by design to be simple, so that we can focus on introducing the
 techniques of formal semantics, but this approach can be extended to widely used
