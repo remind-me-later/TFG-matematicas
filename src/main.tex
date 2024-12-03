@@ -1,9 +1,7 @@
-\documentclass[a4paper, 10pt, openany]{article}
-
-
-% \documentclass[draft, a4paper, 10pt, openany]{book}
+\documentclass[a4paper, 10pt, usegeometry]{scrartcl}
 \usepackage[
   margin=2cm,
+  bottom=3cm,
 ]{geometry}
 
 % \usepackage[spanish, es-lcroman]{babel}
@@ -23,22 +21,28 @@
 
 \usepackage{fontspec}
 % switch to a monospace font supporting more Unicode characters
-\setmonofont{JetBrains Mono}[Scale=MatchLowercase]
+\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
 \usepackage[outputdir=../build]{minted}
 \newmintinline[lean]{lean4}{bgcolor=white}
 % \newminted[leancode]{lean4}{fontsize=\footnotesize}
-\usemintedstyle{tango}  % a nice, colorful theme
+\usemintedstyle{pastie}
 
 
-% \usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    % linkcolor=blue,
+    % filecolor=magenta,      
+    % urlcolor=cyan,
+    % pdftitle={Overleaf Example},
+    % pdfpagemode=FullScreen,
+    }
 
+
+% Use KOMA-Script's nice headers instead of fancyhdr
 % \usepackage[Conny]{fncychap}
 
 \usepackage{../sty/teoremas}
-\usepackage{../sty/general}
-\usepackage{../sty/conjuntos}
-% \usepackage{../sty/calculo}
-% \usepackage{../sty/algebra}
 
 \usepackage{xcolor}
 \usepackage{soul}
@@ -66,6 +70,9 @@
 %   \textbf{\textit{Palabras clave---}} #1
 % }
 
+\newcommand{\funfont}[1]{\textit{#1}}
+\newcommand{\tyfont}[1]{\texttt{#1}}
+
 
 \title{Resultados clásicos sobre semántica de lenguajes de programación en Lean 4 (Draft)}
 \author{Ricardo Maurizio Paul}
@@ -74,6 +81,8 @@
 \begin{document}
 
 \maketitle
+
+\tableofcontents
 
 \section{Observations}
 
@@ -153,7 +162,8 @@ correctly.}
 Proof assistants, or interactive theorem provers, are software systems that aid
 in the construction and verification of mathematical proofs using computers. The
 inception of proof assistants can be traced back to the 1950s and 1960s, with
-the \emph{Logic Theorist}\footnote{\url{https://en.wikipedia.org/wiki/Logic_Theorist}} and \hl{\emph{Automath}} systems. These were the
+the \emph{Logic Theorist}\footnote{\url{https://en.wikipedia.org/wiki/Logic_Theorist}} 
+and \hl{\emph{Automath}} systems. These were the
 first systems to use a computer to check mathematical proofs.\ \hl{They were
 created before the advent of modern type theory and the Curry-Howard
 isomorphism, and used a different logical foundation based on \emph{natural
@@ -262,21 +272,25 @@ propositions, and functions to encode proofs.
 
 This makes type theory \hl{more expressive than set theory, as we can use types to
 encode propositions, and vice versa}. This also means that we can encode sets
-in type theory as a function that takes an arbitrary type \(\alpha\) and returns a
-proposition:
+in type theory as a function.
 
-\[\texttt{Set} \ (\alpha : \texttt{Type}) := \alpha \to \texttt{Prop}\]
+\begin{definition}[Type theoretic set]
+  A set is a function that takes an element of a type and returns a proposition.
+  \[\texttt{Set} \ (\alpha : \texttt{Type}) 
+    \triangleq \alpha \to \texttt{Prop}\]
+\end{definition}
+
 
 In this definition the precise type of \(\texttt{Set}\) depends on the type
-\(\alpha\), this is what's commonly known as a \hl{polymorphic type}, and allows us
-to define a type that depends on another type.
+\(\alpha\), this is what's commonly known as a \hl{polymorphic type}, and allows 
+us to define a type that depends on another type.
 
 \hl{We use the term proposition to refer to a type that can be either true or
 false, not to be confused with the propositions of logic, which are statements
-susceptible to proof}. This function corresponds to the concept of \emph{membership}
-in set theory, and can be used to define the membership of an element \(x\) in a
-set \(S\) as \(\texttt{Set} \ x \ S\), which is true if \(x\) is a member of \(S\), and
-false otherwise.
+susceptible to proof}. This function corresponds to the concept of 
+\emph{membership} in set theory, and can be used to define the membership of an 
+element \(x\) in a set \(S\) as \(\texttt{Set} \ x \ S\), which is true if 
+\(x\) is a member of \(S\), and false otherwise.
 
 \subsection{Equality}
 
@@ -286,32 +300,59 @@ terms are equal if they can be transformed into each other via \emph{rewriting
 rules}. The reduction rules of type theories typically include:
 
 \begin{itemize}
-\item \(\beta\)-reduction. Replacing a function application with the function body
-  where the argument is substituted for the bound variable.
+\item \(\beta\)-reduction. Replacing a function application with the function 
+  body where the argument is substituted for the bound variable.
 \item \(\delta\)-reduction. Replacing a constant with its definition.
-\item \(\iota\)-reduction. Simplifying expressions involving constructors and pattern
-  matching for inductive data types.
+\item \(\iota\)-reduction. Simplifying expressions involving constructors and 
+  pattern matching for inductive data types.
 \end{itemize}
 
 \hl{These rules normally satisfy a series of desirable properties, such as
-\emph{confluence}, \emph{termination}, and \emph{consistency}, that ensure that the reduction
-process is well defined, and that the equality relation is an equivalence
-relation. In some cases other nice properties are added, such as \emph{congruence},
-\emph{strong normalization}, and \emph{canonicity}}.
+\emph{confluence}, \emph{termination}, and \emph{consistency}, that ensure that 
+the reduction process is well defined, and that the equality relation is an 
+equivalence relation. In some cases other nice properties are added, such as 
+\emph{congruence}, \emph{strong normalization}, and \emph{canonicity}}.
 
 Another type of equality is \emph{propositional equality}, which is states that two
 terms are equal if they can be proven to be equal in the type theory. This is
 more akin to the classic notion of equality, and is used to prove properties of
 the terms.\ \hl{A special case of propositional equality is \emph{functional
-extensionality}}\footnote{\url{https://ncatlab.org/nlab/show/function+extensionality}}, which states that two functions are equal if they are
+extensionality}}\footnote{
+  \url{https://ncatlab.org/nlab/show/function+extensionality}}, 
+which states that two functions are equal if they are
 equal for all arguments, a classic result of set theory that follows from the
 axiom of extensionality, which states that two sets are equal if they contain
 the same elements.\ \hl{(The relationship may depend on axiom K)}.
 
-Another important axiom is \hl{\emph{propositional extensionality}}\footnote{\url{https://ncatlab.org/nlab/show/propositional+extensionality}}, which
+Another important axiom is \hl{\emph{propositional extensionality}}\footnote{
+  \url{https://ncatlab.org/nlab/show/propositional+extensionality}}, which
 states that two propositions are definitionally equal if they are equivalent,
 that is, if they imply each other. This is a key property of type theory, as it
 allows us to rewrite propositions in proofs, and simplify the reasoning process.
+
+Equality is also a \emph{binary relation}, that is, a relation that relates two
+values of a type. In type theory binary relations are functions that take two
+values and return a proposition, this proposition is true if the relation holds,
+and false otherwise.
+
+\begin{definition}[Relation]
+  A relation is a function that takes two elements of a type and returns a
+  proposition.
+  \[\texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
+    \triangleq \alpha \to \beta \to \texttt{Prop}\]
+\end{definition}
+
+And we can define the relation of equality as:
+
+\begin{definition}[Equality]
+  The relation of equality is a function that takes two elements of a type and
+  returns a proposition.
+  \[\texttt{Eq} \ (\alpha: \texttt{Type}) \triangleq \texttt{Rel} \ \alpha \ \alpha \]
+\end{definition}
+
+\hl{Equality is much more than an equivalence relation, however. It has the important 
+property that every assertion respects the equivalence, in the sense that we can 
+substitute equal expressions without changing the truth value}. 
 
 \subsection{Universes}
 
@@ -331,8 +372,9 @@ a system that allows impredicativity, we can define a type \(U\) that contains a
 types that do not contain themselves, and then ask if \(U: U\), if it is, then it
 should not be of type \(U\), and if it is not, then it should be. A system that
 shows this paradox is not very useful for theorem proving, as it is
-inconsistent, so any proposition can be proven.\footnote{\hl{Historically this problem has been solved with System U}.} To avoid this, we
-introduce a hierarchy of \emph{type universes}.
+inconsistent, so any proposition can be proven.\footnote{
+  \hl{Historically this problem has been solved with System U}.} 
+To avoid this, we introduce a hierarchy of \emph{type universes}.
 
 Each universe is a \hl{\emph{collection} of types, whether they are types or not
 depends on the particular type theory}, in Lean and Coq they are not. Each
@@ -431,6 +473,8 @@ with constructors:
 In this way \(\Pi\)-types give us a way to type complex data structures, such as
 lists, trees, and graphs, that depend on the values of their elements,
 \hl{ensuring type safety}.
+
+\subsection{Pattern matching}
 
 \section{The Curry-Howard isomorphism}
 
@@ -536,18 +580,20 @@ a ::= n \ | \ x \ | \ a_1 + a_2 \ | \ a_1 - a_2 \ | \ a_1 * a_2
 the syntax of \(\texttt{Bexp}\) as:
 
 \[
-b ::= \texttt{true} \ | \ \texttt{false} \ | \ !b \ | \ b_1 \land b_2 \ | \ b_1 \lor b_2 \ | \ a_1 = a_2 \ | \ a_1 \leq a_2
+b ::= \texttt{true} \ | \ \texttt{false} \ | \ 
+  !b \ | \ b_1 \land b_2 \ | \ b_1 \lor b_2 \ | \ a_1 = a_2 \ | \ a_1 \leq a_2
 \]
 
 and the syntax of \(\texttt{Com}\) as:
 
 \[
 c ::= \texttt{skip} \ | \ x := a \ | \ c_1; c_2 \ | \
-      \texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end} \ | \
-      \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}
+      \texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end} 
+      \ | \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}
 \]
 
-In the Lean project the syntax of \(\texttt{IMP}\) is defined in the file \url{https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean}
+In the Lean project the syntax of \(\texttt{IMP}\) is defined in the file 
+\url{https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean}
 where the previous definitions are encoded as inductive types, with the
 following constructors:
 \begin{minted}{lean4}
@@ -594,11 +640,11 @@ like this:
 
 \begin{minted}{lean4}
 #check [|
-n = 5; i = 2; res = 1;
+n := 5; i := 2; res := 1;
 
-while i <= n loop
-    res = res * i;
-    i = i + 1
+while i ≤ n loop
+    res := res × i;
+    i := i + 1
 end
 |]
 \end{minted}
@@ -609,13 +655,333 @@ As we've seen in the syntax our imperative language supports a feature that
 characterizes all imperative languages are states, and assignments, the
 definition of states is more nuanced that one could expect at first. A state is
 a function that maps variables to values, we could define it as:
-
 \[
-\sigma : \texttt{String} \to \mathbb{Z}
+\funfont{state} : \tyfont{String} \to \mathbb{Z}
+\]
+But we will take a more roundabout way, and define first a \(\tyfont{Map}\)
+type.
+
+\begin{definition}[Map]
+  A map is a function that maps keys (strings) to values, we can define it as:
+  \[
+  \tyfont{Map} \ (\alpha : \tyfont{Type}) \triangleq \tyfont{String} \to \alpha
+  \]
+\end{definition}
+
+Of course this map is not particularly useful if we don't have a way to relate
+keys to values, this is done using the \texttt{update} function:
+
+\begin{definition}[Map update]
+  The update function takes a map, a key, and a value, and returns a new map
+  that maps the key to the value, and all other keys to the same value as the
+  original map.
+  \begin{align*}
+  \funfont{update} : \tyfont{Map} \ \alpha \to \tyfont{String} \to \alpha &\to \tyfont{Map} \ \alpha \\
+                  m \ k \ v &\mapsto \lambda k' . \texttt{if} \ k = k' \ \texttt{then} \ v \ \texttt{else} \ m \ k'
+  \end{align*}
+\end{definition}
+
+The previous definition looks pretty similar in Lean notation:
+
+\begin{minted}{lean4}
+def update (m: Map α) (k: String) (v: α) :=
+  λ k' ↦ bif k == k' then v else m k'
+\end{minted}
+
+The \texttt{bif} construct is provided to use by Lean, and is nothing more than
+syntactic sugar for pattern matching, we can define it as:
+
+\begin{minted}{lean4}
+def cond {α : Type} (c : Bool) (x y : α) : α :=
+  match c with
+  | true  => x
+  | false => y
+\end{minted}
+
+Now we can introduce some notation to denote the \enquote{assignments} of a 
+map in a more familiar way:
+
+\begin{notation}[Map update]
+  We will denote \(\funfont{update} \ m \ k \ v\) as \(m[k \leftarrow v]\).
+\end{notation}
+
+With these definitions we can prove a lot of interesting properties that hold
+in the majority of programming languages, usually assigning a value to a
+variable makes the computer \enquote{forget} the previous value. With the
+\funfont{update} function as defined above this is not true by definition,
+but we can easily prove it:
+
+\begin{minted}{lean4}
+theorem eval_last:
+  m[k ← v₂][k ← v₁] = m[k ← v₁] := by
+  funext k'
+  match h: k == k' with
+  | true =>
+    unfold Map.update
+    rw [h, cond_true, cond_true]
+  | false =>
+    unfold Map.update
+    rw [h, cond_false, cond_false, cond_false]
+\end{minted}
+
+To prove the equality of both functions we used the axiom of \emph{function
+extensionality} (\funfont{funext}), once we do this the proof follows
+immediately by distinguishing the cases where \(k = k'\) and \(k \neq k'\).
+
+The proof of other similar properties, such as the commutativity of the update
+function, or the idempotence of the update function, are proved in a similar
+fashion, and can be found in the code.
+
+With these properties proved we can finally define our \(\tyfont{State}\).
+
+\begin{definition}[State]
+  A state is a map that maps variables to values, we can define it as:
+  \[
+  \tyfont{State} \triangleq \tyfont{Map} \ \mathbb{Z}
+  \]
+\end{definition}
+
+Now we have a problem, what value do the variables have when the program starts?
+In some popular programming languages, like C, wen variables are read before
+they are assigned the hold a random value, this value depends on whatever
+the contents of the memory now used to store the variable used to hold, we could
+model this by defining an \emph{undefined} state, but the \(typefont{Map}\)
+that we have defined is \emph{total}, that is, it is defined for all inputs. 
+We could define a partial map:
+
+\begin{definition}[Partial Map]
+  A partial map is a map that is not defined for all inputs, we can define
+  it as:
+  \[
+  \tyfont{PMap} \ (\alpha : \tyfont{Type}) \triangleq \tyfont{String} \to \tyfont{Option} \ \alpha
+  \]
+\end{definition}
+
+But this would complicate the definitions, and proofs, needlessly so we will
+take the simpler approach of setting all variables to zero in the \emph{initial state},
+of course, setting them to zero is just a convention, we could set them to any
+value.
+
+\begin{definition}[Initial state]
+  We will define the \emph{initial state} of an \(\texttt{IMP}\) program as the
+  constant function:
+  \[
+    s_0 \triangleq \lambda x . 0
+  \]
+\end{definition}
+
+With all this evaluating the state of a program is as simple as:
+\begin{minted}{lean4}
+#eval (s₀["x" ← 3]["x" ← 4]["x" ← 7]) "x" -- 7
+\end{minted}
+
+\subsection{Evaluating expressions}
+
+Now that we have in place the syntax of the language, we can start to wonder
+what does it mean to evaluate an expression. Because our expressions
+contain variables, they don't have any meaning without a state associated to
+them, so our evaluation will act on a pair of an expression and a state, we 
+will call this pair a \emph{configuration}.
+
+Our evaluation will be a \emph{binary relation} between configurations and values,
+we will call this relation \(\funfont{step}\), and define it as:
+
+\begin{definition}[Step relation]
+  The step relation is a binary relation between configurations and values, it 
+  has type:
+  \[
+  \funfont{step} : \tyfont{Aexp} \times \tyfont{State} \to \mathbb{Z} \to \tyfont{Prop}
+  \]  
+\end{definition}
+
+\hl{This is what is generally known as \emph{big step semantics}, as it evaluates
+the expression to a value in a single step.}
+Let's introduce a notation more familiar to classic text on formal semantics.
+
+\begin{notation}[Arithmetic big step]
+  We will denote the step relation \(\funfont{step} \ (a, s) \ n\) as
+  \[
+  (a, s) \Longrightarrow_a n
+  \]
+\end{notation}
+
+Now the constructors will be the rules of the evaluation, for example the
+constructor for the constant expression will be:
+\[
+  \texttt{val}_n : (n, \cdot) \Longrightarrow_a n
 \]
 
-But we will take a more roundabout way, and define first a \(\texttt{Map}\)
-type.
+Which relates the configuration \((n, \cdot)\), where the \(n\) of the left is
+a constant expression (in reality we should write \(\texttt{val}_1 n\) 
+to denote that its the first constructor of the \(\tyfont{Aexp}\) type, but
+we will omit it for brevity) and the \(\cdot\) denotes any state, to the
+integer value \(n\).
+
+The constructor for the variable expression is similar:
+\[
+  \texttt{var}_n : (x, s) \Longrightarrow_a s \ x
+\]
+
+Now we can define the constructors for the arithmetic operations, we will only show
+the constructor for the addition, the others are analogous:
+\[
+  \texttt{add}_n : \frac{(a_1, s) \Longrightarrow_a n_1 \quad (a_2, s) \Longrightarrow_a n_2}
+   {(a_1 + a_2, s) \Longrightarrow_a n_1 + n_2}
+\]
+
+The previous rule states that if the configuration \((a_1, s)\) evaluates to
+\(n_1\) and the configuration \((a_2, s)\) evaluates to \(n_2\), then the
+configuration \((a_1 + a_2, s)\) evaluates to \(n_1 + n_2\).
+
+In Lean we can write the rules as follows:
+\begin{minted}{lean4}
+inductive step: Aexp × State → Int → Prop
+  | valₙ: step (val₁ n, _) n
+  | varₙ: step (var₁ v, s) (s v)
+  | addₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
+    step (a₁ + a₂, s) (n₁ + n₂)
+  | subₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
+    step (a₁ - a₂, s) (n₁ - n₂)
+  | mulₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
+    step (a₁ * a₂, s) (n₁ * n₂)
+\end{minted}
+
+Another way to express evaluation is via a \emph{recursive function} that breaks
+down the expression into its components and evaluates them, the rules are
+analogous to the ones we have defined before, but this time the function will
+take a configuration and return a value.
+
+\begin{definition}[Arithmetic reduce]
+  The reduce function takes a configuration and returns a value, it has type:
+  \[
+  \funfont{reduce} : \tyfont{Aexp} \to \tyfont{State} \to \mathbb{Z}
+  \]
+\end{definition}
+
+\hl{This time, instead of a Cartesian product, we will use a \emph{curried} function.}
+We can easily define the evaluation rules with pattern matching:
+\begin{minted}{lean4}
+def reduce (a: Aexp) (s: State): Int :=
+  match a with
+  | val₁ a => a
+  | var₁ a => s a
+  | add₁ a₁ a₂ => a₁.reduce s + a₂.reduce s
+  | sub₁ a₁ a₂ => a₁.reduce s - a₂.reduce s
+  | mul₁ a₁ a₂ => a₁.reduce s * a₂.reduce s
+\end{minted}
+
+We can introduce some notation to denote the evaluation of an expression on a state.
+
+\begin{notation}[Arithmetic reduce]
+  We will denote the reduce function \(\funfont{reduce} \ a \ s\) as applying
+  the expression \(a\) to the state \(s\):
+  \[
+  a \ s
+  \]
+\end{notation}
+
+\hl{This approach has some clear advantages over the relation definition, as
+it can compute the result of the evaluation directly}, instead of 
+just saying if some \enquote{evaluation tree} is valid or not. That is only if
+both evaluation rules are equivalent, fortunately they are, and we can prove it.
+
+\begin{theorem}[Equivalence of the evaluation rules]
+  The step relation and the reduce function are equivalent, that is, for all
+  expressions \(a\), states \(s\), and values \(n\), we have:
+  \[
+  ((a, s) \Longrightarrow_a n) = (a \ s = n)
+  \]
+\end{theorem}
+
+The proof, follows by applying \emph{propositional extensionality} to
+transform the equals into a double implication, and then proving each
+implication separately.\ \hl{Both are straightforward proofs by induction,
+we will reproduce the proof of the right to left implication, because
+it introduces a new keyword, \texttt{generalizing}}.
+
+\begin{minted}{lean4}
+theorem Natural.from_reduce (hred: a s = n): (a, s) ==>ₐ n :=
+  by induction a generalizing n with
+  | val₁ a => exact hred ▸ step.valₙ
+  | var₁ a => exact hred ▸ step.varₙ
+  | add₁ a₁ a₂ iha₁ iha₂ => exact hred ▸ step.addₙ (iha₁ rfl) (iha₂ rfl)
+  | sub₁ a₁ a₂ iha₁ iha₂ => exact hred ▸ step.subₙ (iha₁ rfl) (iha₂ rfl)
+  | mul₁ a₁ a₂ iha₁ iha₂ => exact hred ▸ step.mulₙ (iha₁ rfl) (iha₂ rfl)
+\end{minted}
+
+What this keyword does is reintroduce the variable \(n\) into the induction 
+hypotheses and generalize it, so the hypotheses hold \(\forall n\), \hl{this is
+useful when we have a hypothesis that depends on a variable that is not
+introduced in the induction}.
+
+The rules for evaluation of boolean expressions are analogous, and can be found
+in the file 
+\url{https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Bexp.lean}.
+We define first the rules for arithmetic expressions because some operators,
+like \(\leq\) operate on integers, so then the constructor for the
+\emph{boolean step} for the \(\leq\) operator looks something like:
+
+\[
+\texttt{le}_n : (a_1 \leq a_2, s) \Longrightarrow_l (a_1 \ s \leq a_2 \ s)
+\]
+
+Where we have exploited the equivalence of the step and reduction evaluations
+described above.
+
+\subsection{Evaluating commands}
+
+In the previous section defined the big step semantics for arithmetic and
+boolean expressions, and also their reduction functions, one could wonder
+why do we bother with introducing the big step semantics since 
+the functions are easier to define and use. The reason is that 
+\emph{commands} cannot be evaluated by a function, this is due to the 
+\texttt{while} construct. To convince ourselves of this fact we can try to
+define such a function:
+
+\begin{minted}{lean4}
+def reduce (c: Com) (s: State): State :=
+  match c with
+  | skip₁ => s
+  | ass₁ v a => s[v ← a s]
+  | cat₁ c₁ c₂ => reduce c₂ (reduce c₁ s)
+  | if₁ b c₁ c₂ => if b s then reduce c₁ s else reduce c₂ s
+  | while₁ b c => if b s then reduce (while b loop c end) (reduce c s) else s
+\end{minted}
+
+When trying to execute this code Lean will give the error:
+
+\begin{minted}{text}
+fail to show termination for
+  Com.Natural.reduce
+with errors
+failed to infer structural recursion:
+Not considering parameter s of Com.Natural.reduce:
+  its type is not an inductive
+Cannot use parameter c:
+  failed to eliminate recursive application
+    reduce while b loop c end (reduce c s)
+\end{minted}
+
+that informs us that Lean could not prove that the function terminates, in fact
+this function is not \emph{well founded}, as the \texttt{while} construct can
+loop indefinitely, and the function would never return a value. This is why we
+need a relation to define the semantics of commands, later we will see
+an approach that will give us a \enquote{function} to evaluate commands, \hl{that
+is \emph{denotational semantics}}.
+
+To define the big step semantics of commands we will use a relation, as 
+before, this time associating configurations to states. The definition of
+the constructors for skip, assignment and concatenation are straightforward,
+the rules for the \texttt{if} construct, however, require two constructors,
+one for the case when the condition is false:
+
+\[
+\texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \Longrightarrow_c s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_c s_2}
+\]
+
+and another for the case when the condition is true:
+
 
 
 \end{document}
