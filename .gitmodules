@@ -1,0 +1,3 @@
+[submodule "SemanticsLean"]
+	path = SemanticsLean
+	url = https://github.com/remind-me-later/SemanticsLean
