@@ -1,12 +1,7 @@
-\documentclass[a4paper, 10pt, usegeometry]{scrartcl}
-\usepackage[
-  margin=2cm,
-  bottom=3cm,
-]{geometry}
+\documentclass[a4paper, 10pt, parskip=half, DIV=20]{scrartcl}
 
 % \usepackage[spanish, es-lcroman]{babel}
 
-\usepackage{parskip}
 % \usepackage{multicol}
 
 % \usepackage{subfiles} 
@@ -23,21 +18,7 @@
 % switch to a monospace font supporting more Unicode characters
 \setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
 \usepackage[outputdir=../build]{minted}
-\newmintinline[lean]{lean4}{bgcolor=white}
-% \newminted[leancode]{lean4}{fontsize=\footnotesize}
 \usemintedstyle{pastie}
-
-
-\usepackage{hyperref}
-\hypersetup{
-    colorlinks=true,
-    % linkcolor=blue,
-    % filecolor=magenta,      
-    % urlcolor=cyan,
-    % pdftitle={Overleaf Example},
-    % pdfpagemode=FullScreen,
-    }
-
 
 % Use KOMA-Script's nice headers instead of fancyhdr
 % \usepackage[Conny]{fncychap}
@@ -49,8 +30,16 @@
 \newcommand{\mathcolorbox}[2]{\colorbox{#1}{$\displaystyle #2$}}
 
 \usepackage{csquotes}
-% Se carga el último 
+
 \usepackage{bookmark}
+\hypersetup{
+    colorlinks=true,
+    % linkcolor=blue,
+    % filecolor=magenta,      
+    % urlcolor=cyan,
+    % pdftitle={Overleaf Example},
+    % pdfpagemode=FullScreen,
+    }
 
 % Los apéndices se llaman apéndices
 % \renewcommand\appendixpagename{Apéndices}
@@ -106,9 +95,9 @@ properties that model the desired behaviour. A classic approach to formal
 verification is Hoare logic, a formal system that deconstructs programs into
 components each with a set of pre and post conditions, these conditions and
 components, called commands, are represented as \emph{Hoare triples} of the form:
-
-\[ \{P\} \ C \ \{Q\} \]
-
+\[ 
+\{P\} \ C \ \{Q\} 
+ \]
 where P is the precondition, C is the command, and Q is the postcondition. By
 using inference rules, Hoare logic can be used to show the correctness of a
 program by proving that the postcondition of the program is satisfied given the
@@ -276,8 +265,9 @@ in type theory as a function.
 
 \begin{definition}[Type theoretic set]
   A set is a function that takes an element of a type and returns a proposition.
-  \[\texttt{Set} \ (\alpha : \texttt{Type}) 
-    \triangleq \alpha \to \texttt{Prop}\]
+  \[
+  \texttt{Set} \ (\alpha : \texttt{Type}) \triangleq \alpha \to \texttt{Prop}
+  \]
 \end{definition}
 
 
@@ -338,8 +328,10 @@ and false otherwise.
 \begin{definition}[Relation]
   A relation is a function that takes two elements of a type and returns a
   proposition.
-  \[\texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
-    \triangleq \alpha \to \beta \to \texttt{Prop}\]
+  \[
+  \texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
+    \triangleq \alpha \to \beta \to \texttt{Prop}
+  \]
 \end{definition}
 
 And we can define the relation of equality as:
@@ -347,7 +339,9 @@ And we can define the relation of equality as:
 \begin{definition}[Equality]
   The relation of equality is a function that takes two elements of a type and
   returns a proposition.
-  \[\texttt{Eq} \ (\alpha: \texttt{Type}) \triangleq \texttt{Rel} \ \alpha \ \alpha \]
+  \[
+  \texttt{Eq} \ (\alpha: \texttt{Type}) \triangleq \texttt{Rel} \ \alpha \ \alpha 
+  \]
 \end{definition}
 
 \hl{Equality is much more than an equivalence relation, however. It has the important 
@@ -412,12 +406,10 @@ by a set of constructors that define the possible forms an element of the type
 can take. For example, we can define the natural numbers as an inductive type
 with two constructors, \(\texttt{zero}\) and \(\texttt{succ}\), that create the
 elements of the type, in a way analogous to the \emph{Peano axioms}.
-
 \[
 \texttt{zero} : \mathbb{N} \qquad
     \texttt{succ}: \mathbb{N} \to \mathbb{N}
 \]
-
 Similar to the classic principle of induction, we have defined a base case
 \(\texttt{zero}\) and an inductive case \(\texttt{succ}\), that creates the
 successor of a natural number. In this way we can create the natural numbers as
@@ -432,11 +424,10 @@ Following the natural number example, let's construct a function
 \(f: \mathbb{N} \to C\) by recursion on the naturals, it's enough to provide a
 base case \(c_0 : C\) and a \enquote{next step} function \(c_s: \mathbb{N} \to C \to C\),
 then we can define \(f\) as:
-
-\[ f \ 0 = c_0 \]
-
-\[ f \ (\texttt{succ} \ n) = c_s \ n \ (f \ n) \]
-
+\begin{align*}
+  f \ 0 & = c_0 \\
+  f \ (\texttt{succ} \ n) & = c_s \ n \ (f \ n)
+\end{align*}
 To use this proof technique we must ensure that the inductive type is
 \emph{well-founded}, that is, that the constructors of the type are applied a finite
 number of times to create an element of the type.
@@ -456,11 +447,14 @@ define a function that takes a natural
 
 To better understand this we introduce an example were \(\Pi\)-types are used to
 to define a vector of a given length, which type depends on the length of the
-vector:
+vector.
+
+\begin{example}[Vector]
+  We can define a vector of a given length as an inductive type that depends on
+  the length of the vector. We define the type \(\texttt{Vec}\) as:
 \[
  \Pi_{n: \mathbb{N}} \texttt{Vec} \ \alpha \ n
 \]
-
 with constructors:
 \begin{align*}
   \texttt{nil} & : \texttt{Vec} \ \alpha \ 0 \\
@@ -468,8 +462,7 @@ with constructors:
   (\alpha \to \texttt{Vec} \ \alpha \ n
     \to \texttt{Vec} \ \alpha \ (\texttt{succ} \ n))
 \end{align*}
-
-
+\end{example}
 In this way \(\Pi\)-types give us a way to type complex data structures, such as
 lists, trees, and graphs, that depend on the values of their elements,
 \hl{ensuring type safety}.
@@ -572,26 +565,20 @@ As an informal introduction to the syntax of \(\texttt{IMP}\) we can define the
 \end{itemize}
 
 Now we could define the syntax of \(\texttt{Aexp}\) in Backus-Naur form:
-
 \[
 a ::= n \ | \ x \ | \ a_1 + a_2 \ | \ a_1 - a_2 \ | \ a_1 * a_2
 \]
-
 the syntax of \(\texttt{Bexp}\) as:
-
 \[
 b ::= \texttt{true} \ | \ \texttt{false} \ | \ 
   !b \ | \ b_1 \land b_2 \ | \ b_1 \lor b_2 \ | \ a_1 = a_2 \ | \ a_1 \leq a_2
 \]
-
 and the syntax of \(\texttt{Com}\) as:
-
 \[
 c ::= \texttt{skip} \ | \ x := a \ | \ c_1; c_2 \ | \
       \texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end} 
       \ | \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}
 \]
-
 In the Lean project the syntax of \(\texttt{IMP}\) is defined in the file 
 \url{https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean}
 where the previous definitions are encoded as inductive types, with the
@@ -766,7 +753,7 @@ value.
   We will define the \emph{initial state} of an \(\texttt{IMP}\) program as the
   constant function:
   \[
-    s_0 \triangleq \lambda x . 0
+  s_0 \triangleq \lambda x . 0
   \]
 \end{definition}
 
@@ -783,14 +770,16 @@ contain variables, they don't have any meaning without a state associated to
 them, so our evaluation will act on a pair of an expression and a state, we 
 will call this pair a \emph{configuration}.
 
-Our evaluation will be a \emph{binary relation} between configurations and values,
-we will call this relation \(\funfont{step}\), and define it as:
+Our evaluation will be \emph{syntax-directed}, that is, for every syntactic
+construct of the language we will define a rule that tells us how to evaluate
+it. This rule will be a \emph{binary relation} between configurations and values,
+we will call this relation \(\funfont{big\_step}\), and define it as:
 
 \begin{definition}[Step relation]
   The step relation is a binary relation between configurations and values, it 
   has type:
   \[
-  \funfont{step} : \tyfont{Aexp} \times \tyfont{State} \to \mathbb{Z} \to \tyfont{Prop}
+  \funfont{big\_step} : \tyfont{Aexp} \times \tyfont{State} \to \mathbb{Z} \to \tyfont{Prop}
   \]  
 \end{definition}
 
@@ -799,7 +788,7 @@ the expression to a value in a single step.}
 Let's introduce a notation more familiar to classic text on formal semantics.
 
 \begin{notation}[Arithmetic big step]
-  We will denote the step relation \(\funfont{step} \ (a, s) \ n\) as
+  We will denote the step relation \(\funfont{big\_step} \ (a, s) \ n\) as
   \[
   (a, s) \Longrightarrow_a n
   \]
@@ -833,7 +822,31 @@ The previous rule states that if the configuration \((a_1, s)\) evaluates to
 \(n_1\) and the configuration \((a_2, s)\) evaluates to \(n_2\), then the
 configuration \((a_1 + a_2, s)\) evaluates to \(n_1 + n_2\).
 
-In Lean we can write the rules as follows:
+Let's see an example of a valid \emph{evaluation tree}.
+
+\begin{example}[Arithmetic evaluation]\label{ex:arithmetic_evaluation}
+  Let's evaluate the value of the expression
+  \((x + 5) + (9 - 7)\) in the state \(s_0\) by applying the \enquote{rules} 
+  (constructors) of the evaluation relation:
+\[
+  \texttt{add}_n: \frac{
+    \texttt{add}_n: \displaystyle{\frac{
+      \texttt{var}_n: \displaystyle{\frac{}{(x, s_0) \Longrightarrow_a 0}}
+      \quad
+      \texttt{val}_n: \displaystyle{\frac{}{(5, s_0) \Longrightarrow_a 5}}
+    }{(x + 5, s_0) \Longrightarrow_a 5}}
+    \quad 
+    \texttt{sub}_n: \displaystyle{\frac{
+      \texttt{val}_n: \displaystyle{\frac{}{(9, s_0) \Longrightarrow_a 9}}
+      \quad
+      \texttt{val}_n: \displaystyle{\frac{}{(7, s_0) \Longrightarrow_a 7}}
+    }{(9 - 7, s_0) \Longrightarrow_a 2}}
+  }
+  {((x + 5) + (9 - 7), s_0) \Longrightarrow_a 7}
+\]
+\end{example}
+
+All of this can be denoted in Lean as:
 \begin{minted}{lean4}
 inductive step: Aexp × State → Int → Prop
   | valₙ: step (val₁ n, _) n
@@ -844,6 +857,14 @@ inductive step: Aexp × State → Int → Prop
     step (a₁ - a₂, s) (n₁ - n₂)
   | mulₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
     step (a₁ * a₂, s) (n₁ * n₂)
+\end{minted}
+
+And the example~\ref{ex:arithmetic_evaluation} can be written as:
+\begin{minted}{lean4}
+private example: ((var₁ "x" + 5) + (9 - 7), s₀) ==>ₐ 7 :=
+  big_step.addₙ
+    (big_step.addₙ big_step.varₙ big_step.valₙ)
+    (big_step.subₙ big_step.valₙ big_step.valₙ)
 \end{minted}
 
 Another way to express evaluation is via a \emph{recursive function} that breaks
@@ -879,6 +900,12 @@ We can introduce some notation to denote the evaluation of an expression on a st
   a \ s
   \]
 \end{notation}
+
+The example~\ref{ex:arithmetic_evaluation} can the be directly 
+evaluated in Lean as:
+\begin{minted}{lean4}
+#eval ((var₁ "x" + 5) + (9 - 7)) s₀ -- 7
+\end{minted}
 
 \hl{This approach has some clear advantages over the relation definition, as
 it can compute the result of the evaluation directly}, instead of 
@@ -920,11 +947,9 @@ in the file
 We define first the rules for arithmetic expressions because some operators,
 like \(\leq\) operate on integers, so then the constructor for the
 \emph{boolean step} for the \(\leq\) operator looks something like:
-
 \[
 \texttt{le}_n : (a_1 \leq a_2, s) \Longrightarrow_l (a_1 \ s \leq a_2 \ s)
 \]
-
 Where we have exploited the equivalence of the step and reduction evaluations
 described above.
 
@@ -974,13 +999,109 @@ before, this time associating configurations to states. The definition of
 the constructors for skip, assignment and concatenation are straightforward,
 the rules for the \texttt{if} construct, however, require two constructors,
 one for the case when the condition is false:
-
 \[
-\texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \Longrightarrow_c s_2}
-{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_c s_2}
+\texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \Longrightarrow_n s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2}
 \]
-
 and another for the case when the condition is true:
+\[
+\texttt{if}_{1n} : \frac{b \ s_1 = \texttt{true}  \quad (c_2, s_1) \Longrightarrow_n s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2}
+\]
+The evaluation rule for \texttt{while} follows the same principle but with a more
+recursive approach, the case when the condition is false is easy:
+\[
+\texttt{while}_{0n} : \frac{b \ s = \texttt{false}}
+  {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s) \Longrightarrow_n s}
+\]
+but when the condition is true, we have to recurse from another evaluation tree
+where the \enquote{previous step} has already been applied:
+\[
+\texttt{while}_{1n} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \Longrightarrow_n s_2 \quad
+  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow_n s_3}
+{(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow_n s_3}
+\]
+we have to introduce an intermediate state \(s_2\) that doesn't appear in the
+final result, in this way we account for \enquote{intermediate steps} in the 
+evaluation of the \texttt{while} construct.
+
+The encoding of the big step semantics of commands in Lean is:
+\begin{minted}{lean4}
+inductive big_step: Config → State → Prop
+  | skipₙ:
+    big_step (skip₁, s) s
+
+  | assₙ:
+    big_step (ass₁ v a, s) (s[v ← a s])
+
+  | catₙ (s₂: State) (hc₁: big_step (c₁, s₁) s₂) (hc₂: big_step (c₂, s₂) s₃):
+    big_step (c₁++c₂, s₁) s₃
+
+  | if₀ₙ (hb: b s₁ = false) (hc₂: big_step (c₂, s₁) s₂):
+    big_step (if b then c₁ else c₂ end, s₁) s₂
+
+  | if₁ₙ (hb: b s₁ = true) (hc₁: big_step (c₁, s₁) s₂):
+    big_step (if b then c₁ else c₂ end, s₁) s₂
+
+  | while₀ₙ (hb: b s₁ = false):
+    big_step (while b loop c end, s₁) s₁
+
+  | while₁ₙ
+    (s₂: State) (hb: b s₁ = true) (hc: big_step (c, s₁) s₂)
+    (hw: big_step (while b loop c end, s₂) s₃):
+    big_step (while b loop c end, s₁) s₃
+\end{minted}
+
+Introducing some notation, as per usual, we can check the evaluation of a
+program like this:
+
+\begin{example}[Program evaluation]
+  Let's evaluate a simple program containing a branch in the state \(s_0\):
+\begin{minted}{text}
+x := 2;
+if x ≤ 1 then
+  y := 3
+else
+  z := 4
+end
+\end{minted}
+  to simplify the notation we will denote the program as \(P\), and the
+  the all the if construct as \(\texttt{Ifelse}\), then:
+  \[
+  \texttt{cat}_n: \frac{
+    \texttt{ass}_n: (x := 2, s_0) \Longrightarrow_n s_0[x \leftarrow 2]
+    \quad
+    \texttt{if}_{0n}: \displaystyle{\frac{
+      \texttt{ass}_n: (z := 4, s_0[x \leftarrow 2]) \Longrightarrow_n s_0[x \leftarrow 2][z \leftarrow 4]
+    }
+    {
+      (\text{Ifelse}, s_0[x \leftarrow 2]) \Longrightarrow_n s_0[x \leftarrow 2][z \leftarrow 4]
+    }}
+  }{
+    (P, s_0) \Longrightarrow_n s_0[x \leftarrow 2][z \leftarrow 4]
+  }
+  \]
+\end{example}
+
+Which in Lean looks like:
+
+\begin{minted}{lean4}
+private example:
+  ([|
+     x := 2;
+     if x ≤ 1 then
+       y := 3
+     else
+       z := 4
+     end
+   |], s₀)
+   ==>ₙ s₀["x" ← 2]["z" ← 4] :=
+   big_step.catₙ _ big_step.assₙ $ big_step.if₀ₙ rfl big_step.assₙ
+\end{minted}
+
+As we can see the \enquote{proof} that the program finishes in the given state
+follows directly from the evaluation tree created by the constructors of the
+big step semantics.
 
 
 
