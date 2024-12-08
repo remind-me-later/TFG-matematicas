@@ -1,4 +1,4 @@
-\documentclass[a4paper, 10pt, parskip=half, DIV=20]{scrartcl}
+\documentclass[a4paper, 10pt, parskip=half, DIV=20, toc=bibliography]{scrartcl}
 
 % \usepackage[spanish, es-lcroman]{babel}
 
@@ -209,7 +209,8 @@ first introduce the basics of type theory.
 Type theory is not a single theory, but a family of related theories that share
 the same basic principles. We will focus on a family of type theories known as
 Martin-Löf type theory, which was developed by Per Martin-Löf in the 1970s as a
-foundation for constructive mathematics. Since its inception, type theory has
+foundation for constructive mathematics, in particular the version used in~\cite{hottbook}. 
+Since its inception, type theory has
 been strongly connected to \(\lambda\)-calculus, a formal system for expressing
 computation based on function abstraction and application. This connection
 arises thanks to the works of Alonzo Church, who showed that the
@@ -218,11 +219,7 @@ define computable functions.
 
 \subsection{Type theory vs set theory}
 
-Type theory\footnote{This section can mostly be copy and pasted from the HoTT book. The only
-problem is the exposition in the book introduce first all the concepts and
-then the examples, while in this text we will introduce the concepts and
-examples together. This means, for example, introducing natural numbers much
-earlier.} is a branch of mathematical logic that deals with the study of
+Type theory is a branch of mathematical logic that deals with the study of
 types, an abstraction similar in some ways to the more familiar sets.
 
 Like \emph{sets} are a primitive notion in set theory, \emph{types} are a primitive notion
@@ -347,6 +344,13 @@ And we can define the relation of equality as:
 \hl{Equality is much more than an equivalence relation, however. It has the important 
 property that every assertion respects the equivalence, in the sense that we can 
 substitute equal expressions without changing the truth value}. 
+
+\subsubsection{Equivalence}
+
+\hl{In type theory, the notion of equivalence is more general than equality, and
+refers to a relation between two types that is reflexive, symmetric, and
+transitive. This relation is normally defined as a setoid in the type theory,
+and is used to define the notion of isomorphism between types.}
 
 \subsection{Universes}
 
@@ -532,10 +536,11 @@ Coq \(\texttt{Prop}\) is a universe, separate from data types which reside in
 \emph{propositionally equal}. Coq also supports definitional proof irrelevance, by
 using the \(\texttt{SProp}\) but it's not the default.
 
-\section{Semantics}
+\section{Big-Step Semantics}
 
 Now that we have introduced type theory and proof assistants, we can move on to
-using them to define the semantics of programming languages\footnote{This section can be mostly copy and pasted from Winskel's book.}. 
+using them to define the semantics of programming languages. The exposition
+will follow closely the one in~\cite{winskel_formal_semantics}.
 Semantics are the
 study of the \hl{\emph{meaning} of programs}, and can be defined in different ways, we
 will focus on operational semantics, and denotational semantics.
@@ -831,15 +836,15 @@ Let's see an example of a valid \emph{evaluation tree}.
 \[
   \texttt{add}_n: \frac{
     \texttt{add}_n: \displaystyle{\frac{
-      \texttt{var}_n: \displaystyle{\frac{}{(x, s_0) \Longrightarrow_a 0}}
+      \texttt{var}_n: (x, s_0) \Longrightarrow_a 0
       \quad
-      \texttt{val}_n: \displaystyle{\frac{}{(5, s_0) \Longrightarrow_a 5}}
+      \texttt{val}_n: (5, s_0) \Longrightarrow_a 5
     }{(x + 5, s_0) \Longrightarrow_a 5}}
     \quad 
     \texttt{sub}_n: \displaystyle{\frac{
-      \texttt{val}_n: \displaystyle{\frac{}{(9, s_0) \Longrightarrow_a 9}}
+      \texttt{val}_n: (9, s_0) \Longrightarrow_a 9
       \quad
-      \texttt{val}_n: \displaystyle{\frac{}{(7, s_0) \Longrightarrow_a 7}}
+      \texttt{val}_n: (7, s_0) \Longrightarrow_a 7
     }{(9 - 7, s_0) \Longrightarrow_a 2}}
   }
   {((x + 5) + (9 - 7), s_0) \Longrightarrow_a 7}
@@ -1023,7 +1028,10 @@ where the \enquote{previous step} has already been applied:
 \]
 we have to introduce an intermediate state \(s_2\) that doesn't appear in the
 final result, in this way we account for \enquote{intermediate steps} in the 
-evaluation of the \texttt{while} construct.
+evaluation of the \texttt{while} construct. While the evaluation rules for
+expressions could be applied \enquote{automatically}, the evaluation rules for
+commands require a more \enquote{manual} approach, as we have to \enquote{choose}
+the correct constructor to apply in the control flow of the program.
 
 The encoding of the big step semantics of commands in Lean is:
 \begin{minted}{lean4}
@@ -1103,6 +1111,134 @@ As we can see the \enquote{proof} that the program finishes in the given state
 follows directly from the evaluation tree created by the constructors of the
 big step semantics.
 
+\subsubsection{Rewriting rules}
+
+Now we can prove some \enquote{rewriting rules} for the constructs of the 
+language, the proof is more or less immediate and can be found in the code,
+so we will only present the theorems.
+
+\begin{theorem}[Skip equality]
+  Skipping (doing nothing) in a program doesn't change the state:
+  \[
+  ((\texttt{skip}, s_1) \Longrightarrow_n s_2) =  (s_1 = s_2)
+  \]
+\end{theorem}
+
+\begin{theorem}[Concatenation equality]
+  The concatenation of two programs is equivalent to executing the first
+  program and then the second:
+  \[
+  ((c_1 \texttt{;} c_2, s_1) \Longrightarrow_n s_3) = 
+  \exists s_2, \left((c_1, s_1) \Longrightarrow_n s_2 \land (c_2, s_2) \Longrightarrow_n s_3\right)
+  \]
+\end{theorem}
+
+The rewriting rules for the \texttt{if} construct can be defined in two equivalent ways,
+which rule to apply depends on the context, as either one could be easier to use
+depending on the situation.
+
+\begin{theorem}[If equality]
+  The \texttt{if} construct can be rewritten as:
+  \[
+  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2) = 
+  \text{if} \ b \ s_1 \ \text{then} \ (c_1, s_1) \Longrightarrow_n s_2 \ \text{else} \ (c_2, s_1) \Longrightarrow_n s_2
+  \]
+  or, equivalently:
+  \[
+  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2) =
+  ((\text{if} \ b \ s_1 \ \text{then} \ c_1 \ \text{else} \ c_2) \Longrightarrow_n s_2)
+  \]
+\end{theorem}
+
+In the previous theorem we have to be careful to not confuse the \enquote{if}
+construct of the language \texttt{IMP} \hl{and that of the meta-language (in this case Lean).}
+To aid in this distinction we will use \texttt{monospace} font for the constructs
+of the language, and normal font for the constructs of the meta-language.
+
+\begin{theorem}[While equality]\label{thm:while_rewrite}
+  The \texttt{while} construct can be rewritten as:
+  \begin{align*}
+  &((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow_n s_3) = \\
+  &\quad \text{if} \ b \ s_1 \\
+  &\quad \text{then} \ \exists s_2, ((c, s_1) \Longrightarrow_n s_2) \land ((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow_n s_3) \\
+  &\quad \text{else} \ s_1 = s_3
+  \end{align*}
+\end{theorem}
+
+\subsubsection{Behavioral equivalence}
+
+The previous rewriting rules are useful in proofs as we can substitute one program
+for another that is \enquote{exactly the same}, but we can also define a more
+lax notion of equality that will let us say that two syntactically different
+programs are \enquote{the same}. This is specially useful when proving
+that certain optimizations don't change the behaviour of a program.
+
+\begin{definition}[Behavioral equivalence]
+  Two programs are behaviourally equivalent if they evaluate to the same state
+  for all initial states:
+  \[
+  c_1 \sim c_2 \triangleq \forall s_1, \forall s_2, (c_1, s_1) \Longrightarrow_n s_2 \iff (c_2, s_1) \Longrightarrow_n s_2
+  \]
+\end{definition}
+
+Is easy to show that this is an equivalence relation, that is, it is reflexive,
+symmetric, and transitive. Armed with this we can, for example, show that adding
+an arbitrary number of skips to a program doesn't change its behaviour.
+
+\begin{theorem}[Skip left]
+  Adding \texttt{skip} to the left of a program doesn't change its behaviour:
+  \[
+  \texttt{skip} \texttt{;} c \sim c
+  \]
+\end{theorem}
+
+With this we can \enquote{optimize} the \texttt{skip} away of a program, but only
+on the left, to completely remove them without consequence we need the following.
+
+\begin{theorem}[Skip right]
+  Adding \texttt{skip} to the right of a program doesn't change its behaviour:
+  \[
+  c \texttt{;} \texttt{skip} \sim c
+  \]
+\end{theorem}
+
+A more interesting equivalence that mirrors Theorem~\ref{thm:while_rewrite} is
+loop unfolding, a common optimization in compilers, \hl{used when memory is cheaper
+than computation.}
+
+\begin{theorem}[While unfolding]
+  The \texttt{while} construct can be unfolded:
+  \[
+  \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \sim 
+  \texttt{if} \ b \ \texttt{then} \ c \texttt{;} \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \texttt{else} \ \texttt{skip}
+  \]
+\end{theorem}
+
+The proof of this fact is quite interesting, so we reproduce it in full:
+\begin{minted}{lean4}
+theorem loop_unfold:
+  while b loop c end ≈
+    if b then c++while b loop c end else skip₁ end := by
+  intro s₁ s₃
+  rw [if_eq']
+  constructor
+  . intro hmp
+    match hmp with
+    | big_step.while₁ₙ s₂ hb hc hw => exact hb ▸ big_step.catₙ s₂ hc hw
+    | big_step.while₀ₙ hb => exact hb ▸ big_step.skipₙ
+  . match hb: b s₁ with
+    | false =>
+      intro (big_step.skipₙ)
+      exact big_step.while₀ₙ hb
+    | true =>
+      intro (big_step.catₙ s₂ hc hw)
+      exact big_step.while₁ₙ s₂ hb hc hw
+\end{minted}
+
+% Bibliography
+
+\bibliographystyle{alpha} % We choose the "plain" reference style
+\bibliography{refs} % Entries are in the refs.bib file
 
 
 \end{document}
