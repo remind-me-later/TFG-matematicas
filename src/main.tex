@@ -59,9 +59,8 @@
 %   \textbf{\textit{Palabras clave---}} #1
 % }
 
-\newcommand{\funfont}[1]{\textit{#1}}
+\newcommand{\funfont}[1]{\text{#1}}
 \newcommand{\tyfont}[1]{\texttt{#1}}
-
 
 \title{Resultados clásicos sobre semántica de lenguajes de programación en Lean 4 (Draft)}
 \author{Ricardo Maurizio Paul}
@@ -263,7 +262,7 @@ in type theory as a function.
 \begin{definition}[Type theoretic set]
   A set is a function that takes an element of a type and returns a proposition.
   \[
-  \texttt{Set} \ (\alpha : \texttt{Type}) \triangleq \alpha \to \texttt{Prop}
+  \texttt{Set} \ (\alpha : \texttt{Type}) \coloneq \alpha \to \texttt{Prop}
   \]
 \end{definition}
 
@@ -327,7 +326,7 @@ and false otherwise.
   proposition.
   \[
   \texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
-    \triangleq \alpha \to \beta \to \texttt{Prop}
+    \coloneq \alpha \to \beta \to \texttt{Prop}
   \]
 \end{definition}
 
@@ -337,7 +336,7 @@ And we can define the relation of equality as:
   The relation of equality is a function that takes two elements of a type and
   returns a proposition.
   \[
-  \texttt{Eq} \ (\alpha: \texttt{Type}) \triangleq \texttt{Rel} \ \alpha \ \alpha 
+  \texttt{Eq} \ (\alpha: \texttt{Type}) \coloneq \texttt{Rel} \ \alpha \ \alpha 
   \]
 \end{definition}
 
@@ -571,7 +570,7 @@ As an informal introduction to the syntax of \(\texttt{IMP}\) we can define the
 
 Now we could define the syntax of \(\texttt{Aexp}\) in Backus-Naur form:
 \[
-a ::= n \ | \ x \ | \ a_1 + a_2 \ | \ a_1 - a_2 \ | \ a_1 * a_2
+a ::= n \ | \ x \ | \ a_1 + a_2 \ | \ a_1 - a_2 \ | \ a_1 \times a_2
 \]
 the syntax of \(\texttt{Bexp}\) as:
 \[
@@ -584,62 +583,65 @@ c ::= \texttt{skip} \ | \ x := a \ | \ c_1; c_2 \ | \
       \texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end} 
       \ | \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}
 \]
-In the Lean project the syntax of \(\texttt{IMP}\) is defined in the file 
-\url{https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean}
-where the previous definitions are encoded as inductive types, with the
-following constructors:
-\begin{minted}{lean4}
-inductive Aexp where
-  | val₁ : Int → Aexp
-  | var₁ : String → Aexp
-  -- arithmetic
-  | add₁ : Aexp → Aexp → Aexp
-  | sub₁ : Aexp → Aexp → Aexp
-  | mul₁ : Aexp → Aexp → Aexp
-\end{minted}
+In type theory we can encode this as inductive types, the type of arithmetic 
+expressions can be defined as an inductive type \(\texttt{Aexp}\) with 
+constructors for each \enquote{syntactic construct}:
+\begin{align*}
+  \texttt{val}_1 &\coloneq \mathbb{Z} \to \texttt{Aexp} \\
+  \texttt{var}_1 &\coloneq \texttt{String} \to \texttt{Aexp} \\
+  \texttt{add}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
+  \texttt{sub}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
+  \texttt{mul}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp}
+\end{align*}
+While the first to simply \enquote{coerce} a value or a variable into an
+expression, the others \enquote{construct} an expression from two other
+expressions. The constructors for boolean expressions are defined in a similar
+fashion:
+\begin{align*}
+  \texttt{true}_1 &\coloneq \texttt{Bexp} \\
+  \texttt{false}_1 &\coloneq \texttt{Bexp} \\
+  \texttt{not}_1 &\coloneq \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{and}_1 &\coloneq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{or}_1 &\coloneq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{eq}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp} \\
+  \texttt{le}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp}
+\end{align*}
+And the same goes for commands:
+\begin{align*}
+  \texttt{skip}_1 &\coloneq \texttt{Com} \\
+  \texttt{assign}_1 &\coloneq \texttt{String} \to \texttt{Aexp} \to \texttt{Com} \\
+  \texttt{seq}_1 &\coloneq \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
+  \texttt{if}_1 &\coloneq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
+  \texttt{while}_1 &\coloneq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com}
+\end{align*}
 
-Commands are defined in a similar way:
+Now a simple expression in our language would look something like:
+\[
+  \texttt{add}_1 \ (\texttt{var}_1 \ ``x'') \ (\texttt{val}_1 \ 3)
+\]
+this is not very readable, so we will use some \enquote{abuse of notation} and
+say that \(x + 3\) is an arithmetic expression of \texttt{IMP} for example,
+when defining our language in Lean we have to be more careful about mixing
+our language and meta-language, by using some facilities provided by Lean's 
+macros we can make a little parser for our language, and by using type
+classes and coercions we can even use some familiar notation in the host language,
+all of the details can be found in 
+\url{https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean}.
 
-\begin{minted}{lean4}
-inductive Com where
-  | skip₁
-  | cat₁   : Com → Com → Com
-  | ass₁   : String → Aexp → Com
-  | if₁    : Bexp → Com → Com → Com
-  | while₁ : Bexp → Com → Com
-\end{minted}
+An example program in \texttt{IMP} could then be:
 
-We can now define some \emph{abuses of notation} or \emph{coercions}, for example we can
-transform the integers of the meta-language (Lean) into integers of
-\(\texttt{IMP}\) we can do this by \hl{instantiating some classes}:
+\begin{example}[Factorial in \texttt{IMP}]
+  The factorial of a number can be computed using a simple loop, we can define
+  the factorial of a number \(n\) as:
+  \begin{minted}{text}
+  n := 5; i := 2; res := 1;
 
-\begin{minted}{lean4}
-instance: OfNat Aexp n := ⟨Aexp.val₁ n⟩
-instance: Add Aexp := ⟨Aexp.add₁⟩
-instance: Sub Aexp := ⟨Aexp.sub₁⟩
-instance: Neg Aexp := ⟨λ a => Aexp.sub₁ 0 a⟩
-instance: Mul Aexp := ⟨Aexp.mul₁⟩
-
--- x + 3
-#check Aexp.var₁ "x" + 3
-
--- x * -3
-#check Aexp.var₁ "x" * -3
-\end{minted}
-
-After defining some parsing rules we can typecheck an \(\texttt{IMP}\) program
-like this:
-
-\begin{minted}{lean4}
-#check [|
-n := 5; i := 2; res := 1;
-
-while i ≤ n loop
-    res := res × i;
-    i := i + 1
-end
-|]
-\end{minted}
+  while i ≤ n loop
+      res := res × i;
+      i := i + 1
+  end
+  \end{minted}
+\end{example}
 
 \subsection{States}
 
@@ -656,7 +658,7 @@ type.
 \begin{definition}[Map]
   A map is a function that maps keys (strings) to values, we can define it as:
   \[
-  \tyfont{Map} \ (\alpha : \tyfont{Type}) \triangleq \tyfont{String} \to \alpha
+  \tyfont{Map} \ (\alpha : \tyfont{Type}) \coloneq \tyfont{String} \to \alpha
   \]
 \end{definition}
 
@@ -668,40 +670,59 @@ keys to values, this is done using the \texttt{update} function:
   that maps the key to the value, and all other keys to the same value as the
   original map.
   \begin{align*}
-  \funfont{update} : \tyfont{Map} \ \alpha \to \tyfont{String} \to \alpha &\to \tyfont{Map} \ \alpha \\
-                  m \ k \ v &\mapsto \lambda k' . \texttt{if} \ k = k' \ \texttt{then} \ v \ \texttt{else} \ m \ k'
+  \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneq \\
+                      &\lambda k' \mapsto \funfont{cond} \ (k = k') \ v \ (m \ k')
   \end{align*}
 \end{definition}
 
-The previous definition looks pretty similar in Lean notation:
-
-\begin{minted}{lean4}
-def update (m: Map α) (k: String) (v: α) :=
-  λ k' ↦ bif k == k' then v else m k'
-\end{minted}
-
-The \texttt{bif} construct is provided to use by Lean, and is nothing more than
-syntactic sugar for pattern matching, we can define it as:
-
-\begin{minted}{lean4}
-def cond {α : Type} (c : Bool) (x y : α) : α :=
-  match c with
-  | true  => x
-  | false => y
-\end{minted}
-
+The \funfont{cond} function is nothing more than syntactic sugar for 
+pattern matching, we can define it as:
+\begin{align*}
+  \funfont{cond} \ \texttt{true} \ v \ w &\coloneq v \\
+  \funfont{cond} \ \texttt{false} \ v \ w &\coloneq w
+\end{align*}
 Now we can introduce some notation to denote the \enquote{assignments} of a 
 map in a more familiar way:
 
 \begin{notation}[Map update]
-  We will denote \(\funfont{update} \ m \ k \ v\) as \(m[k \leftarrow v]\).
+  We will denote \((\funfont{update} \ m \ k \ v)\) as \(m[k \leftarrow v]\).
 \end{notation}
 
 With these definitions we can prove a lot of interesting properties that hold
 in the majority of programming languages, usually assigning a value to a
 variable makes the computer \enquote{forget} the previous value. With the
 \funfont{update} function as defined above this is not true by definition,
-but we can easily prove it:
+but we can easily prove it.
+
+\begin{theorem}[Map evaluates to last]
+  If we assign a value to a variable, and then assign another value to the same
+  variable, the map evaluates to the last value assigned.
+  \[
+  m[k \leftarrow v_2][k \leftarrow v_1] = m[k \leftarrow v_1]
+  \]
+\end{theorem}
+
+\begin{proof}
+  To prove the equality of both functions we use the axiom of \emph{function
+  extensionality}, this transforms the problem into:
+  \[
+  \forall k' , (m[k \leftarrow v_2][k \leftarrow v_1]) \ k' = (m[k \leftarrow v_1]) \ k'
+  \]
+  Now we can distinguish two cases:
+  \begin{itemize}
+    \item[(\(k = k'\))] In this case the equality holds by \enquote{unfolding} the
+      definition of the \funfont{update} function.
+      \[
+        \text{if} \ k = k' \ \text{then} \ v_1 \ \text{else} \ 
+          \text{if} \ k = k' \ \text{then} \ v_2 \ \text{else} \ m \ k' = 
+          \text{if} \ k = k' \ \text{then} \ v_1 \ \text{else} \ m \ k'
+      \]
+      noting that \(k = k'\) is true, we can simplify the expression to \(v_1 = v_1\).
+    \item[(\(k \neq k'\))] This case is analogous.
+  \end{itemize}
+\end{proof}
+
+This can be easily translated to Lean code:
 
 \begin{minted}{lean4}
 theorem eval_last:
@@ -716,10 +737,6 @@ theorem eval_last:
     rw [h, cond_false, cond_false, cond_false]
 \end{minted}
 
-To prove the equality of both functions we used the axiom of \emph{function
-extensionality} (\funfont{funext}), once we do this the proof follows
-immediately by distinguishing the cases where \(k = k'\) and \(k \neq k'\).
-
 The proof of other similar properties, such as the commutativity of the update
 function, or the idempotence of the update function, are proved in a similar
 fashion, and can be found in the code.
@@ -729,7 +746,7 @@ With these properties proved we can finally define our \(\tyfont{State}\).
 \begin{definition}[State]
   A state is a map that maps variables to values, we can define it as:
   \[
-  \tyfont{State} \triangleq \tyfont{Map} \ \mathbb{Z}
+  \tyfont{State} \coloneq \tyfont{Map} \ \mathbb{Z}
   \]
 \end{definition}
 
@@ -737,7 +754,7 @@ Now we have a problem, what value do the variables have when the program starts?
 In some popular programming languages, like C, wen variables are read before
 they are assigned the hold a random value, this value depends on whatever
 the contents of the memory now used to store the variable used to hold, we could
-model this by defining an \emph{undefined} state, but the \(typefont{Map}\)
+model this by defining an \emph{undefined} state, but the \(\tyfont{Map}\)
 that we have defined is \emph{total}, that is, it is defined for all inputs. 
 We could define a partial map:
 
@@ -745,7 +762,7 @@ We could define a partial map:
   A partial map is a map that is not defined for all inputs, we can define
   it as:
   \[
-  \tyfont{PMap} \ (\alpha : \tyfont{Type}) \triangleq \tyfont{String} \to \tyfont{Option} \ \alpha
+  \tyfont{PMap} \ (\alpha : \tyfont{Type}) \coloneq \tyfont{String} \to \tyfont{Option} \ \alpha
   \]
 \end{definition}
 
@@ -756,16 +773,17 @@ value.
 
 \begin{definition}[Initial state]
   We will define the \emph{initial state} of an \(\texttt{IMP}\) program as the
-  constant function:
+  constant function that maps all variables to zero.
   \[
-  s_0 \triangleq \lambda x . 0
+  s_0 \coloneq \lambda x \mapsto 0
   \]
 \end{definition}
 
-With all this evaluating the state of a program is as simple as:
-\begin{minted}{lean4}
-#eval (s₀["x" ← 3]["x" ← 4]["x" ← 7]) "x" -- 7
-\end{minted}
+With all this evaluating the state of a program is as simple as applying it to
+a string:
+\[
+(s_0[k \leftarrow 3][k \leftarrow 4][k \leftarrow 7]) \ k = 7
+\]
 
 \subsection{Evaluating expressions}
 
@@ -795,14 +813,14 @@ Let's introduce a notation more familiar to classic text on formal semantics.
 \begin{notation}[Arithmetic big step]
   We will denote the step relation \(\funfont{big\_step} \ (a, s) \ n\) as
   \[
-  (a, s) \Longrightarrow_a n
+  (a, s) \Longrightarrow n
   \]
 \end{notation}
 
 Now the constructors will be the rules of the evaluation, for example the
 constructor for the constant expression will be:
 \[
-  \texttt{val}_n : (n, \cdot) \Longrightarrow_a n
+  \texttt{val}_n : (n, \cdot) \Longrightarrow n
 \]
 
 Which relates the configuration \((n, \cdot)\), where the \(n\) of the left is
@@ -811,21 +829,32 @@ to denote that its the first constructor of the \(\tyfont{Aexp}\) type, but
 we will omit it for brevity) and the \(\cdot\) denotes any state, to the
 integer value \(n\).
 
-The constructor for the variable expression is similar:
+The constructor for the variable expression is similar, but this time we need
+to look up the value of the variable in the state:
 \[
-  \texttt{var}_n : (x, s) \Longrightarrow_a s \ x
+  \texttt{var}_n : (x, s) \Longrightarrow s \ x
 \]
 
-Now we can define the constructors for the arithmetic operations, we will only show
-the constructor for the addition, the others are analogous:
+Now we can define the constructors for the arithmetic operations, since these 
+are \emph{binary} operations we will need to know the value of the left and
+right expressions to evaluate the operation, this is done by requiring
+the evaluation of the left and right expressions in the premises of the rule.
+For example the constructor for the addition operation is:
 \[
-  \texttt{add}_n : \frac{(a_1, s) \Longrightarrow_a n_1 \quad (a_2, s) \Longrightarrow_a n_2}
-   {(a_1 + a_2, s) \Longrightarrow_a n_1 + n_2}
+  \texttt{add}_n : \frac{(a_1, s) \Longrightarrow n_1 \quad (a_2, s) \Longrightarrow n_2}
+   {(a_1 + a_2, s) \Longrightarrow n_1 + n_2}
 \]
-
 The previous rule states that if the configuration \((a_1, s)\) evaluates to
 \(n_1\) and the configuration \((a_2, s)\) evaluates to \(n_2\), then the
 configuration \((a_1 + a_2, s)\) evaluates to \(n_1 + n_2\).
+
+The constructors of the subtraction and multiplication operations are analogous.
+\begin{align*}
+  \texttt{sub}_n &: \frac{(a_1, s) \Longrightarrow n_1 \quad (a_2, s) \Longrightarrow n_2}
+   {(a_1 - a_2, s) \Longrightarrow n_1 - n_2} \\
+  \texttt{mul}_n &: \frac{(a_1, s) \Longrightarrow n_1 \quad (a_2, s) \Longrightarrow n_2}
+   {(a_1 * a_2, s) \Longrightarrow n_1 * n_2}
+\end{align*}
 
 Let's see an example of a valid \emph{evaluation tree}.
 
@@ -836,18 +865,18 @@ Let's see an example of a valid \emph{evaluation tree}.
 \[
   \texttt{add}_n: \frac{
     \texttt{add}_n: \displaystyle{\frac{
-      \texttt{var}_n: (x, s_0) \Longrightarrow_a 0
+      \texttt{var}_n: (x, s_0) \Longrightarrow 0
       \quad
-      \texttt{val}_n: (5, s_0) \Longrightarrow_a 5
-    }{(x + 5, s_0) \Longrightarrow_a 5}}
+      \texttt{val}_n: (5, s_0) \Longrightarrow 5
+    }{(x + 5, s_0) \Longrightarrow 5}}
     \quad 
     \texttt{sub}_n: \displaystyle{\frac{
-      \texttt{val}_n: (9, s_0) \Longrightarrow_a 9
+      \texttt{val}_n: (9, s_0) \Longrightarrow 9
       \quad
-      \texttt{val}_n: (7, s_0) \Longrightarrow_a 7
-    }{(9 - 7, s_0) \Longrightarrow_a 2}}
+      \texttt{val}_n: (7, s_0) \Longrightarrow 7
+    }{(9 - 7, s_0) \Longrightarrow 2}}
   }
-  {((x + 5) + (9 - 7), s_0) \Longrightarrow_a 7}
+  {((x + 5) + (9 - 7), s_0) \Longrightarrow 7}
 \]
 \end{example}
 
@@ -921,7 +950,7 @@ both evaluation rules are equivalent, fortunately they are, and we can prove it.
   The step relation and the reduce function are equivalent, that is, for all
   expressions \(a\), states \(s\), and values \(n\), we have:
   \[
-  ((a, s) \Longrightarrow_a n) = (a \ s = n)
+  ((a, s) \Longrightarrow n) = (a \ s = n)
   \]
 \end{theorem}
 
@@ -1177,7 +1206,7 @@ that certain optimizations don't change the behaviour of a program.
   Two programs are behaviourally equivalent if they evaluate to the same state
   for all initial states:
   \[
-  c_1 \sim c_2 \triangleq \forall s_1, \forall s_2, (c_1, s_1) \Longrightarrow_n s_2 \iff (c_2, s_1) \Longrightarrow_n s_2
+  c_1 \sim c_2 \coloneq \forall s_1, \forall s_2, (c_1, s_1) \Longrightarrow_n s_2 \iff (c_2, s_1) \Longrightarrow_n s_2
   \]
 \end{definition}
 
@@ -1206,7 +1235,7 @@ A more interesting equivalence that mirrors Theorem~\ref{thm:while_rewrite} is
 loop unfolding, a common optimization in compilers, \hl{used when memory is cheaper
 than computation.}
 
-\begin{theorem}[While unfolding]
+\begin{theorem}[Loop unfolding]
   The \texttt{while} construct can be unfolded:
   \[
   \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \sim 

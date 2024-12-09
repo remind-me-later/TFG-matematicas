@@ -5,6 +5,7 @@
 \RequirePackage{etoolbox}
 \RequirePackage{amsmath}
 \RequirePackage[thmmarks, amsmath, thref]{ntheorem}
+\RequirePackage{mathtools}
 
 \theorembodyfont{\normalfont}
 % Theorems
@@ -14,13 +15,13 @@
 \newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{lemma}[theorem]{Lemma}
 
-\theoremstyle{definition}
+% \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
 % Problems
 \newtheorem{example}[theorem]{Example}
 \newtheorem{problem}[theorem]{Problem}
 
-\theoremstyle{remark}
+% \theoremstyle{remark}
 \newtheorem{remark}[theorem]{Remark}
 \newtheorem{notation}[theorem]{Notation}
 
@@ -30,8 +31,8 @@
 %\theorembodyfont{\upshape}
 \theorembodyfont{\normalfont}
 \theoremsymbol{\ensuremath{\square}}
-\newtheorem*{proof}{Demostración}
-\newtheorem*{solution}{Solución}
+\newtheorem*{proof}{Proof}
+\newtheorem*{solution}{Solution}
 
 % add space for parskip
 % \AtBeginEnvironment{definition}{\vspace{\parskip}}
