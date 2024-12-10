@@ -1,4 +1,4 @@
-\documentclass[a4paper, 10pt, parskip=half, DIV=20, toc=bibliography]{scrartcl}
+\documentclass[a4paper, 10pt, parskip=half, DIV=24, toc=bibliography]{scrartcl}
 
 % \usepackage[spanish, es-lcroman]{babel}
 
@@ -61,6 +61,7 @@
 
 \newcommand{\funfont}[1]{\text{#1}}
 \newcommand{\tyfont}[1]{\texttt{#1}}
+\renewcommand{\implies}{\to}
 
 \title{Resultados clásicos sobre semántica de lenguajes de programación en Lean 4 (Draft)}
 \author{Ricardo Maurizio Paul}
@@ -402,7 +403,7 @@ either \(\texttt{true}\) or \(\texttt{false}\), and no other value.
 
 \subsection{Inductive types}   
 
-Of course\footnote{ This section can be mostly copy and pasted from the HoTT book, chapter 5.}, defining finite types such as \(\texttt{Bool}\) is not very
+Of course defining finite types such as \(\texttt{Bool}\) is not very
 interesting, we need a way to define infinite types, such as the natural
 numbers. This is done using \emph{inductive types}, which are types that are defined
 by a set of constructors that define the possible forms an element of the type
@@ -617,7 +618,7 @@ And the same goes for commands:
 
 Now a simple expression in our language would look something like:
 \[
-  \texttt{add}_1 \ (\texttt{var}_1 \ ``x'') \ (\texttt{val}_1 \ 3)
+  \texttt{add}_1 \ (\texttt{var}_1 \ \textit{``x''}) \ (\texttt{val}_1 \ 3)
 \]
 this is not very readable, so we will use some \enquote{abuse of notation} and
 say that \(x + 3\) is an arithmetic expression of \texttt{IMP} for example,
@@ -633,14 +634,14 @@ An example program in \texttt{IMP} could then be:
 \begin{example}[Factorial in \texttt{IMP}]
   The factorial of a number can be computed using a simple loop, we can define
   the factorial of a number \(n\) as:
-  \begin{minted}{text}
+  \begin{verbatim}
   n := 5; i := 2; res := 1;
 
   while i ≤ n loop
       res := res × i;
       i := i + 1
   end
-  \end{minted}
+  \end{verbatim}
 \end{example}
 
 \subsection{States}
@@ -681,22 +682,45 @@ pattern matching, we can define it as:
   \funfont{cond} \ \texttt{true} \ v \ w &\coloneq v \\
   \funfont{cond} \ \texttt{false} \ v \ w &\coloneq w
 \end{align*}
-Now we can introduce some notation to denote the \enquote{assignments} of a 
-map in a more familiar way:
-
+We can even denote the \funfont{cond} function as an \emph{if then else}:
+\begin{align*}
+  \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneq \\
+                      &\lambda k' \mapsto \text{if} \ k = k' \ \text{then} \ v \ \text{else} \ m \ k'
+\end{align*}
+Not to be confused with the \texttt{if then else} construct of the language 
+\texttt{IMP}. While we are introducing notation we can also introduce some to 
+denote the \enquote{assignments} of a map in a more familiar way:
 \begin{notation}[Map update]
   We will denote \((\funfont{update} \ m \ k \ v)\) as \(m[k \leftarrow v]\).
 \end{notation}
 
 With these definitions we can prove a lot of interesting properties that hold
-in the majority of programming languages, usually assigning a value to a
+in the majority of programming languages, for example:
+
+\begin{theorem}[Map evaluate]
+  If we assign a value to a variable, the map evaluates to that value.
+  \[
+  (m[k \leftarrow v]) \ k = v
+  \]
+\end{theorem}
+
+\begin{theorem}[Map don't evaluate]
+  If we assign a value to a variable, the map does not evaluate to that value
+  for other variables (\(k \neq k'\)).
+  \[
+  (m[k \leftarrow v]) \ k' = m \ k'
+  \]
+\end{theorem}
+
+Both these fact are pretty intuitive, let's see another theorem that is also
+intuitive but not so easy to prove. Usually assigning a value to a
 variable makes the computer \enquote{forget} the previous value. With the
 \funfont{update} function as defined above this is not true by definition,
 but we can easily prove it.
 
-\begin{theorem}[Map evaluates to last]
+\begin{theorem}[Map forget]
   If we assign a value to a variable, and then assign another value to the same
-  variable, the map evaluates to the last value assigned.
+  variable, the map \enquote{forgets} the first value.
   \[
   m[k \leftarrow v_2][k \leftarrow v_1] = m[k \leftarrow v_1]
   \]
@@ -741,7 +765,22 @@ The proof of other similar properties, such as the commutativity of the update
 function, or the idempotence of the update function, are proved in a similar
 fashion, and can be found in the code.
 
-With these properties proved we can finally define our \(\tyfont{State}\).
+\begin{theorem}[Map commutative]
+  If we assign a value to a variable, and then assign another value to another
+  variable (\(k_1 \neq k_2\)), the order of the assignments does not matter.
+  \[
+  m[k_2 \leftarrow v_2][k_1 \leftarrow v_1] = m[k_1 \leftarrow v_1][k_2 \leftarrow v_2]
+  \]
+\end{theorem}
+
+\begin{theorem}[Map idempotence]
+  If we assign to a key the value it already has, the map does not change.
+  \[
+  m[k \leftarrow m \ k] = m
+  \]
+\end{theorem}
+
+With these properties proven we can finally define our \(\tyfont{State}\).
 
 \begin{definition}[State]
   A state is a map that maps variables to values, we can define it as:
@@ -790,7 +829,8 @@ a string:
 Now that we have in place the syntax of the language, we can start to wonder
 what does it mean to evaluate an expression. Because our expressions
 contain variables, they don't have any meaning without a state associated to
-them, so our evaluation will act on a pair of an expression and a state, we 
+them, so our evaluation will act on a pair of an expression and a state 
+\(\tyfont{Aexp} \times \tyfont{State}\), we 
 will call this pair a \emph{configuration}.
 
 Our evaluation will be \emph{syntax-directed}, that is, for every syntactic
@@ -807,9 +847,8 @@ we will call this relation \(\funfont{big\_step}\), and define it as:
 \end{definition}
 
 \hl{This is what is generally known as \emph{big step semantics}, as it evaluates
-the expression to a value in a single step.}
+the expression to a value in a single step, from configuration directly to value.}
 Let's introduce a notation more familiar to classic text on formal semantics.
-
 \begin{notation}[Arithmetic big step]
   We will denote the step relation \(\funfont{big\_step} \ (a, s) \ n\) as
   \[
@@ -827,7 +866,8 @@ Which relates the configuration \((n, \cdot)\), where the \(n\) of the left is
 a constant expression (in reality we should write \(\texttt{val}_1 n\) 
 to denote that its the first constructor of the \(\tyfont{Aexp}\) type, but
 we will omit it for brevity) and the \(\cdot\) denotes any state, to the
-integer value \(n\).
+integer value \(n\). Note that we used the subscript \(n\) to distinguish
+the big step constructor from the syntactic constructor.
 
 The constructor for the variable expression is similar, but this time we need
 to look up the value of the variable in the state:
@@ -856,6 +896,9 @@ The constructors of the subtraction and multiplication operations are analogous.
    {(a_1 * a_2, s) \Longrightarrow n_1 * n_2}
 \end{align*}
 
+One can think that while applying the syntactic rules of the language we are
+\enquote{building up} the expression while we apply the evaluation rules
+we will \enquote{break down} the expression to its value.
 Let's see an example of a valid \emph{evaluation tree}.
 
 \begin{example}[Arithmetic evaluation]\label{ex:arithmetic_evaluation}
@@ -880,27 +923,6 @@ Let's see an example of a valid \emph{evaluation tree}.
 \]
 \end{example}
 
-All of this can be denoted in Lean as:
-\begin{minted}{lean4}
-inductive step: Aexp × State → Int → Prop
-  | valₙ: step (val₁ n, _) n
-  | varₙ: step (var₁ v, s) (s v)
-  | addₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
-    step (a₁ + a₂, s) (n₁ + n₂)
-  | subₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
-    step (a₁ - a₂, s) (n₁ - n₂)
-  | mulₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
-    step (a₁ * a₂, s) (n₁ * n₂)
-\end{minted}
-
-And the example~\ref{ex:arithmetic_evaluation} can be written as:
-\begin{minted}{lean4}
-private example: ((var₁ "x" + 5) + (9 - 7), s₀) ==>ₐ 7 :=
-  big_step.addₙ
-    (big_step.addₙ big_step.varₙ big_step.valₙ)
-    (big_step.subₙ big_step.valₙ big_step.valₙ)
-\end{minted}
-
 Another way to express evaluation is via a \emph{recursive function} that breaks
 down the expression into its components and evaluates them, the rules are
 analogous to the ones we have defined before, but this time the function will
@@ -915,31 +937,29 @@ take a configuration and return a value.
 
 \hl{This time, instead of a Cartesian product, we will use a \emph{curried} function.}
 We can easily define the evaluation rules with pattern matching:
-\begin{minted}{lean4}
-def reduce (a: Aexp) (s: State): Int :=
-  match a with
-  | val₁ a => a
-  | var₁ a => s a
-  | add₁ a₁ a₂ => a₁.reduce s + a₂.reduce s
-  | sub₁ a₁ a₂ => a₁.reduce s - a₂.reduce s
-  | mul₁ a₁ a₂ => a₁.reduce s * a₂.reduce s
-\end{minted}
+\begin{align*}
+  \funfont{reduce} \ (\texttt{val}_1 \ v) \ \cdot &\coloneq v \\
+  \funfont{reduce} \ (\texttt{var}_1 \ x) \ s &\coloneq s \ x \\
+  \funfont{reduce} \ (\texttt{add}_1 \ a_1 \ a_2) \ s &\coloneq \funfont{reduce} \ a_1 \ s + \funfont{reduce} \ a_2 \ s \\
+  \funfont{reduce} \ (\texttt{sub}_1 \ a_1 \ a_2) \ s &\coloneq \funfont{reduce} \ a_1 \ s - \funfont{reduce} \ a_2 \ s \\
+  \funfont{reduce} \ (\texttt{mul}_1 \ a_1 \ a_2) \ s &\coloneq \funfont{reduce} \ a_1 \ s \times \funfont{reduce} \ a_2 \ s
+\end{align*}
 
 We can introduce some notation to denote the evaluation of an expression on a state.
 
 \begin{notation}[Arithmetic reduce]
-  We will denote the reduce function \(\funfont{reduce} \ a \ s\) as applying
+  We will denote the reduce function (\(\funfont{reduce} \ a \ s\)) as applying
   the expression \(a\) to the state \(s\):
   \[
   a \ s
   \]
 \end{notation}
 
-The example~\ref{ex:arithmetic_evaluation} can the be directly 
-evaluated in Lean as:
-\begin{minted}{lean4}
-#eval ((var₁ "x" + 5) + (9 - 7)) s₀ -- 7
-\end{minted}
+Now the example~\ref{ex:arithmetic_evaluation} can the be directly 
+evaluated by the reduce function:
+\[
+  ((x + 5) + (9 - 7)) \ s_0 = 7
+\]
 
 \hl{This approach has some clear advantages over the relation definition, as
 it can compute the result of the evaluation directly}, instead of 
@@ -954,38 +974,68 @@ both evaluation rules are equivalent, fortunately they are, and we can prove it.
   \]
 \end{theorem}
 
+\begin{proof}
 The proof, follows by applying \emph{propositional extensionality} to
 transform the equals into a double implication, and then proving each
-implication separately.\ \hl{Both are straightforward proofs by induction,
-we will reproduce the proof of the right to left implication, because
-it introduces a new keyword, \texttt{generalizing}}.
+implication separately.
 
-\begin{minted}{lean4}
-theorem Natural.from_reduce (hred: a s = n): (a, s) ==>ₐ n :=
-  by induction a generalizing n with
-  | val₁ a => exact hred ▸ step.valₙ
-  | var₁ a => exact hred ▸ step.varₙ
-  | add₁ a₁ a₂ iha₁ iha₂ => exact hred ▸ step.addₙ (iha₁ rfl) (iha₂ rfl)
-  | sub₁ a₁ a₂ iha₁ iha₂ => exact hred ▸ step.subₙ (iha₁ rfl) (iha₂ rfl)
-  | mul₁ a₁ a₂ iha₁ iha₂ => exact hred ▸ step.mulₙ (iha₁ rfl) (iha₂ rfl)
-\end{minted}
-
-What this keyword does is reintroduce the variable \(n\) into the induction 
-hypotheses and generalize it, so the hypotheses hold \(\forall n\), \hl{this is
-useful when we have a hypothesis that depends on a variable that is not
-introduced in the induction}.
-
-The rules for evaluation of boolean expressions are analogous, and can be found
-in the file 
-\url{https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Bexp.lean}.
-We define first the rules for arithmetic expressions because some operators,
-like \(\leq\) operate on integers, so then the constructor for the
-\emph{boolean step} for the \(\leq\) operator looks something like:
+Let's first prove the left to right implication 
+\((a, s) \Longrightarrow n \implies a \ s = n\). We proceed by induction
+on the evaluation relation, the cases for the constructors \(\texttt{val}_n\)
+and \(\texttt{var}_n\) are immediate. In the case of \(\texttt{add}_n\) the
+expression has the form \(a_1 + a_2\), and so we have to prove that
 \[
-\texttt{le}_n : (a_1 \leq a_2, s) \Longrightarrow_l (a_1 \ s \leq a_2 \ s)
+(a_1 + a_2 \ s) = n_1 + n_2
 \]
-Where we have exploited the equivalence of the step and reduction evaluations
-described above.
+for some \(n_1\) and \(n_2\), by the induction hypothesis we have that
+\(a_1 \ s = n_1\) and \(a_2 \ s = n_2\), and so we just have to apply the
+definition of the reduce function to prove the equality.
+The cases for the subtraction and multiplication are analogous.
+
+The right to left implication \(a \ s = n \implies (a, s) \Longrightarrow n\)
+is proven by induction on arithmetic expression, again the cases for 
+\(\texttt{val}_1\) and \(\texttt{var}_1\) are immediate, so let's focus on
+\(\texttt{add}_1\). Like before we have to prove that 
+\((a_1 + a_2, s) \Longrightarrow n\), with the induction hypotheses:
+\begin{align*}
+  \forall n, a_1 \ s &= n \implies (a_1, s) \Longrightarrow n \\
+  \forall n, a_2 \ s &= n \implies (a_2, s) \Longrightarrow n
+\end{align*}
+by choosing \(n\) to be \(a_1 \ s\) and \(a_2 \ s\) respectively we can construct
+the evaluation tree:
+\[
+  \texttt{add}_n: \frac{
+    (a_1, s) \Longrightarrow a_1 \ s
+    \quad
+    (a_2, s) \Longrightarrow a_2 \ s
+  }
+  {
+   (a_1 + a_2, s) \Longrightarrow a_1 \ s + a_2 \ s
+  }
+\]
+And now we simply apply the hypothesis (\((a_1 + a_2) \ s = n\)) to obtain the result. The cases for
+subtraction and multiplication are analogous.
+\end{proof}
+
+We present the rules of evaluation of boolean expression without much detail,
+as they are analogous to the arithmetic expressions, we have presented first
+the rules for arithmetic expressions because some of the rules for boolean
+expressions depend on the evaluation of arithmetic expressions.
+\begin{align*}
+  \texttt{true}_n &: (\texttt{true}, \cdot) \Longrightarrow \texttt{true} \\
+  \texttt{false}_n &: (\texttt{false}, \cdot) \Longrightarrow \texttt{false} \\
+  \texttt{not}_n &: \frac{(b, s) \Longrightarrow b'}{\lnot (b, s) \Longrightarrow \lnot b'} \\
+  \texttt{and}_n &: \frac{(b_1, s) \Longrightarrow b_1' \quad (b_2, s) \Longrightarrow b_2'}
+    {(b_1 \land b_2, s) \Longrightarrow b_1' \land b_2'} \\
+  \texttt{or}_n &: \frac{(b_1, s) \Longrightarrow b_1' \quad (b_2, s) \Longrightarrow b_2'}
+    {(b_1 \lor b_2, s) \Longrightarrow b_1' \lor b_2'} \\
+  \texttt{eq}_n &: (a_1 = a_2, s) \Longrightarrow a_1 \ s = a_2 \ s \\
+  \texttt{le}_n &: (a_1 \leq a_2, s) \Longrightarrow a_1 \ s \leq a_2 \ s
+\end{align*}
+Notice that in the last two rules we are using the reduce function to evaluate
+the arithmetic expressions, we could have used the evaluation relation, but
+this approach is easier. Everything that we said about the reduce function
+and its equivalence to the big step relation holds for boolean expressions.
 
 \subsection{Evaluating commands}
 
@@ -994,44 +1044,42 @@ boolean expressions, and also their reduction functions, one could wonder
 why do we bother with introducing the big step semantics since 
 the functions are easier to define and use. The reason is that 
 \emph{commands} cannot be evaluated by a function, this is due to the 
-\texttt{while} construct. To convince ourselves of this fact we can try to
-define such a function:
-
-\begin{minted}{lean4}
-def reduce (c: Com) (s: State): State :=
-  match c with
-  | skip₁ => s
-  | ass₁ v a => s[v ← a s]
-  | cat₁ c₁ c₂ => reduce c₂ (reduce c₁ s)
-  | if₁ b c₁ c₂ => if b s then reduce c₁ s else reduce c₂ s
-  | while₁ b c => if b s then reduce (while b loop c end) (reduce c s) else s
-\end{minted}
-
-When trying to execute this code Lean will give the error:
-
-\begin{minted}{text}
-fail to show termination for
-  Com.Natural.reduce
-with errors
-failed to infer structural recursion:
-Not considering parameter s of Com.Natural.reduce:
-  its type is not an inductive
-Cannot use parameter c:
-  failed to eliminate recursive application
-    reduce while b loop c end (reduce c s)
-\end{minted}
-
-that informs us that Lean could not prove that the function terminates, in fact
-this function is not \emph{well founded}, as the \texttt{while} construct can
-loop indefinitely, and the function would never return a value. This is why we
+\texttt{while} construct. We could define a \(\funfont{reduce}: \tyfont{Com} \to \tyfont{State} \to \tyfont{State}\) 
+function to evaluate commands that looks something like this:
+\begin{align*}
+  \funfont{reduce} \ \texttt{skip}_1 \ s &\coloneq s \\
+  \funfont{reduce} \ (x := a) \ s &\coloneq s[x \leftarrow a \ s] \\
+  \funfont{reduce} \ (c_1; c_2) \ s &\coloneq \funfont{reduce} \ c_2 \ (\funfont{reduce} \ c_1 \ s) \\
+  \funfont{reduce} \ (\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}) \ s &\coloneq
+    \text{if} \ b \ s \ \text{then} \ \funfont{reduce} \ c_1 \ s \ \text{else} \ \funfont{reduce} \ c_2 \ s \\
+  \funfont{reduce} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ s &\coloneq
+    \text{if} \ b \ s \ \text{then} \ \funfont{reduce} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ (\funfont{reduce} \ c \ s) \ \text{else} \ s
+\end{align*}
+The problem with this function is that it is not \emph{well founded}, that is,
+it could loop indefinitely, for example, the evaluation of the command
+\texttt{while true loop skip end}
+would never terminate. This is why we
 need a relation to define the semantics of commands, later we will see
 an approach that will give us a \enquote{function} to evaluate commands, \hl{that
 is \emph{denotational semantics}}.
 
 To define the big step semantics of commands we will use a relation, as 
 before, this time associating configurations to states. The definition of
-the constructors for skip, assignment and concatenation are straightforward,
-the rules for the \texttt{if} construct, however, require two constructors,
+the constructors for skip, assignment and concatenation are straightforward:
+\begin{align*}
+  \texttt{skip}_n &: (\texttt{skip}, s) \Longrightarrow s \\
+  \texttt{ass}_n &: (v \ \texttt{:=} \ a, s) \Longrightarrow s[v \leftarrow a \ s] \\
+  \texttt{cat}_n &: \frac{
+    (c_1, s_1) \Longrightarrow s_2 \quad (c_2, s_2) \Longrightarrow s_3
+  }{
+    (c_1; c_2, s_1) \Longrightarrow s_3
+  }
+\end{align*}
+In the concatenationwe have to introduce an intermediate state \(s_2\) that doesn't appear in the
+final result, in this way we account for \enquote{intermediate step} in the 
+evaluation.
+
+The rules for the \texttt{if} construct require two constructors,
 one for the case when the condition is false:
 \[
 \texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \Longrightarrow_n s_2}
@@ -1055,43 +1103,13 @@ where the \enquote{previous step} has already been applied:
   (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow_n s_3}
 {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow_n s_3}
 \]
-we have to introduce an intermediate state \(s_2\) that doesn't appear in the
-final result, in this way we account for \enquote{intermediate steps} in the 
-evaluation of the \texttt{while} construct. While the evaluation rules for
+While the evaluation rules for
 expressions could be applied \enquote{automatically}, the evaluation rules for
 commands require a more \enquote{manual} approach, as we have to \enquote{choose}
 the correct constructor to apply in the control flow of the program.
 
-The encoding of the big step semantics of commands in Lean is:
-\begin{minted}{lean4}
-inductive big_step: Config → State → Prop
-  | skipₙ:
-    big_step (skip₁, s) s
-
-  | assₙ:
-    big_step (ass₁ v a, s) (s[v ← a s])
-
-  | catₙ (s₂: State) (hc₁: big_step (c₁, s₁) s₂) (hc₂: big_step (c₂, s₂) s₃):
-    big_step (c₁++c₂, s₁) s₃
-
-  | if₀ₙ (hb: b s₁ = false) (hc₂: big_step (c₂, s₁) s₂):
-    big_step (if b then c₁ else c₂ end, s₁) s₂
-
-  | if₁ₙ (hb: b s₁ = true) (hc₁: big_step (c₁, s₁) s₂):
-    big_step (if b then c₁ else c₂ end, s₁) s₂
-
-  | while₀ₙ (hb: b s₁ = false):
-    big_step (while b loop c end, s₁) s₁
-
-  | while₁ₙ
-    (s₂: State) (hb: b s₁ = true) (hc: big_step (c, s₁) s₂)
-    (hw: big_step (while b loop c end, s₂) s₃):
-    big_step (while b loop c end, s₁) s₃
-\end{minted}
-
 Introducing some notation, as per usual, we can check the evaluation of a
 program like this:
-
 \begin{example}[Program evaluation]
   Let's evaluate a simple program containing a branch in the state \(s_0\):
 \begin{minted}{text}
@@ -1102,8 +1120,7 @@ else
   z := 4
 end
 \end{minted}
-  to simplify the notation we will denote the program as \(P\), and the
-  the all the if construct as \(\texttt{Ifelse}\), then:
+  to simplify the notation we will denote the program as \(P\), and the if construct as \(\text{Ifelse}\), then:
   \[
   \texttt{cat}_n: \frac{
     \texttt{ass}_n: (x := 2, s_0) \Longrightarrow_n s_0[x \leftarrow 2]
@@ -1119,23 +1136,6 @@ end
   }
   \]
 \end{example}
-
-Which in Lean looks like:
-
-\begin{minted}{lean4}
-private example:
-  ([|
-     x := 2;
-     if x ≤ 1 then
-       y := 3
-     else
-       z := 4
-     end
-   |], s₀)
-   ==>ₙ s₀["x" ← 2]["z" ← 4] :=
-   big_step.catₙ _ big_step.assₙ $ big_step.if₀ₙ rfl big_step.assₙ
-\end{minted}
-
 As we can see the \enquote{proof} that the program finishes in the given state
 follows directly from the evaluation tree created by the constructors of the
 big step semantics.
@@ -1166,20 +1166,23 @@ The rewriting rules for the \texttt{if} construct can be defined in two equivale
 which rule to apply depends on the context, as either one could be easier to use
 depending on the situation.
 
-\begin{theorem}[If equality]
+\begin{theorem}[If equality (version 1)]\label{thm:if_rewrite_1}
   The \texttt{if} construct can be rewritten as:
   \[
   ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2) = 
   \text{if} \ b \ s_1 \ \text{then} \ (c_1, s_1) \Longrightarrow_n s_2 \ \text{else} \ (c_2, s_1) \Longrightarrow_n s_2
   \]
-  or, equivalently:
+\end{theorem}
+or, equivalently:
+\begin{theorem}[If equality (version 2)]\label{thm:if_rewrite_2}
+  The \texttt{if} construct can be rewritten as:
   \[
   ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2) =
   ((\text{if} \ b \ s_1 \ \text{then} \ c_1 \ \text{else} \ c_2) \Longrightarrow_n s_2)
   \]
 \end{theorem}
 
-In the previous theorem we have to be careful to not confuse the \enquote{if}
+In the previous theorems we have to be careful to not confuse the \enquote{if}
 construct of the language \texttt{IMP} \hl{and that of the meta-language (in this case Lean).}
 To aid in this distinction we will use \texttt{monospace} font for the constructs
 of the language, and normal font for the constructs of the meta-language.
@@ -1243,26 +1246,45 @@ than computation.}
   \]
 \end{theorem}
 
-The proof of this fact is quite interesting, so we reproduce it in full:
-\begin{minted}{lean4}
-theorem loop_unfold:
-  while b loop c end ≈
-    if b then c++while b loop c end else skip₁ end := by
-  intro s₁ s₃
-  rw [if_eq']
-  constructor
-  . intro hmp
-    match hmp with
-    | big_step.while₁ₙ s₂ hb hc hw => exact hb ▸ big_step.catₙ s₂ hc hw
-    | big_step.while₀ₙ hb => exact hb ▸ big_step.skipₙ
-  . match hb: b s₁ with
-    | false =>
-      intro (big_step.skipₙ)
-      exact big_step.while₀ₙ hb
-    | true =>
-      intro (big_step.catₙ s₂ hc hw)
-      exact big_step.while₁ₙ s₂ hb hc hw
-\end{minted}
+% The proof of this fact is quite interesting, so we reproduce it in full:
+% \begin{minted}{lean4}
+% theorem loop_unfold:
+%   while b loop c end ≈
+%     if b then c++while b loop c end else skip₁ end := by
+%   intro s₁ s₃
+%   rw [if_eq']
+%   constructor
+%   . intro hmp
+%     match hmp with
+%     | big_step.while₁ₙ s₂ hb hc hw => exact hb ▸ big_step.catₙ s₂ hc hw
+%     | big_step.while₀ₙ hb => exact hb ▸ big_step.skipₙ
+%   . match hb: b s₁ with
+%     | false =>
+%       intro (big_step.skipₙ)
+%       exact big_step.while₀ₙ hb
+%     | true =>
+%       intro (big_step.catₙ s₂ hc hw)
+%       exact big_step.while₁ₙ s₂ hb hc hw
+% \end{minted}
+
+\begin{proof}
+  Unfolding the equivalence definition the problem is reduced to proving that
+  \(\forall s_1 \ s_3\):
+  \[
+    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3 \iff
+    (\texttt{if} \ b \ \texttt{then} \ c \texttt{;} \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \texttt{else} \ \texttt{skip}, s_1) \Longrightarrow s_3
+  \]
+  Now we can apply Theorem~\ref{thm:if_rewrite_2} to the right side of the equivalence:
+  \[
+    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3 \iff
+    (\text{if} \ b \ s_1 \ \text{then} \ c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \text{else} \ \texttt{skip}, s_1) \Longrightarrow s_3
+  \]
+  Now it is again a question of proving both implications separately.
+  \begin{itemize}
+    \item[(\(\Rightarrow\))] It suffices to check both possible constructors for
+    the \texttt{while} construct in the left of the implication.
+  \end{itemize}
+\end{proof}
 
 % Bibliography
 
