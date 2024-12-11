@@ -2,14 +2,10 @@
 
 % Requirements
 \RequirePackage{amssymb}
-\RequirePackage{etoolbox}
-\RequirePackage{amsmath}
-\RequirePackage[thmmarks, amsmath, thref]{ntheorem}
+\RequirePackage{amsthm}
 \RequirePackage{mathtools}
 
-\theorembodyfont{\normalfont}
 % Theorems
-\theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{corollary}[theorem]{Corollary}
@@ -21,28 +17,5 @@
 \newtheorem{example}[theorem]{Example}
 \newtheorem{problem}[theorem]{Problem}
 
-% \theoremstyle{remark}
 \newtheorem{remark}[theorem]{Remark}
 \newtheorem{notation}[theorem]{Notation}
-
-% Solutions
-\theoremheaderfont{\bfseries}
-\theoremseparator{.}
-%\theorembodyfont{\upshape}
-\theorembodyfont{\normalfont}
-\theoremsymbol{\ensuremath{\square}}
-\newtheorem*{proof}{Proof}
-\newtheorem*{solution}{Solution}
-
-% add space for parskip
-% \AtBeginEnvironment{definition}{\vspace{\parskip}}
-% \AtBeginEnvironment{theorem}{\vspace{\parskip}}
-% \AtBeginEnvironment{proposition}{\vspace{\parskip}}
-% \AtBeginEnvironment{corollary}{\vspace{\parskip}}
-% \AtBeginEnvironment{lemma}{\vspace{\parskip}}
-% \AtBeginEnvironment{remark}{\vspace{\parskip}}
-% \AtBeginEnvironment{notation}{\vspace{\parskip}}
-% \AtBeginEnvironment{example}{\vspace{\parskip}}
-% \AtBeginEnvironment{problem}{\vspace{\parskip}}
-% \AtBeginEnvironment{proof}{\vspace{\parskip}}
-% \AtBeginEnvironment{solution}{\vspace{\parskip}}

@@ -1,4 +1,4 @@
-\documentclass[a4paper, 10pt, parskip=half, DIV=24, toc=bibliography]{scrartcl}
+\documentclass[a4paper, 10pt, parskip=half, DIV=15, toc=bibliography]{scrartcl}
 
 % \usepackage[spanish, es-lcroman]{babel}
 
@@ -27,7 +27,9 @@
 
 \usepackage{xcolor}
 \usepackage{soul}
-\newcommand{\mathcolorbox}[2]{\colorbox{#1}{$\displaystyle #2$}}
+% \newcommand{\mathcolorbox}[2]{\colorbox{#1}{$\displaystyle #2$}}
+
+\usepackage{centernot}
 
 \usepackage{csquotes}
 
@@ -61,7 +63,7 @@
 
 \newcommand{\funfont}[1]{\text{#1}}
 \newcommand{\tyfont}[1]{\texttt{#1}}
-\renewcommand{\implies}{\to}
+\renewcommand{\implies}{\Rightarrow}
 
 \title{Resultados clásicos sobre semántica de lenguajes de programación en Lean 4 (Draft)}
 \author{Ricardo Maurizio Paul}
@@ -1082,26 +1084,26 @@ evaluation.
 The rules for the \texttt{if} construct require two constructors,
 one for the case when the condition is false:
 \[
-\texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \Longrightarrow_n s_2}
-{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2}
+\texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \Longrightarrow s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow s_2}
 \]
 and another for the case when the condition is true:
 \[
-\texttt{if}_{1n} : \frac{b \ s_1 = \texttt{true}  \quad (c_2, s_1) \Longrightarrow_n s_2}
-{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2}
+\texttt{if}_{1n} : \frac{b \ s_1 = \texttt{true}  \quad (c_2, s_1) \Longrightarrow s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow s_2}
 \]
 The evaluation rule for \texttt{while} follows the same principle but with a more
 recursive approach, the case when the condition is false is easy:
 \[
 \texttt{while}_{0n} : \frac{b \ s = \texttt{false}}
-  {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s) \Longrightarrow_n s}
+  {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s) \Longrightarrow s}
 \]
 but when the condition is true, we have to recurse from another evaluation tree
 where the \enquote{previous step} has already been applied:
 \[
-\texttt{while}_{1n} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \Longrightarrow_n s_2 \quad
-  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow_n s_3}
-{(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow_n s_3}
+\texttt{while}_{1n} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \Longrightarrow s_2 \quad
+  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow s_3}
+{(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3}
 \]
 While the evaluation rules for
 expressions could be applied \enquote{automatically}, the evaluation rules for
@@ -1123,16 +1125,16 @@ end
   to simplify the notation we will denote the program as \(P\), and the if construct as \(\text{Ifelse}\), then:
   \[
   \texttt{cat}_n: \frac{
-    \texttt{ass}_n: (x := 2, s_0) \Longrightarrow_n s_0[x \leftarrow 2]
+    \texttt{ass}_n: (x := 2, s_0) \Longrightarrow s_0[x \leftarrow 2]
     \quad
     \texttt{if}_{0n}: \displaystyle{\frac{
-      \texttt{ass}_n: (z := 4, s_0[x \leftarrow 2]) \Longrightarrow_n s_0[x \leftarrow 2][z \leftarrow 4]
+      \texttt{ass}_n: (z := 4, s_0[x \leftarrow 2]) \Longrightarrow s_0[x \leftarrow 2][z \leftarrow 4]
     }
     {
-      (\text{Ifelse}, s_0[x \leftarrow 2]) \Longrightarrow_n s_0[x \leftarrow 2][z \leftarrow 4]
+      (\text{Ifelse}, s_0[x \leftarrow 2]) \Longrightarrow s_0[x \leftarrow 2][z \leftarrow 4]
     }}
   }{
-    (P, s_0) \Longrightarrow_n s_0[x \leftarrow 2][z \leftarrow 4]
+    (P, s_0) \Longrightarrow s_0[x \leftarrow 2][z \leftarrow 4]
   }
   \]
 \end{example}
@@ -1149,7 +1151,7 @@ so we will only present the theorems.
 \begin{theorem}[Skip equality]
   Skipping (doing nothing) in a program doesn't change the state:
   \[
-  ((\texttt{skip}, s_1) \Longrightarrow_n s_2) =  (s_1 = s_2)
+  ((\texttt{skip}, s_1) \Longrightarrow s_2) =  (s_1 = s_2)
   \]
 \end{theorem}
 
@@ -1157,8 +1159,8 @@ so we will only present the theorems.
   The concatenation of two programs is equivalent to executing the first
   program and then the second:
   \[
-  ((c_1 \texttt{;} c_2, s_1) \Longrightarrow_n s_3) = 
-  \exists s_2, \left((c_1, s_1) \Longrightarrow_n s_2 \land (c_2, s_2) \Longrightarrow_n s_3\right)
+  ((c_1 \texttt{;} c_2, s_1) \Longrightarrow s_3) = 
+  \exists s_2, \left((c_1, s_1) \Longrightarrow s_2 \land (c_2, s_2) \Longrightarrow s_3\right)
   \]
 \end{theorem}
 
@@ -1169,16 +1171,16 @@ depending on the situation.
 \begin{theorem}[If equality (version 1)]\label{thm:if_rewrite_1}
   The \texttt{if} construct can be rewritten as:
   \[
-  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2) = 
-  \text{if} \ b \ s_1 \ \text{then} \ (c_1, s_1) \Longrightarrow_n s_2 \ \text{else} \ (c_2, s_1) \Longrightarrow_n s_2
+  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow s_2) = 
+  \text{if} \ b \ s_1 \ \text{then} \ (c_1, s_1) \Longrightarrow s_2 \ \text{else} \ (c_2, s_1) \Longrightarrow s_2
   \]
 \end{theorem}
 or, equivalently:
 \begin{theorem}[If equality (version 2)]\label{thm:if_rewrite_2}
   The \texttt{if} construct can be rewritten as:
   \[
-  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow_n s_2) =
-  ((\text{if} \ b \ s_1 \ \text{then} \ c_1 \ \text{else} \ c_2) \Longrightarrow_n s_2)
+  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow s_2) =
+  ((\text{if} \ b \ s_1 \ \text{then} \ c_1 \ \text{else} \ c_2) \Longrightarrow s_2)
   \]
 \end{theorem}
 
@@ -1190,9 +1192,9 @@ of the language, and normal font for the constructs of the meta-language.
 \begin{theorem}[While equality]\label{thm:while_rewrite}
   The \texttt{while} construct can be rewritten as:
   \begin{align*}
-  &((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow_n s_3) = \\
+  &((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3) = \\
   &\quad \text{if} \ b \ s_1 \\
-  &\quad \text{then} \ \exists s_2, ((c, s_1) \Longrightarrow_n s_2) \land ((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow_n s_3) \\
+  &\quad \text{then} \ \exists s_2, ((c, s_1) \Longrightarrow s_2) \land ((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow s_3) \\
   &\quad \text{else} \ s_1 = s_3
   \end{align*}
 \end{theorem}
@@ -1209,7 +1211,7 @@ that certain optimizations don't change the behaviour of a program.
   Two programs are behaviourally equivalent if they evaluate to the same state
   for all initial states:
   \[
-  c_1 \sim c_2 \coloneq \forall s_1, \forall s_2, (c_1, s_1) \Longrightarrow_n s_2 \iff (c_2, s_1) \Longrightarrow_n s_2
+  c_1 \sim c_2 \coloneq \forall s_1, \forall s_2, (c_1, s_1) \Longrightarrow s_2 \iff (c_2, s_1) \Longrightarrow s_2
   \]
 \end{definition}
 
@@ -1246,27 +1248,6 @@ than computation.}
   \]
 \end{theorem}
 
-% The proof of this fact is quite interesting, so we reproduce it in full:
-% \begin{minted}{lean4}
-% theorem loop_unfold:
-%   while b loop c end ≈
-%     if b then c++while b loop c end else skip₁ end := by
-%   intro s₁ s₃
-%   rw [if_eq']
-%   constructor
-%   . intro hmp
-%     match hmp with
-%     | big_step.while₁ₙ s₂ hb hc hw => exact hb ▸ big_step.catₙ s₂ hc hw
-%     | big_step.while₀ₙ hb => exact hb ▸ big_step.skipₙ
-%   . match hb: b s₁ with
-%     | false =>
-%       intro (big_step.skipₙ)
-%       exact big_step.while₀ₙ hb
-%     | true =>
-%       intro (big_step.catₙ s₂ hc hw)
-%       exact big_step.while₁ₙ s₂ hb hc hw
-% \end{minted}
-
 \begin{proof}
   Unfolding the equivalence definition the problem is reduced to proving that
   \(\forall s_1 \ s_3\):
@@ -1283,8 +1264,126 @@ than computation.}
   \begin{itemize}
     \item[(\(\Rightarrow\))] It suffices to check both possible constructors for
     the \texttt{while} construct in the left of the implication.
+    \begin{itemize}
+      \item[(\(b \ s_1 = \texttt{true}\))]
+      If the condition is true then the problem simplifies to:
+      \[
+        c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1 \Longrightarrow s_3
+      \]
+      and since we know the precondition is true we can apply the \(\texttt{while}_{1n}\) constructor
+      to obtain the derivation tree from the left side of the equivalence.
+      \[
+        \texttt{while}_{1n}: \frac{
+          b \ s_1 = \texttt{true}
+          \quad
+          (c, s_1) \Longrightarrow s_2 
+          \quad 
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow s_3
+        }{
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3
+        }
+      \]
+      Now it suffices to apply the newfound hypotheses of \(\texttt{while}_{1n}\) to 
+      obtain the result:
+      \[
+        \texttt{cat}_n: \frac{
+          (c, s_1) \Longrightarrow s_2
+          \quad
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow s_3
+        }{
+          (c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3
+        }
+      \]
+      \item[(\(b \ s_1 = \texttt{false}\))] The problem simplifies to:
+      \[
+        \texttt{skip}, s_1 \Longrightarrow s_3
+      \]
+      proceeding in the same manner as before we can apply the \(\texttt{while}_{0n}\) constructor:
+      \[
+        \texttt{while}_{0n}: \frac{
+          b \ s_1 = \texttt{false}          
+        }{
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_1
+        }
+      \]
+      so \(s_1 = s_3\) and we have the result.
+    \end{itemize}
+
+    \item[(\(\Leftarrow\))] This direction is also proved by cases on the condition 
+    of the \texttt{if} construct, but is even easier than before, since we
+    can directly simplify the precondition.
   \end{itemize}
 \end{proof}
+
+\subsubsection{Non termination}
+
+When we attempted to define a \tyfont{reduce} function to evaluate commands before
+we said that some programs could not end, what we mean by this is that the
+big step relationship doesn't relate the program in some state to any state.
+
+\begin{definition}[Non termination]
+  We will say that a program doesn't terminate in a given \(s\) state if there 
+  is no state that the program can evaluate to, that is:
+  \[
+   \forall s', (c, s) \centernot \Longrightarrow s'
+  \]
+\end{definition}
+
+We will prove that there are programs in \texttt{IMP} that don't terminate,
+we will show that there is in fact a program that doesn't terminate in any
+state.
+
+\begin{theorem}[While true doesn't terminate]
+  The program \texttt{while b loop c end}, where \(b \sim \texttt{true}\)
+  doesn't terminate in any state.
+  \[
+  \forall s_1 \ s_2, (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \centernot \Longrightarrow s_2
+  \]
+\end{theorem}
+
+\begin{proof}
+  In reality the \(\centernot \Longrightarrow\) is syntactic sugar for
+  the negation of the big step relation, so the theorem is equivalent to:
+  \[
+  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_2 \implies \bot
+  \]
+  Now we have to use a little trick, we will first generalize the configuration on the
+  left, calling it \(\text{hconf} \coloneq (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1)\) 
+  so:
+  \[
+  \text{hconf} \Longrightarrow s_2 \implies \bot
+  \]
+  now we will use the induction principle on the configuration, that is, we will
+  prove the theorem for all the possible forms of \text{hconf}. Since
+  \(\text{hconf} = (\texttt{skip}, s_1)\) for example is clearly false, we will only
+  prove the case for the two constructors of \texttt{while}.
+
+  In the \(\texttt{while}_{1n}\) case we have to prove that:
+  \[
+    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) = (\texttt{while} \ b' \ \texttt{loop} \ c' \ \texttt{end}, s_1')
+  \]
+  but the induction hypothesis takes the form:
+  \[
+    \forall x, (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, x) = (\texttt{while} \ b' \ \texttt{loop} \ c' \ \texttt{end}, s_2')
+  \]
+  so it suffices to choose \(x = s_2\). For the \(\texttt{while}_{0n}\) case we 
+  don't even need to use induction, in fact if \text{hconf} takes this form
+  that means that the condition of the \texttt{while} construct is false but
+  \(b \sim \texttt{true}\) by hypothesis so we have a contradiction.
+\end{proof}
+
+\subsubsection{Determinism}
+
+Another important property of \texttt{IMP} that we can prove using the big step
+semantics is that the evaluation of a program is deterministic, that is, given
+a program and a state there is only one state that the program can evaluate to.
+
+\begin{theorem}[Determinism]
+  The evaluation of a program is deterministic:
+  \[
+  \forall c \ s \ s_1 \ s_2, ((c, s) \Longrightarrow s_1 \land (c, s) \Longrightarrow s_2) \implies s_1 = s_2
+  \]
+\end{theorem}
 
 % Bibliography
 
