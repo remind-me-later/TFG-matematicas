@@ -1,4 +1,10 @@
-\documentclass[a4paper, 10pt, parskip=half, DIV=15, toc=bibliography]{scrartcl}
+\documentclass[
+  a4paper, 
+  10pt, 
+  parskip=half, 
+  DIV=15, 
+  toc=bibliography
+]{scrartcl}
 
 % \usepackage[spanish, es-lcroman]{babel}
 
@@ -14,22 +20,40 @@
 % \usepackage[shortlabels]{enumitem}
 % \usepackage{epigraph}
 
-\usepackage{fontspec}
+% \usepackage{fontspec}
 % switch to a monospace font supporting more Unicode characters
-\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
-\usepackage[outputdir=../build]{minted}
-\usemintedstyle{pastie}
+% \setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
+% \usepackage[outputdir=../build]{minted}
+% \usemintedstyle{pastie}
 
 % Use KOMA-Script's nice headers instead of fancyhdr
 % \usepackage[Conny]{fncychap}
 
-\usepackage{../sty/teoremas}
-
 \usepackage{xcolor}
 \usepackage{soul}
-% \newcommand{\mathcolorbox}[2]{\colorbox{#1}{$\displaystyle #2$}}
 
+% === Math facilities ===
 \usepackage{centernot}
+% Requirements
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+
+% Theorems
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+
+% \theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+% Problems
+\newtheorem{example}[theorem]{Example}
+\newtheorem{problem}[theorem]{Problem}
+
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{notation}[theorem]{Notation}
+% === End math facilities ===
 
 \usepackage{csquotes}
 
@@ -64,6 +88,9 @@
 \newcommand{\funfont}[1]{\text{#1}}
 \newcommand{\tyfont}[1]{\texttt{#1}}
 \renewcommand{\implies}{\Rightarrow}
+
+% define math symbol for big step arrow
+\newcommand{\bigstep}{\Longrightarrow}
 
 \title{Resultados clásicos sobre semántica de lenguajes de programación en Lean 4 (Draft)}
 \author{Ricardo Maurizio Paul}
@@ -148,8 +175,6 @@ correctly.}
 
 \section{Proof assistants}
 
-\subsection{Historical background}
-
 Proof assistants, or interactive theorem provers, are software systems that aid
 in the construction and verification of mathematical proofs using computers. The
 inception of proof assistants can be traced back to the 1950s and 1960s, with
@@ -206,18 +231,89 @@ Leaving HOL aside, all these systems are based on the Curry-Howard isomorphism,
 a fundamental concept that relates proofs and programs. To understand it we must
 first introduce the basics of type theory.
 
+\section{Lambda calculus}
+
+The \(\lambda\)-calculus is a formal system for expressing computation based on function abstraction 
+and application using variable binding and substitution. It was introduced by 
+Alonzo Church in the 1930s as a way to study the foundations of mathematics and 
+has since become a fundamental concept in computer science. We can think of
+it as a \enquote{programming language} with only one data type, the function, and
+two operations, abstraction and application.
+
+The syntax of lambda calculus is simple, it consists of variables (\(x, y, z\)),
+abstraction (\(\lambda x \implies M\)), and application (\(M \ N\)). 
+
+\begin{example}\label{ex:lambda_expr}
+We can apply the successor function to the number 3 as:
+\[
+(\lambda x \implies x + 1) \ 3
+\]
+\end{example}
+
+The rules to evaluate lambda calculus expressions are known as
+\emph{reduction rules} and they are:
+\begin{itemize}
+  \item[\(\alpha\)-conversion] Allows us to rename bound variables:
+    \((\lambda x \implies M) \ N \longrightarrow M[x := N]\) 
+
+  \item[Substitution] Allows us to replace all \emph{free} occurrences of the 
+  variable \(x\) in the expression \(M\) with expression \(N\) and is denoted as
+  \(M[x \coloneq N]\).
+  
+  \item[\(\beta\)-reduction] Allows us to apply a function to an argument, and
+    is defined in terms of substitution as:
+    \((\lambda x \implies M) \ N \longrightarrow M[x \coloneq N]\).
+
+  \item[\(\eta\)-conversion] Expresses the concept of \emph{extensionality} of functions, 
+    and states that two functions are equal if they are equal for all arguments.
+    To give an example it converts \((\lambda x \implies f \ x) \longrightarrow f\)
+    when \(x\) is not free in \(f\).
+\end{itemize}
+
+\begin{example}
+  We can apply the \(\beta\)-reduction rule to the expression in
+  Example~\ref{ex:lambda_expr} as:
+  \[
+  (\lambda x \implies x + 1) \ 3 \longrightarrow 3 + 1
+  \]
+\end{example}
+
+These reduction rules are called like that because they only go one way, from
+left to right. Seeing the previous example one could think that they also
+\enquote{reduce} expressions to simpler ones, but this is not always the case.
+
+\begin{definition}[Normal form]
+  An expression is in normal form if it cannot be reduced further.
+\end{definition}
+
+Now we present an example of an expression that does not have a normal form.
+
+\begin{definition}[\(\Omega\)-combinator]\label{def:omega_combinator}
+  The \(\Omega\)-combinator:
+  \[
+  \Omega \coloneq (\lambda x \implies x \ x) \ (\lambda x \implies x \ x)
+  \]
+  is a lambda expression that does not have a normal form
+\end{definition}
+
+\begin{proof}
+  If we apply the \(\beta\)-reduction rule to~\ref{def:omega_combinator}we get
+  the expression itself:
+  \[
+  (\lambda x \implies x \ x) \ (\lambda x \implies x \ x) \longrightarrow
+  (\lambda x \implies x \ x) \ (\lambda x \implies x \ x)
+  \]
+  So the expression does not have a normal form.
+\end{proof}
+
+\subsection{Simply typed lambda calculus}
+
 \section{Type theory}
 
 Type theory is not a single theory, but a family of related theories that share
 the same basic principles. We will focus on a family of type theories known as
 Martin-Löf type theory, which was developed by Per Martin-Löf in the 1970s as a
 foundation for constructive mathematics, in particular the version used in~\cite{hottbook}. 
-Since its inception, type theory has
-been strongly connected to \(\lambda\)-calculus, a formal system for expressing
-computation based on function abstraction and application. This connection
-arises thanks to the works of Alonzo Church, who showed that the
-\(\lambda\)-calculus is equivalent to the Turing machine, and can be used to
-define computable functions.
 
 \subsection{Type theory vs set theory}
 
@@ -639,8 +735,8 @@ An example program in \texttt{IMP} could then be:
   \begin{verbatim}
   n := 5; i := 2; res := 1;
 
-  while i ≤ n loop
-      res := res × i;
+  while i <= n loop
+      res := res * i;
       i := i + 1
   end
   \end{verbatim}
@@ -674,7 +770,7 @@ keys to values, this is done using the \texttt{update} function:
   original map.
   \begin{align*}
   \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneq \\
-                      &\lambda k' \mapsto \funfont{cond} \ (k = k') \ v \ (m \ k')
+                      &\lambda k' \implies \funfont{cond} \ (k = k') \ v \ (m \ k')
   \end{align*}
 \end{definition}
 
@@ -687,7 +783,7 @@ pattern matching, we can define it as:
 We can even denote the \funfont{cond} function as an \emph{if then else}:
 \begin{align*}
   \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneq \\
-                      &\lambda k' \mapsto \text{if} \ k = k' \ \text{then} \ v \ \text{else} \ m \ k'
+                      &\lambda k' \implies \text{if} \ k = k' \ \text{then} \ v \ \text{else} \ m \ k'
 \end{align*}
 Not to be confused with the \texttt{if then else} construct of the language 
 \texttt{IMP}. While we are introducing notation we can also introduce some to 
@@ -748,21 +844,6 @@ but we can easily prove it.
   \end{itemize}
 \end{proof}
 
-This can be easily translated to Lean code:
-
-\begin{minted}{lean4}
-theorem eval_last:
-  m[k ← v₂][k ← v₁] = m[k ← v₁] := by
-  funext k'
-  match h: k == k' with
-  | true =>
-    unfold Map.update
-    rw [h, cond_true, cond_true]
-  | false =>
-    unfold Map.update
-    rw [h, cond_false, cond_false, cond_false]
-\end{minted}
-
 The proof of other similar properties, such as the commutativity of the update
 function, or the idempotence of the update function, are proved in a similar
 fashion, and can be found in the code.
@@ -816,7 +897,7 @@ value.
   We will define the \emph{initial state} of an \(\texttt{IMP}\) program as the
   constant function that maps all variables to zero.
   \[
-  s_0 \coloneq \lambda x \mapsto 0
+  s_0 \coloneq \lambda x \implies 0
   \]
 \end{definition}
 
@@ -854,14 +935,14 @@ Let's introduce a notation more familiar to classic text on formal semantics.
 \begin{notation}[Arithmetic big step]
   We will denote the step relation \(\funfont{big\_step} \ (a, s) \ n\) as
   \[
-  (a, s) \Longrightarrow n
+  (a, s) \bigstep n
   \]
 \end{notation}
 
 Now the constructors will be the rules of the evaluation, for example the
 constructor for the constant expression will be:
 \[
-  \texttt{val}_n : (n, \cdot) \Longrightarrow n
+  \texttt{val}_n : (n, \cdot) \bigstep n
 \]
 
 Which relates the configuration \((n, \cdot)\), where the \(n\) of the left is
@@ -874,7 +955,7 @@ the big step constructor from the syntactic constructor.
 The constructor for the variable expression is similar, but this time we need
 to look up the value of the variable in the state:
 \[
-  \texttt{var}_n : (x, s) \Longrightarrow s \ x
+  \texttt{var}_n : (x, s) \bigstep s \ x
 \]
 
 Now we can define the constructors for the arithmetic operations, since these 
@@ -883,8 +964,8 @@ right expressions to evaluate the operation, this is done by requiring
 the evaluation of the left and right expressions in the premises of the rule.
 For example the constructor for the addition operation is:
 \[
-  \texttt{add}_n : \frac{(a_1, s) \Longrightarrow n_1 \quad (a_2, s) \Longrightarrow n_2}
-   {(a_1 + a_2, s) \Longrightarrow n_1 + n_2}
+  \texttt{add}_n : \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+   {(a_1 + a_2, s) \bigstep n_1 + n_2}
 \]
 The previous rule states that if the configuration \((a_1, s)\) evaluates to
 \(n_1\) and the configuration \((a_2, s)\) evaluates to \(n_2\), then the
@@ -892,10 +973,10 @@ configuration \((a_1 + a_2, s)\) evaluates to \(n_1 + n_2\).
 
 The constructors of the subtraction and multiplication operations are analogous.
 \begin{align*}
-  \texttt{sub}_n &: \frac{(a_1, s) \Longrightarrow n_1 \quad (a_2, s) \Longrightarrow n_2}
-   {(a_1 - a_2, s) \Longrightarrow n_1 - n_2} \\
-  \texttt{mul}_n &: \frac{(a_1, s) \Longrightarrow n_1 \quad (a_2, s) \Longrightarrow n_2}
-   {(a_1 * a_2, s) \Longrightarrow n_1 * n_2}
+  \texttt{sub}_n &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+   {(a_1 - a_2, s) \bigstep n_1 - n_2} \\
+  \texttt{mul}_n &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+   {(a_1 * a_2, s) \bigstep n_1 * n_2}
 \end{align*}
 
 One can think that while applying the syntactic rules of the language we are
@@ -910,18 +991,18 @@ Let's see an example of a valid \emph{evaluation tree}.
 \[
   \texttt{add}_n: \frac{
     \texttt{add}_n: \displaystyle{\frac{
-      \texttt{var}_n: (x, s_0) \Longrightarrow 0
+      \texttt{var}_n: (x, s_0) \bigstep 0
       \quad
-      \texttt{val}_n: (5, s_0) \Longrightarrow 5
-    }{(x + 5, s_0) \Longrightarrow 5}}
+      \texttt{val}_n: (5, s_0) \bigstep 5
+    }{(x + 5, s_0) \bigstep 5}}
     \quad 
     \texttt{sub}_n: \displaystyle{\frac{
-      \texttt{val}_n: (9, s_0) \Longrightarrow 9
+      \texttt{val}_n: (9, s_0) \bigstep 9
       \quad
-      \texttt{val}_n: (7, s_0) \Longrightarrow 7
-    }{(9 - 7, s_0) \Longrightarrow 2}}
+      \texttt{val}_n: (7, s_0) \bigstep 7
+    }{(9 - 7, s_0) \bigstep 2}}
   }
-  {((x + 5) + (9 - 7), s_0) \Longrightarrow 7}
+  {((x + 5) + (9 - 7), s_0) \bigstep 7}
 \]
 \end{example}
 
@@ -972,7 +1053,7 @@ both evaluation rules are equivalent, fortunately they are, and we can prove it.
   The step relation and the reduce function are equivalent, that is, for all
   expressions \(a\), states \(s\), and values \(n\), we have:
   \[
-  ((a, s) \Longrightarrow n) = (a \ s = n)
+  ((a, s) \bigstep n) = (a \ s = n)
   \]
 \end{theorem}
 
@@ -982,7 +1063,7 @@ transform the equals into a double implication, and then proving each
 implication separately.
 
 Let's first prove the left to right implication 
-\((a, s) \Longrightarrow n \implies a \ s = n\). We proceed by induction
+\((a, s) \bigstep n \implies a \ s = n\). We proceed by induction
 on the evaluation relation, the cases for the constructors \(\texttt{val}_n\)
 and \(\texttt{var}_n\) are immediate. In the case of \(\texttt{add}_n\) the
 expression has the form \(a_1 + a_2\), and so we have to prove that
@@ -994,25 +1075,25 @@ for some \(n_1\) and \(n_2\), by the induction hypothesis we have that
 definition of the reduce function to prove the equality.
 The cases for the subtraction and multiplication are analogous.
 
-The right to left implication \(a \ s = n \implies (a, s) \Longrightarrow n\)
+The right to left implication \(a \ s = n \implies (a, s) \bigstep n\)
 is proven by induction on arithmetic expression, again the cases for 
 \(\texttt{val}_1\) and \(\texttt{var}_1\) are immediate, so let's focus on
 \(\texttt{add}_1\). Like before we have to prove that 
-\((a_1 + a_2, s) \Longrightarrow n\), with the induction hypotheses:
+\((a_1 + a_2, s) \bigstep n\), with the induction hypotheses:
 \begin{align*}
-  \forall n, a_1 \ s &= n \implies (a_1, s) \Longrightarrow n \\
-  \forall n, a_2 \ s &= n \implies (a_2, s) \Longrightarrow n
+  \forall n, a_1 \ s &= n \implies (a_1, s) \bigstep n \\
+  \forall n, a_2 \ s &= n \implies (a_2, s) \bigstep n
 \end{align*}
 by choosing \(n\) to be \(a_1 \ s\) and \(a_2 \ s\) respectively we can construct
 the evaluation tree:
 \[
   \texttt{add}_n: \frac{
-    (a_1, s) \Longrightarrow a_1 \ s
+    (a_1, s) \bigstep a_1 \ s
     \quad
-    (a_2, s) \Longrightarrow a_2 \ s
+    (a_2, s) \bigstep a_2 \ s
   }
   {
-   (a_1 + a_2, s) \Longrightarrow a_1 \ s + a_2 \ s
+   (a_1 + a_2, s) \bigstep a_1 \ s + a_2 \ s
   }
 \]
 And now we simply apply the hypothesis (\((a_1 + a_2) \ s = n\)) to obtain the result. The cases for
@@ -1024,15 +1105,15 @@ as they are analogous to the arithmetic expressions, we have presented first
 the rules for arithmetic expressions because some of the rules for boolean
 expressions depend on the evaluation of arithmetic expressions.
 \begin{align*}
-  \texttt{true}_n &: (\texttt{true}, \cdot) \Longrightarrow \texttt{true} \\
-  \texttt{false}_n &: (\texttt{false}, \cdot) \Longrightarrow \texttt{false} \\
-  \texttt{not}_n &: \frac{(b, s) \Longrightarrow b'}{\lnot (b, s) \Longrightarrow \lnot b'} \\
-  \texttt{and}_n &: \frac{(b_1, s) \Longrightarrow b_1' \quad (b_2, s) \Longrightarrow b_2'}
-    {(b_1 \land b_2, s) \Longrightarrow b_1' \land b_2'} \\
-  \texttt{or}_n &: \frac{(b_1, s) \Longrightarrow b_1' \quad (b_2, s) \Longrightarrow b_2'}
-    {(b_1 \lor b_2, s) \Longrightarrow b_1' \lor b_2'} \\
-  \texttt{eq}_n &: (a_1 = a_2, s) \Longrightarrow a_1 \ s = a_2 \ s \\
-  \texttt{le}_n &: (a_1 \leq a_2, s) \Longrightarrow a_1 \ s \leq a_2 \ s
+  \texttt{true}_n &: (\texttt{true}, \cdot) \bigstep \texttt{true} \\
+  \texttt{false}_n &: (\texttt{false}, \cdot) \bigstep \texttt{false} \\
+  \texttt{not}_n &: \frac{(b, s) \bigstep b'}{\lnot (b, s) \bigstep \lnot b'} \\
+  \texttt{and}_n &: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+    {(b_1 \land b_2, s) \bigstep b_1' \land b_2'} \\
+  \texttt{or}_n &: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+    {(b_1 \lor b_2, s) \bigstep b_1' \lor b_2'} \\
+  \texttt{eq}_n &: (a_1 = a_2, s) \bigstep a_1 \ s = a_2 \ s \\
+  \texttt{le}_n &: (a_1 \leq a_2, s) \bigstep a_1 \ s \leq a_2 \ s
 \end{align*}
 Notice that in the last two rules we are using the reduce function to evaluate
 the arithmetic expressions, we could have used the evaluation relation, but
@@ -1069,12 +1150,12 @@ To define the big step semantics of commands we will use a relation, as
 before, this time associating configurations to states. The definition of
 the constructors for skip, assignment and concatenation are straightforward:
 \begin{align*}
-  \texttt{skip}_n &: (\texttt{skip}, s) \Longrightarrow s \\
-  \texttt{ass}_n &: (v \ \texttt{:=} \ a, s) \Longrightarrow s[v \leftarrow a \ s] \\
+  \texttt{skip}_n &: (\texttt{skip}, s) \bigstep s \\
+  \texttt{ass}_n &: (v \ \texttt{:=} \ a, s) \bigstep s[v \leftarrow a \ s] \\
   \texttt{cat}_n &: \frac{
-    (c_1, s_1) \Longrightarrow s_2 \quad (c_2, s_2) \Longrightarrow s_3
+    (c_1, s_1) \bigstep s_2 \quad (c_2, s_2) \bigstep s_3
   }{
-    (c_1; c_2, s_1) \Longrightarrow s_3
+    (c_1; c_2, s_1) \bigstep s_3
   }
 \end{align*}
 In the concatenationwe have to introduce an intermediate state \(s_2\) that doesn't appear in the
@@ -1084,26 +1165,26 @@ evaluation.
 The rules for the \texttt{if} construct require two constructors,
 one for the case when the condition is false:
 \[
-\texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \Longrightarrow s_2}
-{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow s_2}
+\texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \bigstep s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2}
 \]
 and another for the case when the condition is true:
 \[
-\texttt{if}_{1n} : \frac{b \ s_1 = \texttt{true}  \quad (c_2, s_1) \Longrightarrow s_2}
-{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow s_2}
+\texttt{if}_{1n} : \frac{b \ s_1 = \texttt{true}  \quad (c_2, s_1) \bigstep s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2}
 \]
 The evaluation rule for \texttt{while} follows the same principle but with a more
 recursive approach, the case when the condition is false is easy:
 \[
 \texttt{while}_{0n} : \frac{b \ s = \texttt{false}}
-  {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s) \Longrightarrow s}
+  {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s) \bigstep s}
 \]
 but when the condition is true, we have to recurse from another evaluation tree
 where the \enquote{previous step} has already been applied:
 \[
-\texttt{while}_{1n} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \Longrightarrow s_2 \quad
-  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow s_3}
-{(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3}
+\texttt{while}_{1n} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \bigstep s_2 \quad
+  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3}
+{(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3}
 \]
 While the evaluation rules for
 expressions could be applied \enquote{automatically}, the evaluation rules for
@@ -1114,27 +1195,27 @@ Introducing some notation, as per usual, we can check the evaluation of a
 program like this:
 \begin{example}[Program evaluation]
   Let's evaluate a simple program containing a branch in the state \(s_0\):
-\begin{minted}{text}
-x := 2;
-if x ≤ 1 then
-  y := 3
-else
-  z := 4
-end
-\end{minted}
+\begin{verbatim}
+  x := 2;
+  if x <= 1 then
+    y := 3
+  else
+    z := 4
+  end
+\end{verbatim}
   to simplify the notation we will denote the program as \(P\), and the if construct as \(\text{Ifelse}\), then:
   \[
   \texttt{cat}_n: \frac{
-    \texttt{ass}_n: (x := 2, s_0) \Longrightarrow s_0[x \leftarrow 2]
+    \texttt{ass}_n: (x := 2, s_0) \bigstep s_0[x \leftarrow 2]
     \quad
     \texttt{if}_{0n}: \displaystyle{\frac{
-      \texttt{ass}_n: (z := 4, s_0[x \leftarrow 2]) \Longrightarrow s_0[x \leftarrow 2][z \leftarrow 4]
+      \texttt{ass}_n: (z := 4, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
     }
     {
-      (\text{Ifelse}, s_0[x \leftarrow 2]) \Longrightarrow s_0[x \leftarrow 2][z \leftarrow 4]
+      (\text{Ifelse}, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
     }}
   }{
-    (P, s_0) \Longrightarrow s_0[x \leftarrow 2][z \leftarrow 4]
+    (P, s_0) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
   }
   \]
 \end{example}
@@ -1142,7 +1223,7 @@ As we can see the \enquote{proof} that the program finishes in the given state
 follows directly from the evaluation tree created by the constructors of the
 big step semantics.
 
-\subsubsection{Rewriting rules}
+\subsection{Rewriting rules}
 
 Now we can prove some \enquote{rewriting rules} for the constructs of the 
 language, the proof is more or less immediate and can be found in the code,
@@ -1151,7 +1232,7 @@ so we will only present the theorems.
 \begin{theorem}[Skip equality]
   Skipping (doing nothing) in a program doesn't change the state:
   \[
-  ((\texttt{skip}, s_1) \Longrightarrow s_2) =  (s_1 = s_2)
+  ((\texttt{skip}, s_1) \bigstep s_2) = (s_1 = s_2)
   \]
 \end{theorem}
 
@@ -1159,8 +1240,8 @@ so we will only present the theorems.
   The concatenation of two programs is equivalent to executing the first
   program and then the second:
   \[
-  ((c_1 \texttt{;} c_2, s_1) \Longrightarrow s_3) = 
-  \exists s_2, \left((c_1, s_1) \Longrightarrow s_2 \land (c_2, s_2) \Longrightarrow s_3\right)
+  ((c_1 \texttt{;} c_2, s_1) \bigstep s_3) = 
+  \exists s_2, \left((c_1, s_1) \bigstep s_2 \land (c_2, s_2) \bigstep s_3\right)
   \]
 \end{theorem}
 
@@ -1171,16 +1252,16 @@ depending on the situation.
 \begin{theorem}[If equality (version 1)]\label{thm:if_rewrite_1}
   The \texttt{if} construct can be rewritten as:
   \[
-  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow s_2) = 
-  \text{if} \ b \ s_1 \ \text{then} \ (c_1, s_1) \Longrightarrow s_2 \ \text{else} \ (c_2, s_1) \Longrightarrow s_2
+  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2) = 
+  \text{if} \ b \ s_1 \ \text{then} \ (c_1, s_1) \bigstep s_2 \ \text{else} \ (c_2, s_1) \bigstep s_2
   \]
 \end{theorem}
 or, equivalently:
 \begin{theorem}[If equality (version 2)]\label{thm:if_rewrite_2}
   The \texttt{if} construct can be rewritten as:
   \[
-  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \Longrightarrow s_2) =
-  ((\text{if} \ b \ s_1 \ \text{then} \ c_1 \ \text{else} \ c_2) \Longrightarrow s_2)
+  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2) =
+  ((\text{if} \ b \ s_1 \ \text{then} \ c_1 \ \text{else} \ c_2) \bigstep s_2)
   \]
 \end{theorem}
 
@@ -1192,14 +1273,14 @@ of the language, and normal font for the constructs of the meta-language.
 \begin{theorem}[While equality]\label{thm:while_rewrite}
   The \texttt{while} construct can be rewritten as:
   \begin{align*}
-  &((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3) = \\
+  &((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3) = \\
   &\quad \text{if} \ b \ s_1 \\
-  &\quad \text{then} \ \exists s_2, ((c, s_1) \Longrightarrow s_2) \land ((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow s_3) \\
+  &\quad \text{then} \ \exists s_2, ((c, s_1) \bigstep s_2) \land ((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3) \\
   &\quad \text{else} \ s_1 = s_3
   \end{align*}
 \end{theorem}
 
-\subsubsection{Behavioral equivalence}
+\subsection{Behavioral equivalence}
 
 The previous rewriting rules are useful in proofs as we can substitute one program
 for another that is \enquote{exactly the same}, but we can also define a more
@@ -1211,7 +1292,7 @@ that certain optimizations don't change the behaviour of a program.
   Two programs are behaviourally equivalent if they evaluate to the same state
   for all initial states:
   \[
-  c_1 \sim c_2 \coloneq \forall s_1, \forall s_2, (c_1, s_1) \Longrightarrow s_2 \iff (c_2, s_1) \Longrightarrow s_2
+  c_1 \sim c_2 \coloneq \forall s_1, \forall s_2, (c_1, s_1) \bigstep s_2 \iff (c_2, s_1) \bigstep s_2
   \]
 \end{definition}
 
@@ -1252,23 +1333,23 @@ than computation.}
   Unfolding the equivalence definition the problem is reduced to proving that
   \(\forall s_1 \ s_3\):
   \[
-    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3 \iff
-    (\texttt{if} \ b \ \texttt{then} \ c \texttt{;} \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \texttt{else} \ \texttt{skip}, s_1) \Longrightarrow s_3
+    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3 \iff
+    (\texttt{if} \ b \ \texttt{then} \ c \texttt{;} \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \texttt{else} \ \texttt{skip}, s_1) \bigstep s_3
   \]
   Now we can apply Theorem~\ref{thm:if_rewrite_2} to the right side of the equivalence:
   \[
-    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3 \iff
-    (\text{if} \ b \ s_1 \ \text{then} \ c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \text{else} \ \texttt{skip}, s_1) \Longrightarrow s_3
+    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3 \iff
+    (\text{if} \ b \ s_1 \ \text{then} \ c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \text{else} \ \texttt{skip}, s_1) \bigstep s_3
   \]
   Now it is again a question of proving both implications separately.
   \begin{itemize}
-    \item[(\(\Rightarrow\))] It suffices to check both possible constructors for
+    \item[(\(\implies\))] It suffices to check both possible constructors for
     the \texttt{while} construct in the left of the implication.
     \begin{itemize}
       \item[(\(b \ s_1 = \texttt{true}\))]
       If the condition is true then the problem simplifies to:
       \[
-        c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1 \Longrightarrow s_3
+        c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1 \bigstep s_3
       \]
       and since we know the precondition is true we can apply the \(\texttt{while}_{1n}\) constructor
       to obtain the derivation tree from the left side of the equivalence.
@@ -1276,46 +1357,46 @@ than computation.}
         \texttt{while}_{1n}: \frac{
           b \ s_1 = \texttt{true}
           \quad
-          (c, s_1) \Longrightarrow s_2 
+          (c, s_1) \bigstep s_2 
           \quad 
-          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow s_3
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3
         }{
-          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3
         }
       \]
       Now it suffices to apply the newfound hypotheses of \(\texttt{while}_{1n}\) to 
       obtain the result:
       \[
         \texttt{cat}_n: \frac{
-          (c, s_1) \Longrightarrow s_2
+          (c, s_1) \bigstep s_2
           \quad
-          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \Longrightarrow s_3
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3
         }{
-          (c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_3
+          (c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3
         }
       \]
       \item[(\(b \ s_1 = \texttt{false}\))] The problem simplifies to:
       \[
-        \texttt{skip}, s_1 \Longrightarrow s_3
+        \texttt{skip}, s_1 \bigstep s_3
       \]
       proceeding in the same manner as before we can apply the \(\texttt{while}_{0n}\) constructor:
       \[
         \texttt{while}_{0n}: \frac{
           b \ s_1 = \texttt{false}          
         }{
-          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_1
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_1
         }
       \]
       so \(s_1 = s_3\) and we have the result.
     \end{itemize}
 
-    \item[(\(\Leftarrow\))] This direction is also proved by cases on the condition 
+    \item[(\(\impliedby\))] This direction is also proved by cases on the condition 
     of the \texttt{if} construct, but is even easier than before, since we
     can directly simplify the precondition.
   \end{itemize}
 \end{proof}
 
-\subsubsection{Non termination}
+\subsection{Non termination}
 
 When we attempted to define a \tyfont{reduce} function to evaluate commands before
 we said that some programs could not end, what we mean by this is that the
@@ -1325,7 +1406,7 @@ big step relationship doesn't relate the program in some state to any state.
   We will say that a program doesn't terminate in a given \(s\) state if there 
   is no state that the program can evaluate to, that is:
   \[
-   \forall s', (c, s) \centernot \Longrightarrow s'
+   \forall s', (c, s) \centernot \bigstep s'
   \]
 \end{definition}
 
@@ -1337,21 +1418,21 @@ state.
   The program \texttt{while b loop c end}, where \(b \sim \texttt{true}\)
   doesn't terminate in any state.
   \[
-  \forall s_1 \ s_2, (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \centernot \Longrightarrow s_2
+  \forall s_1 \ s_2, (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \centernot \bigstep s_2
   \]
 \end{theorem}
 
 \begin{proof}
-  In reality the \(\centernot \Longrightarrow\) is syntactic sugar for
+  In reality the \(\centernot \bigstep\) is syntactic sugar for
   the negation of the big step relation, so the theorem is equivalent to:
   \[
-  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \Longrightarrow s_2 \implies \bot
+  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_2 \implies \bot
   \]
   Now we have to use a little trick, we will first generalize the configuration on the
   left, calling it \(\text{hconf} \coloneq (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1)\) 
   so:
   \[
-  \text{hconf} \Longrightarrow s_2 \implies \bot
+  \text{hconf} \bigstep s_2 \implies \bot
   \]
   now we will use the induction principle on the configuration, that is, we will
   prove the theorem for all the possible forms of \text{hconf}. Since
@@ -1372,7 +1453,7 @@ state.
   \(b \sim \texttt{true}\) by hypothesis so we have a contradiction.
 \end{proof}
 
-\subsubsection{Determinism}
+\subsection{Determinism}
 
 Another important property of \texttt{IMP} that we can prove using the big step
 semantics is that the evaluation of a program is deterministic, that is, given
@@ -1381,9 +1462,39 @@ a program and a state there is only one state that the program can evaluate to.
 \begin{theorem}[Determinism]
   The evaluation of a program is deterministic:
   \[
-  \forall c \ s \ s_1 \ s_2, ((c, s) \Longrightarrow s_1 \land (c, s) \Longrightarrow s_2) \implies s_1 = s_2
+  \forall c \ s \ s_1 \ s_2, ((c, s) \bigstep s_1 \land (c, s) \bigstep s_2) \implies s_1 = s_2
   \]
 \end{theorem}
+
+\begin{proof}
+  We will prove the theorem by induction on \((c, s) \bigstep s_1\).
+  The \texttt{skip} and assignment cases are immediate, for the concatenation
+  we will need the induction hypotheses:
+  \begin{align*}
+    \forall x, (c_1', s_1') &\bigstep x \implies s_3 = x \\
+    \forall y, (c_2', s_2') &\bigstep y \implies s_1 = y
+  \end{align*}
+  the right hand side of the conjunction takes the form 
+  \((c_1';c_2', s_1') \bigstep s_2\) so we must have its preconditions,
+  that is:
+  \[
+    \texttt{ass}_n: \frac{
+      (c_1', s_1') \bigstep s_2' 
+      \quad 
+      (c_2', s_2') \bigstep s_2
+    }{
+      (c_1';c_2', s_1') \bigstep s_2
+    }
+  \]
+  Now we can apply the first induction hypothesis on the left precondition to
+  obtain \(s_3 = s_2'\), with this the second precondition becomes
+  \((c_2', s_3) \bigstep s_2\) and applying the second 
+  induction hypothesis \(s_1 = s_2\), which is what we wanted to prove.
+
+  The rest of the cases are analogous, the details can be found in the code.
+\end{proof}
+
+\section{Small-Step Semantics}
 
 % Bibliography
 
