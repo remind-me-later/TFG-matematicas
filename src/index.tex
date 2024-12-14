@@ -2,9 +2,12 @@
   a4paper, 
   10pt, 
   parskip=half, 
-  DIV=15, 
-  toc=bibliography
+  DIV=30,
+  toc=bibliography,
+  usegeometry,
 ]{scrartcl}
+
+% \usepackage{showframe}
 
 % \usepackage[spanish, es-lcroman]{babel}
 
@@ -33,26 +36,26 @@
 \usepackage{soul}
 
 % === Math facilities ===
-\usepackage{centernot}
-% Requirements
-\usepackage{amssymb}
+
+% Theorem environments
 \usepackage{amsthm}
-\usepackage{mathtools}
 
-% Theorems
 \newtheorem{theorem}{Theorem}[section]
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{lemma}[theorem]{Lemma}
+% \newtheorem{proposition}[theorem]{Proposition}
+% \newtheorem{corollary}[theorem]{Corollary}
+% \newtheorem{lemma}[theorem]{Lemma}
 
-% \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
-% Problems
 \newtheorem{example}[theorem]{Example}
 \newtheorem{problem}[theorem]{Problem}
 
-\newtheorem{remark}[theorem]{Remark}
+% \newtheorem{remark}[theorem]{Remark}
 \newtheorem{notation}[theorem]{Notation}
+
+\usepackage{centernot}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
 % === End math facilities ===
 
 \usepackage{csquotes}
@@ -92,7 +95,7 @@
 % define math symbol for big step arrow
 \newcommand{\bigstep}{\Longrightarrow}
 
-\title{Resultados clásicos sobre semántica de lenguajes de programación en Lean 4 (Draft)}
+\title{Classic results on programming language semantics in Lean 4 (Draft)}
 \author{Ricardo Maurizio Paul}
 % \date{2020--2024}
 
@@ -102,13 +105,8 @@
 
 \tableofcontents
 
-\section{Observations}
-
 \begin{itemize}
-\item The parts of the text that could require further exploration or sources are
-  \hl{marked like this}.
-\item We use the lambda calculus notation for functions.
-\item Typesetting is not final. Use XeLaTex for special characters.
+\item Parts I'm not sure about or need sources are \hl{marked like this}.
 \end{itemize}
 
 \section{Introduction}
@@ -123,10 +121,8 @@ methods and tools to prove that the system satisfies a set of well defined
 properties that model the desired behaviour. A classic approach to formal
 verification is Hoare logic, a formal system that deconstructs programs into
 components each with a set of pre and post conditions, these conditions and
-components, called commands, are represented as \emph{Hoare triples} of the form:
-\[ 
-\{P\} \ C \ \{Q\} 
- \]
+components, called commands, are represented as \emph{Hoare triples} of the form
+\(\{P\} \ C \ \{Q\}\),
 where P is the precondition, C is the command, and Q is the postcondition. By
 using inference rules, Hoare logic can be used to show the correctness of a
 program by proving that the postcondition of the program is satisfied given the
@@ -138,8 +134,8 @@ non-trivial task, and in the most general case, is undecidable, this is known as
 the famous \hl{\emph{Halting Problem}}.
 
 The inference rules for Hoare logic however are dependent on the \emph{semantics} of
-the programming language, the object of study of this text. The semantics of a
-programming language are the rules that define the meaning of the programs, we
+the programming language. The semantics of a language are the rules that define 
+the meaning of the programs, we
 will see that these rules can present themselves in different forms, such as
 operational semantics, denotational semantics, and axiomatic semantics. In this
 text we will focus on operational semantics, and denotational semantics.
@@ -231,94 +227,13 @@ Leaving HOL aside, all these systems are based on the Curry-Howard isomorphism,
 a fundamental concept that relates proofs and programs. To understand it we must
 first introduce the basics of type theory.
 
-\section{Lambda calculus}
-
-The \(\lambda\)-calculus is a formal system for expressing computation based on function abstraction 
-and application using variable binding and substitution. It was introduced by 
-Alonzo Church in the 1930s as a way to study the foundations of mathematics and 
-has since become a fundamental concept in computer science. We can think of
-it as a \enquote{programming language} with only one data type, the function, and
-two operations, abstraction and application.
-
-The syntax of lambda calculus is simple, it consists of variables (\(x, y, z\)),
-abstraction (\(\lambda x \implies M\)), and application (\(M \ N\)). 
-
-\begin{example}\label{ex:lambda_expr}
-We can apply the successor function to the number 3 as:
-\[
-(\lambda x \implies x + 1) \ 3
-\]
-\end{example}
-
-The rules to evaluate lambda calculus expressions are known as
-\emph{reduction rules} and they are:
-\begin{itemize}
-  \item[\(\alpha\)-conversion] Allows us to rename bound variables:
-    \((\lambda x \implies M) \ N \longrightarrow M[x := N]\) 
-
-  \item[Substitution] Allows us to replace all \emph{free} occurrences of the 
-  variable \(x\) in the expression \(M\) with expression \(N\) and is denoted as
-  \(M[x \coloneq N]\).
-  
-  \item[\(\beta\)-reduction] Allows us to apply a function to an argument, and
-    is defined in terms of substitution as:
-    \((\lambda x \implies M) \ N \longrightarrow M[x \coloneq N]\).
-
-  \item[\(\eta\)-conversion] Expresses the concept of \emph{extensionality} of functions, 
-    and states that two functions are equal if they are equal for all arguments.
-    To give an example it converts \((\lambda x \implies f \ x) \longrightarrow f\)
-    when \(x\) is not free in \(f\).
-\end{itemize}
-
-\begin{example}
-  We can apply the \(\beta\)-reduction rule to the expression in
-  Example~\ref{ex:lambda_expr} as:
-  \[
-  (\lambda x \implies x + 1) \ 3 \longrightarrow 3 + 1
-  \]
-\end{example}
-
-These reduction rules are called like that because they only go one way, from
-left to right. Seeing the previous example one could think that they also
-\enquote{reduce} expressions to simpler ones, but this is not always the case.
-
-\begin{definition}[Normal form]
-  An expression is in normal form if it cannot be reduced further.
-\end{definition}
-
-Now we present an example of an expression that does not have a normal form.
-
-\begin{definition}[\(\Omega\)-combinator]\label{def:omega_combinator}
-  The \(\Omega\)-combinator:
-  \[
-  \Omega \coloneq (\lambda x \implies x \ x) \ (\lambda x \implies x \ x)
-  \]
-  is a lambda expression that does not have a normal form
-\end{definition}
-
-\begin{proof}
-  If we apply the \(\beta\)-reduction rule to~\ref{def:omega_combinator}we get
-  the expression itself:
-  \[
-  (\lambda x \implies x \ x) \ (\lambda x \implies x \ x) \longrightarrow
-  (\lambda x \implies x \ x) \ (\lambda x \implies x \ x)
-  \]
-  So the expression does not have a normal form.
-\end{proof}
-
-\subsection{Simply typed lambda calculus}
-
 \section{Type theory}
-
-Type theory is not a single theory, but a family of related theories that share
-the same basic principles. We will focus on a family of type theories known as
-Martin-Löf type theory, which was developed by Per Martin-Löf in the 1970s as a
-foundation for constructive mathematics, in particular the version used in~\cite{hottbook}. 
-
-\subsection{Type theory vs set theory}
 
 Type theory is a branch of mathematical logic that deals with the study of
 types, an abstraction similar in some ways to the more familiar sets.
+\hl{It emerged in the early 20th century to solve the foundational crisis of
+mathematics, a series of problems that arose from the discovery of paradoxes in
+set theory, such as Russell's paradox.}
 
 Like \emph{sets} are a primitive notion in set theory, \emph{types} are a primitive notion
 in type theory, alongside \emph{functions}. This two primitives ensure that functions
@@ -334,11 +249,203 @@ that takes two natural numbers and returns their sum. This ensures that the
 function \(\texttt{add}\) can only be applied to natural numbers, and not to any
 other type.
 
+Modern type theory is arises from the work of Pier Martin-Löf, who developed an
+\emph{intuitionistic} type theory in the 1970s. In intuitionistic type theory
+proofs are not just a logical argument but a method of constructing a
+\emph{witness} of the truth of a proposition. This is in contrast to classical
+logic, where proofs are just a sequence of logical steps that show the truth of a
+proposition. In intuitionistic logic, the law of the excluded middle is not
+valid, and the principle of \emph{proof by contradiction} is not allowed (with
+some caveats). Another important feature of Martin-Löf type theory is that it
+has a \emph{computational interpretation} via the Curry-Howard isomorphism, which
+we will discuss in more detail later.
+This computational interpretation is what 
+allows computers to reason about mathematical proofs.
+
+To achieve this computational interpretation, Martin-Löf type theory combines
+classic type theory with the \(\lambda\)-calculus.
+
+\subsection{Lambda calculus}
+
+The \(\lambda\)-calculus is a formal system for expressing computation based on function abstraction 
+and application using variable binding and substitution. It was introduced by 
+Alonzo Church in the 1930s as a way to study the foundations of mathematics and 
+has since become a fundamental concept in computer science. We can think of
+it as a \enquote{programming language} with only one data type, the function, and
+two operations, abstraction and application.
+
+The syntax of lambda calculus is simple, it consists of variables (\(x, y, z\)),
+abstraction (\(\lambda x \implies M\)), and application (\(M \ M\)), in 
+BNF:
+\begin{align*}
+  M & \Coloneqq x \mid \lambda x \implies M \mid M \ M
+\end{align*}
+
+\begin{example}\label{ex:lambda_expr}
+We can apply the successor function to the number 3 as
+\(
+(\lambda x \implies x + 1) \ 3
+\).
+\end{example}
+
+The rules to evaluate lambda calculus expressions are known as
+\emph{reduction rules} and they are:
+\begin{itemize}
+  \item \(\alpha\)-conversion: Allows us to rename bound variables:
+    \[(\lambda x \implies M) \ N \longrightarrow M[x \coloneqq N]\]
+  \item Substitution: Allows us to replace all \emph{free} occurrences of the 
+  variable \(x\) in the expression \(M\) with expression \(N\) and is denoted as
+  \(M[x \coloneqq N]\).
+  \item \(\beta\)-reduction: Allows us to apply a function to an argument, and
+    is defined in terms of substitution as:
+    \[(\lambda x \implies M) \ N \longrightarrow M[x \coloneqq N]\]
+  \item \(\eta\)-conversion: Expresses the concept of \emph{extensionality} of functions, 
+    and states that two functions are equal if they are equal for all arguments.
+    To give an example when \(x\) is not free in \(f\):
+    \[(\lambda x \implies f \ x) \longrightarrow f\]
+\end{itemize}
+
+\begin{example}
+  We can apply the \(\beta\)-reduction rule to the expression in
+  Example~\ref{ex:lambda_expr} as:
+  \[
+  (\lambda x \implies x + 1) \ 3 \longrightarrow 3 + 1
+  \]
+\end{example}
+
+These reduction rules are called like that because they only go one way, from
+left to right. Seeing the previous example one could think that they also
+\enquote{reduce} expressions to \enquote{simpler} ones: applying the rules one
+after another we would arrive to a version of the expression on which the reduction rules cannot 
+be applied any more, this is called the \emph{normal form} of the expression.
+
+\begin{definition}[Normal form]
+  An expression is in normal form if it cannot be reduced further.
+\end{definition}
+
+Sadly, not all expressions have a normal form, as we will see in the next example.
+
+\begin{definition}[\(\Omega\)-combinator]\label{def:omega_combinator}
+  The \(\Omega\)-combinator:
+  \[
+  \Omega \coloneqq (\lambda x \implies x \ x) \ (\lambda x \implies x \ x)
+  \]
+  is a lambda expression that does not have a normal form
+\end{definition}
+
+\begin{proof}
+  If we apply the \(\beta\)-reduction rule to~\ref{def:omega_combinator}
+  we get the expression itself:
+  \[
+  (\lambda x \implies x \ x) \ (\lambda x \implies x \ x) \longrightarrow
+  (\lambda x \implies x \ x) \ (\lambda x \implies x \ x)
+  \]
+  So the expression does not have a normal form.
+\end{proof}
+
+Since our only \enquote{data types} are functions, we need to encode numbers,
+booleans, and any other data types using functions. We can use the
+\emph{Church encodings}, which represents the booleans as functions that take two
+arguments and return one of them. For example, we can define the boolean literals
+as follows:
+
+\begin{definition}[Church booleans]
+  We can define the boolean literals as:
+  \begin{align*}
+    \texttt{true} & \coloneqq \lambda x \implies \lambda y \implies x \\
+    \texttt{false} & \coloneqq \lambda x \implies \lambda y \implies y
+  \end{align*}
+\end{definition}
+
+We can then define the logical operations \(\texttt{and}\), \(\texttt{or}\), and
+\(\texttt{not}\) as functions that take two booleans and return a boolean.
+
+\begin{definition}[Logical operators]
+  We can define the logical operators as:
+  \begin{align*}
+    \texttt{and} & \coloneqq \lambda x \implies \lambda y \implies x \ y \ x \\
+    \texttt{or} & \coloneqq \lambda x \implies \lambda y \implies x \ x \ y \\
+    \texttt{not} & \coloneqq \lambda x \implies x \ \texttt{false} \ \texttt{true}
+  \end{align*}
+\end{definition}
+
+And even an if-then-else construct:
+
+\begin{definition}[If-then-else]
+  We can define the if-then-else construct as:
+  \[
+  \texttt{ifthen} \coloneqq \lambda b \implies \lambda x \implies \lambda y \implies b \ x \ y
+  \]
+\end{definition}
+
+Numbers also have a church encoding but we skip presenting it since later we 
+will see a more general way to encode data types.
+
+As we've seen the \(\lambda\)-calculus is a simple but powerful formal system
+that can be used to reason about computation, \hl{it is in fact \emph{Turing complete},
+meaning that it can express any computable function.} However, as we have 
+shown with the \(\Omega\)-combinator, it is not very \enquote{safe} to use.
+
+\subsection{Typed lambda calculi}
+
+To avoid the problem introduced by non-terminating computations such as the 
+\(\Omega\)-combinator we can introduce \emph{types} to the lambda calculus\footnote{
+  In some type systems the \(\Omega\)-combinator can be well typed, this is not
+  the case in the type systems normally used in theorem provers, such as CIC.
+}. 
+Types allow us to classify the expressions
+of the lambda calculus and ensure that the expressions are well-typed, that is,
+that the functions are applied to the correct arguments. This is known as
+\emph{type safety} and is a fundamental concept in programming languages.
+
+By adding types we also ensure that nonsensical expressions, such as applying a
+boolean to an integer are not possible, and so expressions cannot get
+\enquote{stuck} in a non-terminating computation.
+
+\subsubsection{Simply typed lambda calculus}
+
+The simplest typed lambda calculus is the \emph{simply typed lambda calculus} or
+\emph{STLC}. In the STLC each variable has a type, and each function has a type
+function abstraction now has the form \(\lambda x: \alpha \implies M\), where
+\(\alpha\) is the type of the variable \(x\). The two mandatory types in the STLC
+are the function type \(\alpha \to \beta\), which represents a function that
+takes an argument of type \(\alpha\) and returns a value of type \(\beta\), and
+the base type \(\texttt{Bool}\), which represents the booleans.
+
+The syntax of the STLC is:
+\begin{align*}
+  M \Coloneqq & \ x \mid \lambda x: \alpha \implies M \mid M \ M \\
+    & \mid \texttt{true} \mid \texttt{false} \\
+    & \mid \text{if} \ M \ \text{then} \ M \ \text{else} \ M
+\end{align*}
+
+Now besides the evaluation rules that we saw before we have to add the 
+\emph{typing rules}, which are the rules that define the well-typed expressions 
+of the calculus. These rules require a \emph{typing context} normally denoted as
+\(\Gamma\), which is a map that associates variables with types. These rules
+for example ensure that the if-then-else construct is applied to booleans, and
+that the branches of the if-then-else construct have the same type.
+
+\subsubsection{Generalization}
+
+The STLC is the basis of most typed lambda calculi, and can be extended allowing
+\emph{terms that depend on types}, this is known as \emph{polymorphism} and
+the calculus is known as System F. We can also extend the STLC with
+\emph{types that depend on other types}, we will call this later a 
+\emph{type constructor}, and the calculus is known as System F\(_\omega\).
+If we add \emph{dependent types} we get \(\lambda P\), etc...
+
+We can combine these extensions arbitrarily obtaining different system with 
+different expressive power, a taxonomy of these systems is the Barendregt's 
+\(\lambda\)-cube. At the apex of generality we have the \emph{Calculus of
+Constructions}, which is the basis of Coq and Lean. The following sections will
+introduce the concepts of the Calculus of Constructions.
+
+\subsection{Set theory}
+
 A key point to remark is that types don't \emph{contain} values, they \emph{classify}
 values, while in set theory a value is a \emph{member} of a set, in type theory a
-value \emph{has} a type.\ \hl{This is a subtle difference, but an important one, as it
-allows us to reason about the properties of values based on their types, and to
-ensure that the values are used correctly in the program}. The analogous to the
+value \emph{has} a type. The analogous to the
 membership notation in set theory is the \hl{\emph{typing judgement}} in type theory,
 which is written as \(x: \alpha\), and reads as \enquote{x has type \(\alpha\)}.
 
@@ -361,7 +468,7 @@ in type theory as a function.
 \begin{definition}[Type theoretic set]
   A set is a function that takes an element of a type and returns a proposition.
   \[
-  \texttt{Set} \ (\alpha : \texttt{Type}) \coloneq \alpha \to \texttt{Prop}
+  \texttt{Set} \ (\alpha : \texttt{Type}) \coloneqq \alpha \to \texttt{Prop}
   \]
 \end{definition}
 
@@ -425,7 +532,7 @@ and false otherwise.
   proposition.
   \[
   \texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
-    \coloneq \alpha \to \beta \to \texttt{Prop}
+    \coloneqq \alpha \to \beta \to \texttt{Prop}
   \]
 \end{definition}
 
@@ -435,7 +542,7 @@ And we can define the relation of equality as:
   The relation of equality is a function that takes two elements of a type and
   returns a proposition.
   \[
-  \texttt{Eq} \ (\alpha: \texttt{Type}) \coloneq \texttt{Rel} \ \alpha \ \alpha 
+  \texttt{Eq} \ (\alpha: \texttt{Type}) \coloneqq \texttt{Rel} \ \alpha \ \alpha 
   \]
 \end{definition}
 
@@ -506,14 +613,14 @@ interesting, we need a way to define infinite types, such as the natural
 numbers. This is done using \emph{inductive types}, which are types that are defined
 by a set of constructors that define the possible forms an element of the type
 can take. For example, we can define the natural numbers as an inductive type
-with two constructors, \(\texttt{zero}\) and \(\texttt{succ}\), that create the
+with two constructors, \(0\) and \(\texttt{succ}\), that create the
 elements of the type, in a way analogous to the \emph{Peano axioms}.
 \[
-\texttt{zero} : \mathbb{N} \qquad
+0 : \mathbb{N} \qquad
     \texttt{succ}: \mathbb{N} \to \mathbb{N}
 \]
 Similar to the classic principle of induction, we have defined a base case
-\(\texttt{zero}\) and an inductive case \(\texttt{succ}\), that creates the
+\(0\) and an inductive case \(\texttt{succ}\), that creates the
 successor of a natural number. In this way we can create the natural numbers as
 an inductive type, and define functions that operate on them, such as addition,
 multiplication, and exponentiation. This is the essence of inductive types, the
@@ -669,16 +776,16 @@ As an informal introduction to the syntax of \(\texttt{IMP}\) we can define the
 
 Now we could define the syntax of \(\texttt{Aexp}\) in Backus-Naur form:
 \[
-a ::= n \ | \ x \ | \ a_1 + a_2 \ | \ a_1 - a_2 \ | \ a_1 \times a_2
+a \Coloneqq n \ | \ x \ | \ a_1 + a_2 \ | \ a_1 - a_2 \ | \ a_1 \times a_2
 \]
 the syntax of \(\texttt{Bexp}\) as:
 \[
-b ::= \texttt{true} \ | \ \texttt{false} \ | \ 
+b \Coloneqq \texttt{true} \ | \ \texttt{false} \ | \ 
   !b \ | \ b_1 \land b_2 \ | \ b_1 \lor b_2 \ | \ a_1 = a_2 \ | \ a_1 \leq a_2
 \]
 and the syntax of \(\texttt{Com}\) as:
 \[
-c ::= \texttt{skip} \ | \ x := a \ | \ c_1; c_2 \ | \
+c \Coloneqq \texttt{skip} \ | \ x := a \ | \ c_1; c_2 \ | \
       \texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end} 
       \ | \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}
 \]
@@ -686,32 +793,32 @@ In type theory we can encode this as inductive types, the type of arithmetic
 expressions can be defined as an inductive type \(\texttt{Aexp}\) with 
 constructors for each \enquote{syntactic construct}:
 \begin{align*}
-  \texttt{val}_1 &\coloneq \mathbb{Z} \to \texttt{Aexp} \\
-  \texttt{var}_1 &\coloneq \texttt{String} \to \texttt{Aexp} \\
-  \texttt{add}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
-  \texttt{sub}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
-  \texttt{mul}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp}
+  \texttt{val}_1 &\coloneqq \mathbb{Z} \to \texttt{Aexp} \\
+  \texttt{var}_1 &\coloneqq \texttt{String} \to \texttt{Aexp} \\
+  \texttt{add}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
+  \texttt{sub}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
+  \texttt{mul}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp}
 \end{align*}
 While the first to simply \enquote{coerce} a value or a variable into an
 expression, the others \enquote{construct} an expression from two other
 expressions. The constructors for boolean expressions are defined in a similar
 fashion:
 \begin{align*}
-  \texttt{true}_1 &\coloneq \texttt{Bexp} \\
-  \texttt{false}_1 &\coloneq \texttt{Bexp} \\
-  \texttt{not}_1 &\coloneq \texttt{Bexp} \to \texttt{Bexp} \\
-  \texttt{and}_1 &\coloneq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
-  \texttt{or}_1 &\coloneq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
-  \texttt{eq}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp} \\
-  \texttt{le}_1 &\coloneq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp}
+  \texttt{true}_1 &\coloneqq \texttt{Bexp} \\
+  \texttt{false}_1 &\coloneqq \texttt{Bexp} \\
+  \texttt{not}_1 &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{and}_1 &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{or}_1 &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{eq}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp} \\
+  \texttt{le}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp}
 \end{align*}
 And the same goes for commands:
 \begin{align*}
-  \texttt{skip}_1 &\coloneq \texttt{Com} \\
-  \texttt{assign}_1 &\coloneq \texttt{String} \to \texttt{Aexp} \to \texttt{Com} \\
-  \texttt{seq}_1 &\coloneq \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
-  \texttt{if}_1 &\coloneq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
-  \texttt{while}_1 &\coloneq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com}
+  \texttt{skip}_1 &\coloneqq \texttt{Com} \\
+  \texttt{assign}_1 &\coloneqq \texttt{String} \to \texttt{Aexp} \to \texttt{Com} \\
+  \texttt{seq}_1 &\coloneqq \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
+  \texttt{if}_1 &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
+  \texttt{while}_1 &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com}
 \end{align*}
 
 Now a simple expression in our language would look something like:
@@ -757,7 +864,7 @@ type.
 \begin{definition}[Map]
   A map is a function that maps keys (strings) to values, we can define it as:
   \[
-  \tyfont{Map} \ (\alpha : \tyfont{Type}) \coloneq \tyfont{String} \to \alpha
+  \tyfont{Map} \ (\alpha : \tyfont{Type}) \coloneqq \tyfont{String} \to \alpha
   \]
 \end{definition}
 
@@ -769,7 +876,7 @@ keys to values, this is done using the \texttt{update} function:
   that maps the key to the value, and all other keys to the same value as the
   original map.
   \begin{align*}
-  \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneq \\
+  \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneqq \\
                       &\lambda k' \implies \funfont{cond} \ (k = k') \ v \ (m \ k')
   \end{align*}
 \end{definition}
@@ -777,12 +884,12 @@ keys to values, this is done using the \texttt{update} function:
 The \funfont{cond} function is nothing more than syntactic sugar for 
 pattern matching, we can define it as:
 \begin{align*}
-  \funfont{cond} \ \texttt{true} \ v \ w &\coloneq v \\
-  \funfont{cond} \ \texttt{false} \ v \ w &\coloneq w
+  \funfont{cond} \ \texttt{true} \ v \ w &\coloneqq v \\
+  \funfont{cond} \ \texttt{false} \ v \ w &\coloneqq w
 \end{align*}
 We can even denote the \funfont{cond} function as an \emph{if then else}:
 \begin{align*}
-  \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneq \\
+  \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneqq \\
                       &\lambda k' \implies \text{if} \ k = k' \ \text{then} \ v \ \text{else} \ m \ k'
 \end{align*}
 Not to be confused with the \texttt{if then else} construct of the language 
@@ -795,14 +902,14 @@ denote the \enquote{assignments} of a map in a more familiar way:
 With these definitions we can prove a lot of interesting properties that hold
 in the majority of programming languages, for example:
 
-\begin{theorem}[Map evaluate]
+\begin{theorem}
   If we assign a value to a variable, the map evaluates to that value.
   \[
   (m[k \leftarrow v]) \ k = v
   \]
 \end{theorem}
 
-\begin{theorem}[Map don't evaluate]
+\begin{theorem}
   If we assign a value to a variable, the map does not evaluate to that value
   for other variables (\(k \neq k'\)).
   \[
@@ -816,7 +923,7 @@ variable makes the computer \enquote{forget} the previous value. With the
 \funfont{update} function as defined above this is not true by definition,
 but we can easily prove it.
 
-\begin{theorem}[Map forget]
+\begin{theorem}
   If we assign a value to a variable, and then assign another value to the same
   variable, the map \enquote{forgets} the first value.
   \[
@@ -848,7 +955,7 @@ The proof of other similar properties, such as the commutativity of the update
 function, or the idempotence of the update function, are proved in a similar
 fashion, and can be found in the code.
 
-\begin{theorem}[Map commutative]
+\begin{theorem}
   If we assign a value to a variable, and then assign another value to another
   variable (\(k_1 \neq k_2\)), the order of the assignments does not matter.
   \[
@@ -856,7 +963,7 @@ fashion, and can be found in the code.
   \]
 \end{theorem}
 
-\begin{theorem}[Map idempotence]
+\begin{theorem}
   If we assign to a key the value it already has, the map does not change.
   \[
   m[k \leftarrow m \ k] = m
@@ -868,7 +975,7 @@ With these properties proven we can finally define our \(\tyfont{State}\).
 \begin{definition}[State]
   A state is a map that maps variables to values, we can define it as:
   \[
-  \tyfont{State} \coloneq \tyfont{Map} \ \mathbb{Z}
+  \tyfont{State} \coloneqq \tyfont{Map} \ \mathbb{Z}
   \]
 \end{definition}
 
@@ -884,7 +991,7 @@ We could define a partial map:
   A partial map is a map that is not defined for all inputs, we can define
   it as:
   \[
-  \tyfont{PMap} \ (\alpha : \tyfont{Type}) \coloneq \tyfont{String} \to \tyfont{Option} \ \alpha
+  \tyfont{PMap} \ (\alpha : \tyfont{Type}) \coloneqq \tyfont{String} \to \tyfont{Option} \ \alpha
   \]
 \end{definition}
 
@@ -897,7 +1004,7 @@ value.
   We will define the \emph{initial state} of an \(\texttt{IMP}\) program as the
   constant function that maps all variables to zero.
   \[
-  s_0 \coloneq \lambda x \implies 0
+  s_0 \coloneqq \lambda x \implies 0
   \]
 \end{definition}
 
@@ -942,7 +1049,7 @@ Let's introduce a notation more familiar to classic text on formal semantics.
 Now the constructors will be the rules of the evaluation, for example the
 constructor for the constant expression will be:
 \[
-  \texttt{val}_n : (n, \cdot) \bigstep n
+  \texttt{val} : (n, \cdot) \bigstep n
 \]
 
 Which relates the configuration \((n, \cdot)\), where the \(n\) of the left is
@@ -955,7 +1062,7 @@ the big step constructor from the syntactic constructor.
 The constructor for the variable expression is similar, but this time we need
 to look up the value of the variable in the state:
 \[
-  \texttt{var}_n : (x, s) \bigstep s \ x
+  \texttt{var} : (x, s) \bigstep s \ x
 \]
 
 Now we can define the constructors for the arithmetic operations, since these 
@@ -964,7 +1071,7 @@ right expressions to evaluate the operation, this is done by requiring
 the evaluation of the left and right expressions in the premises of the rule.
 For example the constructor for the addition operation is:
 \[
-  \texttt{add}_n : \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+  \texttt{add} : \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
    {(a_1 + a_2, s) \bigstep n_1 + n_2}
 \]
 The previous rule states that if the configuration \((a_1, s)\) evaluates to
@@ -973,9 +1080,9 @@ configuration \((a_1 + a_2, s)\) evaluates to \(n_1 + n_2\).
 
 The constructors of the subtraction and multiplication operations are analogous.
 \begin{align*}
-  \texttt{sub}_n &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+  \texttt{sub} &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
    {(a_1 - a_2, s) \bigstep n_1 - n_2} \\
-  \texttt{mul}_n &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+  \texttt{mul} &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
    {(a_1 * a_2, s) \bigstep n_1 * n_2}
 \end{align*}
 
@@ -989,17 +1096,17 @@ Let's see an example of a valid \emph{evaluation tree}.
   \((x + 5) + (9 - 7)\) in the state \(s_0\) by applying the \enquote{rules} 
   (constructors) of the evaluation relation:
 \[
-  \texttt{add}_n: \frac{
-    \texttt{add}_n: \displaystyle{\frac{
-      \texttt{var}_n: (x, s_0) \bigstep 0
+  \texttt{add}: \frac{
+    \texttt{add}: \displaystyle{\frac{
+      \texttt{var}: (x, s_0) \bigstep 0
       \quad
-      \texttt{val}_n: (5, s_0) \bigstep 5
+      \texttt{val}: (5, s_0) \bigstep 5
     }{(x + 5, s_0) \bigstep 5}}
     \quad 
-    \texttt{sub}_n: \displaystyle{\frac{
-      \texttt{val}_n: (9, s_0) \bigstep 9
+    \texttt{sub}: \displaystyle{\frac{
+      \texttt{val}: (9, s_0) \bigstep 9
       \quad
-      \texttt{val}_n: (7, s_0) \bigstep 7
+      \texttt{val}: (7, s_0) \bigstep 7
     }{(9 - 7, s_0) \bigstep 2}}
   }
   {((x + 5) + (9 - 7), s_0) \bigstep 7}
@@ -1021,11 +1128,11 @@ take a configuration and return a value.
 \hl{This time, instead of a Cartesian product, we will use a \emph{curried} function.}
 We can easily define the evaluation rules with pattern matching:
 \begin{align*}
-  \funfont{reduce} \ (\texttt{val}_1 \ v) \ \cdot &\coloneq v \\
-  \funfont{reduce} \ (\texttt{var}_1 \ x) \ s &\coloneq s \ x \\
-  \funfont{reduce} \ (\texttt{add}_1 \ a_1 \ a_2) \ s &\coloneq \funfont{reduce} \ a_1 \ s + \funfont{reduce} \ a_2 \ s \\
-  \funfont{reduce} \ (\texttt{sub}_1 \ a_1 \ a_2) \ s &\coloneq \funfont{reduce} \ a_1 \ s - \funfont{reduce} \ a_2 \ s \\
-  \funfont{reduce} \ (\texttt{mul}_1 \ a_1 \ a_2) \ s &\coloneq \funfont{reduce} \ a_1 \ s \times \funfont{reduce} \ a_2 \ s
+  \funfont{reduce} \ (\texttt{val}_1 \ v) \ \cdot &\coloneqq v \\
+  \funfont{reduce} \ (\texttt{var}_1 \ x) \ s &\coloneqq s \ x \\
+  \funfont{reduce} \ (\texttt{add}_1 \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s + \funfont{reduce} \ a_2 \ s \\
+  \funfont{reduce} \ (\texttt{sub}_1 \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s - \funfont{reduce} \ a_2 \ s \\
+  \funfont{reduce} \ (\texttt{mul}_1 \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s * \funfont{reduce} \ a_2 \ s
 \end{align*}
 
 We can introduce some notation to denote the evaluation of an expression on a state.
@@ -1049,7 +1156,7 @@ it can compute the result of the evaluation directly}, instead of
 just saying if some \enquote{evaluation tree} is valid or not. That is only if
 both evaluation rules are equivalent, fortunately they are, and we can prove it.
 
-\begin{theorem}[Equivalence of the evaluation rules]
+\begin{theorem}
   The step relation and the reduce function are equivalent, that is, for all
   expressions \(a\), states \(s\), and values \(n\), we have:
   \[
@@ -1064,8 +1171,8 @@ implication separately.
 
 Let's first prove the left to right implication 
 \((a, s) \bigstep n \implies a \ s = n\). We proceed by induction
-on the evaluation relation, the cases for the constructors \(\texttt{val}_n\)
-and \(\texttt{var}_n\) are immediate. In the case of \(\texttt{add}_n\) the
+on the evaluation relation, the cases for the constructors \(\texttt{val}\)
+and \(\texttt{var}\) are immediate. In the case of \(\texttt{add}\) the
 expression has the form \(a_1 + a_2\), and so we have to prove that
 \[
 (a_1 + a_2 \ s) = n_1 + n_2
@@ -1087,7 +1194,7 @@ is proven by induction on arithmetic expression, again the cases for
 by choosing \(n\) to be \(a_1 \ s\) and \(a_2 \ s\) respectively we can construct
 the evaluation tree:
 \[
-  \texttt{add}_n: \frac{
+  \texttt{add}: \frac{
     (a_1, s) \bigstep a_1 \ s
     \quad
     (a_2, s) \bigstep a_2 \ s
@@ -1105,15 +1212,15 @@ as they are analogous to the arithmetic expressions, we have presented first
 the rules for arithmetic expressions because some of the rules for boolean
 expressions depend on the evaluation of arithmetic expressions.
 \begin{align*}
-  \texttt{true}_n &: (\texttt{true}, \cdot) \bigstep \texttt{true} \\
-  \texttt{false}_n &: (\texttt{false}, \cdot) \bigstep \texttt{false} \\
-  \texttt{not}_n &: \frac{(b, s) \bigstep b'}{\lnot (b, s) \bigstep \lnot b'} \\
-  \texttt{and}_n &: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+  \texttt{true} &: (\texttt{true}, \cdot) \bigstep \texttt{true} \\
+  \texttt{false} &: (\texttt{false}, \cdot) \bigstep \texttt{false} \\
+  \texttt{not} &: \frac{(b, s) \bigstep b'}{\lnot (b, s) \bigstep \lnot b'} \\
+  \texttt{and} &: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
     {(b_1 \land b_2, s) \bigstep b_1' \land b_2'} \\
-  \texttt{or}_n &: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+  \texttt{or} &: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
     {(b_1 \lor b_2, s) \bigstep b_1' \lor b_2'} \\
-  \texttt{eq}_n &: (a_1 = a_2, s) \bigstep a_1 \ s = a_2 \ s \\
-  \texttt{le}_n &: (a_1 \leq a_2, s) \bigstep a_1 \ s \leq a_2 \ s
+  \texttt{eq} &: (a_1 = a_2, s) \bigstep a_1 \ s = a_2 \ s \\
+  \texttt{le} &: (a_1 \leq a_2, s) \bigstep a_1 \ s \leq a_2 \ s
 \end{align*}
 Notice that in the last two rules we are using the reduce function to evaluate
 the arithmetic expressions, we could have used the evaluation relation, but
@@ -1130,12 +1237,12 @@ the functions are easier to define and use. The reason is that
 \texttt{while} construct. We could define a \(\funfont{reduce}: \tyfont{Com} \to \tyfont{State} \to \tyfont{State}\) 
 function to evaluate commands that looks something like this:
 \begin{align*}
-  \funfont{reduce} \ \texttt{skip}_1 \ s &\coloneq s \\
-  \funfont{reduce} \ (x := a) \ s &\coloneq s[x \leftarrow a \ s] \\
-  \funfont{reduce} \ (c_1; c_2) \ s &\coloneq \funfont{reduce} \ c_2 \ (\funfont{reduce} \ c_1 \ s) \\
-  \funfont{reduce} \ (\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}) \ s &\coloneq
+  \funfont{reduce} \ \texttt{skip}_1 \ s &\coloneqq s \\
+  \funfont{reduce} \ (x := a) \ s &\coloneqq s[x \leftarrow a \ s] \\
+  \funfont{reduce} \ (c_1; c_2) \ s &\coloneqq \funfont{reduce} \ c_2 \ (\funfont{reduce} \ c_1 \ s) \\
+  \funfont{reduce} \ (\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}) \ s &\coloneqq
     \text{if} \ b \ s \ \text{then} \ \funfont{reduce} \ c_1 \ s \ \text{else} \ \funfont{reduce} \ c_2 \ s \\
-  \funfont{reduce} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ s &\coloneq
+  \funfont{reduce} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ s &\coloneqq
     \text{if} \ b \ s \ \text{then} \ \funfont{reduce} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ (\funfont{reduce} \ c \ s) \ \text{else} \ s
 \end{align*}
 The problem with this function is that it is not \emph{well founded}, that is,
@@ -1150,9 +1257,9 @@ To define the big step semantics of commands we will use a relation, as
 before, this time associating configurations to states. The definition of
 the constructors for skip, assignment and concatenation are straightforward:
 \begin{align*}
-  \texttt{skip}_n &: (\texttt{skip}, s) \bigstep s \\
-  \texttt{ass}_n &: (v \ \texttt{:=} \ a, s) \bigstep s[v \leftarrow a \ s] \\
-  \texttt{cat}_n &: \frac{
+  \texttt{skip} &: (\texttt{skip}, s) \bigstep s \\
+  \texttt{ass} &: (v \ \texttt{:=} \ a, s) \bigstep s[v \leftarrow a \ s] \\
+  \texttt{cat} &: \frac{
     (c_1, s_1) \bigstep s_2 \quad (c_2, s_2) \bigstep s_3
   }{
     (c_1; c_2, s_1) \bigstep s_3
@@ -1165,24 +1272,24 @@ evaluation.
 The rules for the \texttt{if} construct require two constructors,
 one for the case when the condition is false:
 \[
-\texttt{if}_{0n} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \bigstep s_2}
+\texttt{ifFalse} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \bigstep s_2}
 {(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2}
 \]
 and another for the case when the condition is true:
 \[
-\texttt{if}_{1n} : \frac{b \ s_1 = \texttt{true}  \quad (c_2, s_1) \bigstep s_2}
+\texttt{ifTrue} : \frac{b \ s_1 = \texttt{true}  \quad (c_2, s_1) \bigstep s_2}
 {(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2}
 \]
 The evaluation rule for \texttt{while} follows the same principle but with a more
 recursive approach, the case when the condition is false is easy:
 \[
-\texttt{while}_{0n} : \frac{b \ s = \texttt{false}}
+\texttt{whileFalse} : \frac{b \ s = \texttt{false}}
   {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s) \bigstep s}
 \]
 but when the condition is true, we have to recurse from another evaluation tree
 where the \enquote{previous step} has already been applied:
 \[
-\texttt{while}_{1n} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \bigstep s_2 \quad
+\texttt{whileTrue} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \bigstep s_2 \quad
   (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3}
 {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3}
 \]
@@ -1205,11 +1312,11 @@ program like this:
 \end{verbatim}
   to simplify the notation we will denote the program as \(P\), and the if construct as \(\text{Ifelse}\), then:
   \[
-  \texttt{cat}_n: \frac{
-    \texttt{ass}_n: (x := 2, s_0) \bigstep s_0[x \leftarrow 2]
+  \texttt{cat}: \frac{
+    \texttt{ass}: (x := 2, s_0) \bigstep s_0[x \leftarrow 2]
     \quad
-    \texttt{if}_{0n}: \displaystyle{\frac{
-      \texttt{ass}_n: (z := 4, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+    \texttt{ifFalse}: \displaystyle{\frac{
+      \texttt{ass}: (z := 4, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
     }
     {
       (\text{Ifelse}, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
@@ -1229,14 +1336,14 @@ Now we can prove some \enquote{rewriting rules} for the constructs of the
 language, the proof is more or less immediate and can be found in the code,
 so we will only present the theorems.
 
-\begin{theorem}[Skip equality]
+\begin{theorem}
   Skipping (doing nothing) in a program doesn't change the state:
   \[
   ((\texttt{skip}, s_1) \bigstep s_2) = (s_1 = s_2)
   \]
 \end{theorem}
 
-\begin{theorem}[Concatenation equality]
+\begin{theorem}
   The concatenation of two programs is equivalent to executing the first
   program and then the second:
   \[
@@ -1249,7 +1356,7 @@ The rewriting rules for the \texttt{if} construct can be defined in two equivale
 which rule to apply depends on the context, as either one could be easier to use
 depending on the situation.
 
-\begin{theorem}[If equality (version 1)]\label{thm:if_rewrite_1}
+\begin{theorem}\label{thm:if_rewrite_1}
   The \texttt{if} construct can be rewritten as:
   \[
   ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2) = 
@@ -1257,7 +1364,7 @@ depending on the situation.
   \]
 \end{theorem}
 or, equivalently:
-\begin{theorem}[If equality (version 2)]\label{thm:if_rewrite_2}
+\begin{theorem}\label{thm:if_rewrite_2}
   The \texttt{if} construct can be rewritten as:
   \[
   ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2) =
@@ -1270,7 +1377,7 @@ construct of the language \texttt{IMP} \hl{and that of the meta-language (in thi
 To aid in this distinction we will use \texttt{monospace} font for the constructs
 of the language, and normal font for the constructs of the meta-language.
 
-\begin{theorem}[While equality]\label{thm:while_rewrite}
+\begin{theorem}\label{thm:while_rewrite}
   The \texttt{while} construct can be rewritten as:
   \begin{align*}
   &((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3) = \\
@@ -1292,7 +1399,7 @@ that certain optimizations don't change the behaviour of a program.
   Two programs are behaviourally equivalent if they evaluate to the same state
   for all initial states:
   \[
-  c_1 \sim c_2 \coloneq \forall s_1, \forall s_2, (c_1, s_1) \bigstep s_2 \iff (c_2, s_1) \bigstep s_2
+  c_1 \sim c_2 \coloneqq \forall s_1 \ s_2, (c_1, s_1) \bigstep s_2 \iff (c_2, s_1) \bigstep s_2
   \]
 \end{definition}
 
@@ -1300,7 +1407,7 @@ Is easy to show that this is an equivalence relation, that is, it is reflexive,
 symmetric, and transitive. Armed with this we can, for example, show that adding
 an arbitrary number of skips to a program doesn't change its behaviour.
 
-\begin{theorem}[Skip left]
+\begin{theorem}
   Adding \texttt{skip} to the left of a program doesn't change its behaviour:
   \[
   \texttt{skip} \texttt{;} c \sim c
@@ -1310,7 +1417,7 @@ an arbitrary number of skips to a program doesn't change its behaviour.
 With this we can \enquote{optimize} the \texttt{skip} away of a program, but only
 on the left, to completely remove them without consequence we need the following.
 
-\begin{theorem}[Skip right]
+\begin{theorem}
   Adding \texttt{skip} to the right of a program doesn't change its behaviour:
   \[
   c \texttt{;} \texttt{skip} \sim c
@@ -1321,7 +1428,7 @@ A more interesting equivalence that mirrors Theorem~\ref{thm:while_rewrite} is
 loop unfolding, a common optimization in compilers, \hl{used when memory is cheaper
 than computation.}
 
-\begin{theorem}[Loop unfolding]
+\begin{theorem}
   The \texttt{while} construct can be unfolded:
   \[
   \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \sim 
@@ -1346,15 +1453,15 @@ than computation.}
     \item[(\(\implies\))] It suffices to check both possible constructors for
     the \texttt{while} construct in the left of the implication.
     \begin{itemize}
-      \item[(\(b \ s_1 = \texttt{true}\))]
+      \item[(\(b \ s_1\))]
       If the condition is true then the problem simplifies to:
       \[
         c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1 \bigstep s_3
       \]
-      and since we know the precondition is true we can apply the \(\texttt{while}_{1n}\) constructor
+      and since we know the precondition is true we can apply the \(\texttt{whileTrue}\) constructor
       to obtain the derivation tree from the left side of the equivalence.
       \[
-        \texttt{while}_{1n}: \frac{
+        \texttt{whileTrue}: \frac{
           b \ s_1 = \texttt{true}
           \quad
           (c, s_1) \bigstep s_2 
@@ -1364,10 +1471,10 @@ than computation.}
           (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3
         }
       \]
-      Now it suffices to apply the newfound hypotheses of \(\texttt{while}_{1n}\) to 
+      Now it suffices to apply the newfound hypotheses of \(\texttt{whileTrue}\) to 
       obtain the result:
       \[
-        \texttt{cat}_n: \frac{
+        \texttt{cat}: \frac{
           (c, s_1) \bigstep s_2
           \quad
           (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3
@@ -1375,13 +1482,13 @@ than computation.}
           (c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3
         }
       \]
-      \item[(\(b \ s_1 = \texttt{false}\))] The problem simplifies to:
+      \item[(\(\lnot b \ s_1\))] The problem simplifies to:
       \[
         \texttt{skip}, s_1 \bigstep s_3
       \]
-      proceeding in the same manner as before we can apply the \(\texttt{while}_{0n}\) constructor:
+      proceeding in the same manner as before we can apply the \(\texttt{whileFalse}\) constructor:
       \[
-        \texttt{while}_{0n}: \frac{
+        \texttt{whileFalse}: \frac{
           b \ s_1 = \texttt{false}          
         }{
           (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_1
@@ -1414,7 +1521,7 @@ We will prove that there are programs in \texttt{IMP} that don't terminate,
 we will show that there is in fact a program that doesn't terminate in any
 state.
 
-\begin{theorem}[While true doesn't terminate]
+\begin{theorem}
   The program \texttt{while b loop c end}, where \(b \sim \texttt{true}\)
   doesn't terminate in any state.
   \[
@@ -1429,8 +1536,9 @@ state.
   (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_2 \implies \bot
   \]
   Now we have to use a little trick, we will first generalize the configuration on the
-  left, calling it \(\text{hconf} \coloneq (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1)\) 
-  so:
+  left, calling it 
+  \[\text{hconf} \coloneqq (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1)\] 
+  with this we can rewrite the theorem as:
   \[
   \text{hconf} \bigstep s_2 \implies \bot
   \]
@@ -1439,7 +1547,7 @@ state.
   \(\text{hconf} = (\texttt{skip}, s_1)\) for example is clearly false, we will only
   prove the case for the two constructors of \texttt{while}.
 
-  In the \(\texttt{while}_{1n}\) case we have to prove that:
+  In the \(\texttt{whileTrue}\) case we have to prove that:
   \[
     (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) = (\texttt{while} \ b' \ \texttt{loop} \ c' \ \texttt{end}, s_1')
   \]
@@ -1447,7 +1555,7 @@ state.
   \[
     \forall x, (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, x) = (\texttt{while} \ b' \ \texttt{loop} \ c' \ \texttt{end}, s_2')
   \]
-  so it suffices to choose \(x = s_2\). For the \(\texttt{while}_{0n}\) case we 
+  so it suffices to choose \(x = s_2\). For the \(\texttt{whileFalse}\) case we 
   don't even need to use induction, in fact if \text{hconf} takes this form
   that means that the condition of the \texttt{while} construct is false but
   \(b \sim \texttt{true}\) by hypothesis so we have a contradiction.
@@ -1459,7 +1567,7 @@ Another important property of \texttt{IMP} that we can prove using the big step
 semantics is that the evaluation of a program is deterministic, that is, given
 a program and a state there is only one state that the program can evaluate to.
 
-\begin{theorem}[Determinism]
+\begin{theorem}
   The evaluation of a program is deterministic:
   \[
   \forall c \ s \ s_1 \ s_2, ((c, s) \bigstep s_1 \land (c, s) \bigstep s_2) \implies s_1 = s_2
@@ -1478,7 +1586,7 @@ a program and a state there is only one state that the program can evaluate to.
   \((c_1';c_2', s_1') \bigstep s_2\) so we must have its preconditions,
   that is:
   \[
-    \texttt{ass}_n: \frac{
+    \texttt{ass}: \frac{
       (c_1', s_1') \bigstep s_2' 
       \quad 
       (c_2', s_2') \bigstep s_2
@@ -1495,6 +1603,13 @@ a program and a state there is only one state that the program can evaluate to.
 \end{proof}
 
 \section{Small-Step Semantics}
+
+% Appendices 
+
+% appendix
+\appendix
+\section{Normalization in Lean}
+\subsection{Omega combinator}
 
 % Bibliography
 
