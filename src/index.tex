@@ -439,50 +439,34 @@ We can combine these extensions arbitrarily obtaining different system with
 different expressive power, a taxonomy of these systems is the Barendregt's 
 \(\lambda\)-cube. At the apex of generality we have the \emph{Calculus of
 Constructions}, which is the basis of Coq and Lean. The following sections will
-introduce the concepts of the Calculus of Constructions.
+introduce the concepts of the Calculus of Constructions. And in general of
+modern type theory, we will follow the exposition in~\cite{hottbook}.
 
-\subsection{Set theory}
+\subsection{Type theory vs set theory}
 
 A key point to remark is that types don't \emph{contain} values, they \emph{classify}
 values, while in set theory a value is a \emph{member} of a set, in type theory a
 value \emph{has} a type. The analogous to the
 membership notation in set theory is the \hl{\emph{typing judgement}} in type theory,
 which is written as \(x: \alpha\), and reads as \enquote{x has type \(\alpha\)}.
-
-Type theory can be used as a foundation of mathematics, in the same way that set
-theory is used. In fact, type theory and set theory are closely related, and
-both can be used to formalize mathematics. However, there are some key
-differences between the two.
+While in type theory \(x \in S\) are \(x \notin S\) are both valid expressions,
+the typing judgement is \enquote{always true}, it is not a proposition that can be
+proven or disproven.
+Because of this we cannot introduce a variable without
+specifying its type, when we write \(x\) we are implicitly writing \(x: \alpha\),
+where \(\alpha\) is the type of \(x\).
 
 The most important difference between type theory and set theory is that type
 theory its own deductive system, while set theory is formulated within
 first-order logic. This means that set theory has two primitive notions, sets
 and propositions, while type theory has types and functions. With just these two
 we can recreate all first-order logic, and in fact, we can use types to encode
-propositions, and functions to encode proofs.
-
-This makes type theory \hl{more expressive than set theory, as we can use types to
-encode propositions, and vice versa}. This also means that we can encode sets
-in type theory as a function.
-
-\begin{definition}[Type theoretic set]
-  A set is a function that takes an element of a type and returns a proposition.
-  \[
-  \texttt{Set} \ (\alpha : \texttt{Type}) \coloneqq \alpha \to \texttt{Prop}
-  \]
-\end{definition}
-
-
-In this definition the precise type of \(\texttt{Set}\) depends on the type
-\(\alpha\), this is what's commonly known as a \hl{polymorphic type}, and allows 
-us to define a type that depends on another type.
-
-\hl{We use the term proposition to refer to a type that can be either true or
-false, not to be confused with the propositions of logic, which are statements
-susceptible to proof}. This function corresponds to the concept of 
-\emph{membership} in set theory, and can be used to define the membership of an 
-element \(x\) in a set \(S\) as \(\texttt{Set} \ x \ S\), which is true if 
-\(x\) is a member of \(S\), and false otherwise.
+propositions, and functions to encode proofs. The type judgement \(x: \alpha\)
+can also be read as \enquote{x is a proof of \(\alpha\)}, and the function type
+\(\alpha \to \beta\) can be read as \enquote{if we have a proof of \(\alpha\) we can
+construct a proof of \(\beta\)}. This means that function abstraction corresponds
+to a \emph{logical implication} in classical logic, we will expand on this 
+in Section~\ref{sec:curry_howard}.
 
 \subsection{Equality}
 
@@ -509,15 +493,13 @@ Another type of equality is \emph{propositional equality}, which is states that 
 terms are equal if they can be proven to be equal in the type theory. This is
 more akin to the classic notion of equality, and is used to prove properties of
 the terms.\ \hl{A special case of propositional equality is \emph{functional
-extensionality}}\footnote{
-  \url{https://ncatlab.org/nlab/show/function+extensionality}}, 
+extensionality}}, 
 which states that two functions are equal if they are
 equal for all arguments, a classic result of set theory that follows from the
 axiom of extensionality, which states that two sets are equal if they contain
 the same elements.\ \hl{(The relationship may depend on axiom K)}.
 
-Another important axiom is \hl{\emph{propositional extensionality}}\footnote{
-  \url{https://ncatlab.org/nlab/show/propositional+extensionality}}, which
+Another important axiom is \hl{\emph{propositional extensionality}}, which
 states that two propositions are definitionally equal if they are equivalent,
 that is, if they imply each other. This is a key property of type theory, as it
 allows us to rewrite propositions in proofs, and simplify the reasoning process.
@@ -559,9 +541,10 @@ and is used to define the notion of isomorphism between types.}
 
 \subsection{Universes}
 
-But what is this \(\texttt{Prop}\) type that we mentioned before? \(\texttt{Prop}\)
-is, not surprisingly, a type, so it has type \(\texttt{Type}\), in fact any type
-has type \(\texttt{Type}\), even \(\texttt{Type}: \texttt{Type}\). This lead to
+Before we introduced the judgement \(x: \alpha\), but now we ask ourselves 
+what is the type of \(\alpha\)? The answer is that \(\alpha\) is of type
+\(\texttt{Type}\), but what is the type of \(\texttt{Type}\)? Of course it is
+also a type so \(\texttt{Type}: \texttt{Type}\), this leads to a problem known as
 \hl{\emph{impredicativity}}.
 
 Impredicativity arises when a definition of an object or type relies on
@@ -591,10 +574,7 @@ example, \(\mathbb{N} \to \mathbb{N}: \texttt{Type} \ 1\), and
 The first type universe, \(\texttt{Type} \ 0\), contains the types of the
 programming language itself, such as \(\mathbb{N}\), \(\texttt{Bool}\), and
 \(\texttt{List}\). The second type universe, \(\texttt{Type} \ 1\), contains the
-types of the first universe, and so on. The type \(\texttt{Prop}\) is a special
-type that sits alongside \(\texttt{Type} \ 0\) at the bottom of the hierarchy,
-this prevents defining a proposition in terms of itself, or any other type, for
-that matter, and avoids paradoxes.
+types of the first universe, and so on.
 
 \subsection{Constructors}
 
@@ -606,7 +586,20 @@ booleans, and define two constructors \(\texttt{true}\) and \(\texttt{false}\) t
 create the elements of the type. This ensures that the elements of the type are
 either \(\texttt{true}\) or \(\texttt{false}\), and no other value.
 
-\subsection{Inductive types}   
+\subsection{Pattern matching}
+
+To define functions that operate on types we need a way to distinguish between
+the different forms an element of a type can take, this is done using
+\emph{pattern matching}. Pattern matching is a way to define functions by
+defining a different case for each constructor of the type. For example, we can
+define a function \(\texttt{not}\) that takes a boolean and returns its negation
+as:
+\begin{align*}
+  \texttt{not} \ \texttt{true} & = \texttt{false} \\
+  \texttt{not} \ \texttt{false} & = \texttt{true}
+\end{align*}
+
+\subsection{Inductive types}
 
 Of course defining finite types such as \(\texttt{Bool}\) is not very
 interesting, we need a way to define infinite types, such as the natural
@@ -632,7 +625,7 @@ induction}}.
 Following the natural number example, let's construct a function
 \(f: \mathbb{N} \to C\) by recursion on the naturals, it's enough to provide a
 base case \(c_0 : C\) and a \enquote{next step} function \(c_s: \mathbb{N} \to C \to C\),
-then we can define \(f\) as:
+then we can define \(f\) via pattern matching as:
 \begin{align*}
   f \ 0 & = c_0 \\
   f \ (\texttt{succ} \ n) & = c_s \ n \ (f \ n)
@@ -676,22 +669,34 @@ In this way \(\Pi\)-types give us a way to type complex data structures, such as
 lists, trees, and graphs, that depend on the values of their elements,
 \hl{ensuring type safety}.
 
-\subsection{Pattern matching}
+\section{Product types}
 
-\section{The Curry-Howard isomorphism}
+\section{Sum types}
+
+\section{The Curry-Howard isomorphism}\label{sec:curry_howard}
 
 The Curry-Howard isomorphism is a result that establishes a correspondence
-between \emph{propositions} and \emph{types} and between \emph{terms} and \emph{proofs}. In broad
-terms, every proposition \(P\) in the logic corresponds to a type \(\alpha \ P\) in
-the system, every connective in the logic (\(\wedge\), \(\vee\), \(\Rightarrow\), \ldots)
-corresponds to a \emph{type constructor} in the system (\(\times\), \(+\), \(\to\), \ldots),
-and every proof of a proposition corresponds to a term \(a : \alpha \ P\) of the
-type.
+between \emph{propositions} and \emph{types} and between \emph{terms} and \emph{proofs}.
+This is know as the \emph{propositions as types} principle, and is the basis of
+all modern proof assistants, such as Coq, Lean, and Agda. In our type system
+a proposition is a type \(\tyfont{Prop}\), \enquote{proofs} are terms of that type,
+and the proposition is true if the type is inhabited, that is, if there is a
+term of that type, this is our \emph{witness}.
 
-\hl{Let's consider the example of implication} (\(\Rightarrow\)) in propositional
-logic, the proposition \(P \Rightarrow Q\) states that if \(P\) is true, then \(Q\)
+Proofs of terms can be manipulated in classical logic, for example we can
+obtain a proof that two propositions hold by using the \(\land\) operator,
+which states that if \(P\) and \(Q\) are true, then \(P \land Q\) is true. In
+type theory this corresponds to the \emph{pair type} \(P \times Q\), which
+states that if we have a proof of \(P\) and a proof of \(Q\), then we can
+construct a proof of \(P \times Q\). The \(\bot\) judgement which 
+represent unprovability is represented as a type with no constructors,
+and the \(\top\) judgement which represents a tautology is represented as the unit 
+type, which has only one constructor with no arguments.
+
+\hl{Let's consider the example of implication} (\(\implies\)) in propositional
+logic, the proposition \(P \implies Q\) states that if \(P\) is true, then \(Q\)
 must be true. In type theory this corresponds to the function type
-\(\alpha \ P \to \alpha \ Q\), which states that if we have a proof of \(P\), then
+\(P \to \ Q\), which states that if we have a proof of \(P\), then
 we can construct a proof of \(Q\). The proof of the proposition corresponds to a
 term of the type, and the proof of the implication corresponds to a function
 that takes a proof of \(P\) and returns a proof of \(Q\).
