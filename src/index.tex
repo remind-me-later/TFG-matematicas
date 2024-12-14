@@ -669,11 +669,11 @@ In this way \(\Pi\)-types give us a way to type complex data structures, such as
 lists, trees, and graphs, that depend on the values of their elements,
 \hl{ensuring type safety}.
 
-\section{Product types}
+\subsection{Product types}
 
-\section{Sum types}
+\subsection{Sum types}
 
-\section{The Curry-Howard isomorphism}\label{sec:curry_howard}
+\subsection{The Curry-Howard isomorphism}\label{sec:curry_howard}
 
 The Curry-Howard isomorphism is a result that establishes a correspondence
 between \emph{propositions} and \emph{types} and between \emph{terms} and \emph{proofs}.
@@ -712,6 +712,64 @@ The \emph{type checker} of the system then allows us to \emph{verify} the proofs
 checking that the terms are well-typed, and that the terms correspond to valid
 proofs. This mechanism ensures that the proofs are correct, and that the
 programs are well-typed.
+
+\subsection{Sets}
+
+We can express a set in type theory as a function that takes an element of the
+type and returns a proposition, this propsition tells us if the element is in
+the set or not.
+
+\begin{definition}[Set]
+  A set is a function that takes an element of a type and returns a proposition.
+  \[
+  \texttt{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \texttt{Prop}
+  \]
+\end{definition}
+
+We can also use the familiar \emph{set builder} notation to define sets.
+\begin{notation}[Set builder]
+  We can define a set using the set builder notation as:
+  \[
+  \{x \mid P\} \coloneqq \lambda x \implies P
+  \]
+\end{notation}
+
+The definition of the membership relation is immediate as the definition of the
+set itself captures the concept of membership.
+
+\begin{definition}[Membership]
+  The membership relation is a function that takes an element of a type and a set
+  and returns a proposition, let \(x: \alpha\) and \(S: \texttt{Set} \ \alpha\):
+  \[
+  x \in S \coloneqq S \ x
+  \]
+\end{definition}
+
+A subset is defined in a way similar to classic set theory.
+
+\begin{definition}[Subset]
+  A subset is a function that takes an element of a type and two sets and returns
+  a proposition, let \(A B: \texttt{Set} \ \alpha\):
+  \[
+  A \subset B \coloneqq \forall x, x \in A \implies x \in B
+  \]
+\end{definition}
+
+With this definitions set operations are defined in exactly the same way as in
+classic set theory, and we can reason about sets using the tools of type theory.
+
+\begin{definition}[Set operations]
+  We can define the set operations as:
+  \begin{align*}
+    A \cup B & \coloneqq \{x \mid x \in A \lor x \in B\} \\
+    A \cap B & \coloneqq \{x \mid x \in A \land x \in B\} \\
+    A \setminus B & \coloneqq \{x \mid x \in A \land x \notin B\} \\
+    A^\complement & \coloneqq \{x \mid x \notin A\}
+  \end{align*}
+\end{definition}
+
+So we can also use sets to reason if necessary, and it will be, as we will see
+in the definition of denotational semantics.
 
 \section{Proof irrelevance}
 
@@ -1608,6 +1666,8 @@ a program and a state there is only one state that the program can evaluate to.
 \end{proof}
 
 \section{Small-Step Semantics}
+
+
 
 % Appendices 
 
