@@ -90,7 +90,9 @@
 
 \newcommand{\funfont}[1]{\text{#1}}
 \newcommand{\tyfont}[1]{\texttt{#1}}
-\renewcommand{\implies}{\Rightarrow}
+\renewcommand{\implies}{\rightarrow}
+\renewcommand{\impliedby}{\leftarrow}
+\renewcommand{\mapsto}{\Rightarrow}
 
 % define math symbol for big step arrow
 \newcommand{\bigstep}{\Longrightarrow}
@@ -275,16 +277,19 @@ it as a \enquote{programming language} with only one data type, the function, an
 two operations, abstraction and application.
 
 The syntax of lambda calculus is simple, it consists of variables (\(x, y, z\)),
-abstraction (\(\lambda x \implies M\)), and application (\(M \ M\)), in 
+abstraction (\(\lambda x \mapsto M\)), and application (\(M \ M\)), in 
 BNF:
-\begin{align*}
-  M & \Coloneqq x \mid \lambda x \implies M \mid M \ M
-\end{align*}
+\[
+  M \Coloneqq x \mid \lambda x \mapsto M \mid M \ M
+\]
+Our usage of the (\(\mapsto\)) symbol, in contrast to the traditional (\(.\))
+is not accidental, and reveals a profound connection between function abstraction
+and logical implication, a connection that we will explore later.
 
 \begin{example}\label{ex:lambda_expr}
 We can apply the successor function to the number 3 as
 \(
-(\lambda x \implies x + 1) \ 3
+(\lambda x \mapsto x + 1) \ 3
 \).
 \end{example}
 
@@ -292,24 +297,24 @@ The rules to evaluate lambda calculus expressions are known as
 \emph{reduction rules} and they are:
 \begin{itemize}
   \item \(\alpha\)-conversion: Allows us to rename bound variables:
-    \[(\lambda x \implies M) \ N \longrightarrow M[x \coloneqq N]\]
+    \[(\lambda x \mapsto M) \ N \longrightarrow M[x \coloneqq N]\]
   \item Substitution: Allows us to replace all \emph{free} occurrences of the 
   variable \(x\) in the expression \(M\) with expression \(N\) and is denoted as
   \(M[x \coloneqq N]\).
   \item \(\beta\)-reduction: Allows us to apply a function to an argument, and
     is defined in terms of substitution as:
-    \[(\lambda x \implies M) \ N \longrightarrow M[x \coloneqq N]\]
+    \[(\lambda x \mapsto M) \ N \longrightarrow M[x \coloneqq N]\]
   \item \(\eta\)-conversion: Expresses the concept of \emph{extensionality} of functions, 
     and states that two functions are equal if they are equal for all arguments.
     To give an example when \(x\) is not free in \(f\):
-    \[(\lambda x \implies f \ x) \longrightarrow f\]
+    \[(\lambda x \mapsto f \ x) \longrightarrow f\]
 \end{itemize}
 
 \begin{example}
   We can apply the \(\beta\)-reduction rule to the expression in
   Example~\ref{ex:lambda_expr} as:
   \[
-  (\lambda x \implies x + 1) \ 3 \longrightarrow 3 + 1
+  (\lambda x \mapsto x + 1) \ 3 \longrightarrow 3 + 1 
   \]
 \end{example}
 
@@ -326,21 +331,27 @@ be applied any more, this is called the \emph{normal form} of the expression.
 Sadly, not all expressions have a normal form, as we will see in the next example.
 
 \begin{definition}[\(\Omega\)-combinator]\label{def:omega_combinator}
-  The \(\Omega\)-combinator:
+  The \(\Omega\)-combinator is the \(\lambda\)-expression:
   \[
-  \Omega \coloneqq (\lambda x \implies x \ x) \ (\lambda x \implies x \ x)
+  \Omega \coloneqq (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) 
   \]
-  is a lambda expression that does not have a normal form
 \end{definition}
+
+Without going into the details of the definition if the rules of the syntax and
+reduction of \(\lambda\)-calculus we can't give a real \enquote{rigorous} proof
+of the following theorem, but we can give an informal one.
+
+\begin{theorem}
+  The \(\Omega\)-combinator does not have a normal form.
+\end{theorem}
 
 \begin{proof}
   If we apply the \(\beta\)-reduction rule to~\ref{def:omega_combinator}
   we get the expression itself:
   \[
-  (\lambda x \implies x \ x) \ (\lambda x \implies x \ x) \longrightarrow
-  (\lambda x \implies x \ x) \ (\lambda x \implies x \ x)
+  (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) \longrightarrow
+  (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) \qedhere
   \]
-  So the expression does not have a normal form.
 \end{proof}
 
 Since our only \enquote{data types} are functions, we need to encode numbers,
@@ -351,10 +362,10 @@ as follows:
 
 \begin{definition}[Church booleans]
   We can define the boolean literals as:
-  \begin{align*}
-    \texttt{true} & \coloneqq \lambda x \implies \lambda y \implies x \\
-    \texttt{false} & \coloneqq \lambda x \implies \lambda y \implies y
-  \end{align*}
+  \[
+    \texttt{true} \coloneqq \lambda x \mapsto \lambda y \mapsto x \qquad
+    \texttt{false} \coloneqq \lambda x \mapsto \lambda y \mapsto y 
+  \]
 \end{definition}
 
 We can then define the logical operations \(\texttt{and}\), \(\texttt{or}\), and
@@ -362,11 +373,11 @@ We can then define the logical operations \(\texttt{and}\), \(\texttt{or}\), and
 
 \begin{definition}[Logical operators]
   We can define the logical operators as:
-  \begin{align*}
-    \texttt{and} & \coloneqq \lambda x \implies \lambda y \implies x \ y \ x \\
-    \texttt{or} & \coloneqq \lambda x \implies \lambda y \implies x \ x \ y \\
-    \texttt{not} & \coloneqq \lambda x \implies x \ \texttt{false} \ \texttt{true}
-  \end{align*}
+  \[
+    \texttt{and} \coloneqq \lambda x \mapsto \lambda y \mapsto x \ y \ x \quad
+    \texttt{or} \coloneqq \lambda x \mapsto \lambda y \mapsto x \ x \ y \quad
+    \texttt{not} \coloneqq \lambda x \mapsto x \ \texttt{false} \ \texttt{true} 
+  \]
 \end{definition}
 
 And even an if-then-else construct:
@@ -374,7 +385,7 @@ And even an if-then-else construct:
 \begin{definition}[If-then-else]
   We can define the if-then-else construct as:
   \[
-  \texttt{ifthen} \coloneqq \lambda b \implies \lambda x \implies \lambda y \implies b \ x \ y
+  \texttt{ifthen} \coloneqq \lambda b \mapsto \lambda x \mapsto \lambda y \mapsto b \ x \ y 
   \]
 \end{definition}
 
@@ -406,7 +417,7 @@ boolean to an integer are not possible, and so expressions cannot get
 
 The simplest typed lambda calculus is the \emph{simply typed lambda calculus} or
 \emph{STLC}. In the STLC each variable has a type, and each function has a type
-function abstraction now has the form \(\lambda x: \alpha \implies M\), where
+function abstraction now has the form \(\lambda x: \alpha \mapsto M\), where
 \(\alpha\) is the type of the variable \(x\). The two mandatory types in the STLC
 are the function type \(\alpha \to \beta\), which represents a function that
 takes an argument of type \(\alpha\) and returns a value of type \(\beta\), and
@@ -414,7 +425,7 @@ the base type \(\texttt{Bool}\), which represents the booleans.
 
 The syntax of the STLC is:
 \begin{align*}
-  M \Coloneqq & \ x \mid \lambda x: \alpha \implies M \mid M \ M \\
+  M \Coloneqq & \ x \mid \lambda x: \alpha \mapsto M \mid M \ M \\
     & \mid \texttt{true} \mid \texttt{false} \\
     & \mid \text{if} \ M \ \text{then} \ M \ \text{else} \ M
 \end{align*}
@@ -514,7 +525,7 @@ and false otherwise.
   proposition.
   \[
   \texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
-    \coloneqq \alpha \to \beta \to \texttt{Prop}
+    \coloneqq \alpha \to \beta \to \texttt{Prop} 
   \]
 \end{definition}
 
@@ -524,7 +535,7 @@ And we can define the relation of equality as:
   The relation of equality is a function that takes two elements of a type and
   returns a proposition.
   \[
-  \texttt{Eq} \ (\alpha: \texttt{Type}) \coloneqq \texttt{Rel} \ \alpha \ \alpha 
+  \texttt{Eq} \ (\alpha: \texttt{Type}) \coloneqq \texttt{Rel} \ \alpha \ \alpha  
   \]
 \end{definition}
 
@@ -594,10 +605,10 @@ the different forms an element of a type can take, this is done using
 defining a different case for each constructor of the type. For example, we can
 define a function \(\texttt{not}\) that takes a boolean and returns its negation
 as:
-\begin{align*}
-  \texttt{not} \ \texttt{true} & = \texttt{false} \\
-  \texttt{not} \ \texttt{false} & = \texttt{true}
-\end{align*}
+\[
+  \texttt{not} \ \texttt{true} = \texttt{false} \qquad
+  \texttt{not} \ \texttt{false} = \texttt{true}
+\]
 
 \subsection{Inductive types}
 
@@ -662,7 +673,7 @@ with constructors:
   \texttt{nil} & : \texttt{Vec} \ \alpha \ 0 \\
   \texttt{cons} & : \Pi_{n: \mathbb{N}}
   (\alpha \to \texttt{Vec} \ \alpha \ n
-    \to \texttt{Vec} \ \alpha \ (\texttt{succ} \ n))
+    \to \texttt{Vec} \ \alpha \ (\texttt{succ} \ n)) 
 \end{align*}
 \end{example}
 In this way \(\Pi\)-types give us a way to type complex data structures, such as
@@ -722,7 +733,7 @@ the set or not.
 \begin{definition}[Set]
   A set is a function that takes an element of a type and returns a proposition.
   \[
-  \texttt{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \texttt{Prop}
+  \texttt{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \texttt{Prop} 
   \]
 \end{definition}
 
@@ -730,7 +741,7 @@ We can also use the familiar \emph{set builder} notation to define sets.
 \begin{notation}[Set builder]
   We can define a set using the set builder notation as:
   \[
-  \{x \mid P\} \coloneqq \lambda x \implies P
+  \{x \mid P\} \coloneqq \lambda x \mapsto P 
   \]
 \end{notation}
 
@@ -741,7 +752,7 @@ set itself captures the concept of membership.
   The membership relation is a function that takes an element of a type and a set
   and returns a proposition, let \(x: \alpha\) and \(S: \texttt{Set} \ \alpha\):
   \[
-  x \in S \coloneqq S \ x
+  x \in S \coloneqq S \ x 
   \]
 \end{definition}
 
@@ -751,7 +762,7 @@ A subset is defined in a way similar to classic set theory.
   A subset is a function that takes an element of a type and two sets and returns
   a proposition, let \(A B: \texttt{Set} \ \alpha\):
   \[
-  A \subset B \coloneqq \forall x, x \in A \implies x \in B
+  A \subset B \coloneqq \forall x, x \in A \mapsto x \in B 
   \]
 \end{definition}
 
@@ -764,7 +775,7 @@ classic set theory, and we can reason about sets using the tools of type theory.
     A \cup B & \coloneqq \{x \mid x \in A \lor x \in B\} \\
     A \cap B & \coloneqq \{x \mid x \in A \land x \in B\} \\
     A \setminus B & \coloneqq \{x \mid x \in A \land x \notin B\} \\
-    A^\complement & \coloneqq \{x \mid x \notin A\}
+    A^\complement & \coloneqq \{x \mid x \notin A\} 
   \end{align*}
 \end{definition}
 
@@ -856,37 +867,37 @@ In type theory we can encode this as inductive types, the type of arithmetic
 expressions can be defined as an inductive type \(\texttt{Aexp}\) with 
 constructors for each \enquote{syntactic construct}:
 \begin{align*}
-  \texttt{val}_1 &\coloneqq \mathbb{Z} \to \texttt{Aexp} \\
-  \texttt{var}_1 &\coloneqq \texttt{String} \to \texttt{Aexp} \\
-  \texttt{add}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
-  \texttt{sub}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
-  \texttt{mul}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp}
+  \texttt{val} &\coloneqq \mathbb{Z} \to \texttt{Aexp} \\
+  \texttt{var} &\coloneqq \texttt{String} \to \texttt{Aexp} \\
+  \texttt{add} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
+  \texttt{sub} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
+  \texttt{mul} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp}
 \end{align*}
 While the first to simply \enquote{coerce} a value or a variable into an
 expression, the others \enquote{construct} an expression from two other
 expressions. The constructors for boolean expressions are defined in a similar
 fashion:
 \begin{align*}
-  \texttt{true}_1 &\coloneqq \texttt{Bexp} \\
-  \texttt{false}_1 &\coloneqq \texttt{Bexp} \\
-  \texttt{not}_1 &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \\
-  \texttt{and}_1 &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
-  \texttt{or}_1 &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
-  \texttt{eq}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp} \\
-  \texttt{le}_1 &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp}
+  \texttt{true} &\coloneqq \texttt{Bexp} \\
+  \texttt{false} &\coloneqq \texttt{Bexp} \\
+  \texttt{not} &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{and} &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{or} &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{eq} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp} \\
+  \texttt{le} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp}
 \end{align*}
 And the same goes for commands:
 \begin{align*}
-  \texttt{skip}_1 &\coloneqq \texttt{Com} \\
-  \texttt{assign}_1 &\coloneqq \texttt{String} \to \texttt{Aexp} \to \texttt{Com} \\
-  \texttt{seq}_1 &\coloneqq \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
-  \texttt{if}_1 &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
-  \texttt{while}_1 &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com}
+  \texttt{skip} &\coloneqq \texttt{Com} \\
+  \texttt{assign} &\coloneqq \texttt{String} \to \texttt{Aexp} \to \texttt{Com} \\
+  \texttt{seq} &\coloneqq \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
+  \texttt{ifElse} &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
+  \texttt{whileLoop} &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com}
 \end{align*}
 
 Now a simple expression in our language would look something like:
 \[
-  \texttt{add}_1 \ (\texttt{var}_1 \ \textit{``x''}) \ (\texttt{val}_1 \ 3)
+  \texttt{add} \ (\texttt{var} \ \textit{``x''}) \ (\texttt{val} \ 3)
 \]
 this is not very readable, so we will use some \enquote{abuse of notation} and
 say that \(x + 3\) is an arithmetic expression of \texttt{IMP} for example,
@@ -940,7 +951,7 @@ keys to values, this is done using the \texttt{update} function:
   original map.
   \begin{align*}
   \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneqq \\
-                      &\lambda k' \implies \funfont{cond} \ (k = k') \ v \ (m \ k')
+                      &\lambda k' \mapsto \funfont{cond} \ (k = k') \ v \ (m \ k')
   \end{align*}
 \end{definition}
 
@@ -953,7 +964,7 @@ pattern matching, we can define it as:
 We can even denote the \funfont{cond} function as an \emph{if then else}:
 \begin{align*}
   \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneqq \\
-                      &\lambda k' \implies \text{if} \ k = k' \ \text{then} \ v \ \text{else} \ m \ k'
+                      &\lambda k' \mapsto \text{if} \ k = k' \ \text{then} \ v \ \text{else} \ m \ k'
 \end{align*}
 Not to be confused with the \texttt{if then else} construct of the language 
 \texttt{IMP}. While we are introducing notation we can also introduce some to 
@@ -1067,7 +1078,7 @@ value.
   We will define the \emph{initial state} of an \(\texttt{IMP}\) program as the
   constant function that maps all variables to zero.
   \[
-  s_0 \coloneqq \lambda x \implies 0
+  s_0 \coloneqq \lambda x \mapsto 0
   \]
 \end{definition}
 
@@ -1116,11 +1127,12 @@ constructor for the constant expression will be:
 \]
 
 Which relates the configuration \((n, \cdot)\), where the \(n\) of the left is
-a constant expression (in reality we should write \(\texttt{val}_1 n\) 
+a constant expression (in reality we should write \(\texttt{val} n\) 
 to denote that its the first constructor of the \(\tyfont{Aexp}\) type, but
 we will omit it for brevity) and the \(\cdot\) denotes any state, to the
-integer value \(n\). Note that we used the subscript \(n\) to distinguish
-the big step constructor from the syntactic constructor.
+integer value \(n\). Some attention is needed to not confuse the constructor
+of the \emph{syntactic expression} with that of the \emph{evaluation relation},
+but the distinction is clear from the context.
 
 The constructor for the variable expression is similar, but this time we need
 to look up the value of the variable in the state:
@@ -1191,11 +1203,11 @@ take a configuration and return a value.
 \hl{This time, instead of a Cartesian product, we will use a \emph{curried} function.}
 We can easily define the evaluation rules with pattern matching:
 \begin{align*}
-  \funfont{reduce} \ (\texttt{val}_1 \ v) \ \cdot &\coloneqq v \\
-  \funfont{reduce} \ (\texttt{var}_1 \ x) \ s &\coloneqq s \ x \\
-  \funfont{reduce} \ (\texttt{add}_1 \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s + \funfont{reduce} \ a_2 \ s \\
-  \funfont{reduce} \ (\texttt{sub}_1 \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s - \funfont{reduce} \ a_2 \ s \\
-  \funfont{reduce} \ (\texttt{mul}_1 \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s * \funfont{reduce} \ a_2 \ s
+  \funfont{reduce} \ (\texttt{val} \ v) \ \cdot &\coloneqq v \\
+  \funfont{reduce} \ (\texttt{var} \ x) \ s &\coloneqq s \ x \\
+  \funfont{reduce} \ (\texttt{add} \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s + \funfont{reduce} \ a_2 \ s \\
+  \funfont{reduce} \ (\texttt{sub} \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s - \funfont{reduce} \ a_2 \ s \\
+  \funfont{reduce} \ (\texttt{mul} \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s * \funfont{reduce} \ a_2 \ s
 \end{align*}
 
 We can introduce some notation to denote the evaluation of an expression on a state.
@@ -1247,13 +1259,15 @@ The cases for the subtraction and multiplication are analogous.
 
 The right to left implication \(a \ s = n \implies (a, s) \bigstep n\)
 is proven by induction on arithmetic expression, again the cases for 
-\(\texttt{val}_1\) and \(\texttt{var}_1\) are immediate, so let's focus on
-\(\texttt{add}_1\). Like before we have to prove that 
+\(\texttt{val}\) and \(\texttt{var}\) are immediate, so let's focus on
+\(\texttt{add}\). Like before we have to prove that 
 \((a_1 + a_2, s) \bigstep n\), with the induction hypotheses:
-\begin{align*}
-  \forall n, a_1 \ s &= n \implies (a_1, s) \bigstep n \\
-  \forall n, a_2 \ s &= n \implies (a_2, s) \bigstep n
-\end{align*}
+\[
+\begin{gathered}
+  \forall n, a_1 \ s = n \implies (a_1, s) \bigstep n \qquad
+  \forall n, a_2 \ s = n \implies (a_2, s) \bigstep n
+\end{gathered}
+\]
 by choosing \(n\) to be \(a_1 \ s\) and \(a_2 \ s\) respectively we can construct
 the evaluation tree:
 \[
@@ -1274,17 +1288,20 @@ We present the rules of evaluation of boolean expression without much detail,
 as they are analogous to the arithmetic expressions, we have presented first
 the rules for arithmetic expressions because some of the rules for boolean
 expressions depend on the evaluation of arithmetic expressions.
-\begin{align*}
-  \texttt{true} &: (\texttt{true}, \cdot) \bigstep \texttt{true} \\
-  \texttt{false} &: (\texttt{false}, \cdot) \bigstep \texttt{false} \\
-  \texttt{not} &: \frac{(b, s) \bigstep b'}{\lnot (b, s) \bigstep \lnot b'} \\
-  \texttt{and} &: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
-    {(b_1 \land b_2, s) \bigstep b_1' \land b_2'} \\
-  \texttt{or} &: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+\[
+\begin{gathered}
+  \texttt{true}: (\texttt{true}, \cdot) \bigstep \texttt{true} \quad
+  \texttt{false}: (\texttt{false}, \cdot) \bigstep \texttt{false} \\
+  \texttt{not}: \frac{(b, s) \bigstep b'}{\lnot (b, s) \bigstep \lnot b'} \quad
+  \texttt{and}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+    {(b_1 \land b_2, s) \bigstep b_1' \land b_2'} \quad
+  \texttt{or}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
     {(b_1 \lor b_2, s) \bigstep b_1' \lor b_2'} \\
-  \texttt{eq} &: (a_1 = a_2, s) \bigstep a_1 \ s = a_2 \ s \\
-  \texttt{le} &: (a_1 \leq a_2, s) \bigstep a_1 \ s \leq a_2 \ s
-\end{align*}
+  \texttt{eq}: (a_1 = a_2, s) \bigstep a_1 \ s = a_2 \ s \quad
+  \texttt{le}: (a_1 \leq a_2, s) \bigstep a_1 \ s \leq a_2 \ s
+\end{gathered}
+\]
+
 Notice that in the last two rules we are using the reduce function to evaluate
 the arithmetic expressions, we could have used the evaluation relation, but
 this approach is easier. Everything that we said about the reduce function
@@ -1300,7 +1317,7 @@ the functions are easier to define and use. The reason is that
 \texttt{while} construct. We could define a \(\funfont{reduce}: \tyfont{Com} \to \tyfont{State} \to \tyfont{State}\) 
 function to evaluate commands that looks something like this:
 \begin{align*}
-  \funfont{reduce} \ \texttt{skip}_1 \ s &\coloneqq s \\
+  \funfont{reduce} \ \texttt{skip} \ s &\coloneqq s \\
   \funfont{reduce} \ (x := a) \ s &\coloneqq s[x \leftarrow a \ s] \\
   \funfont{reduce} \ (c_1; c_2) \ s &\coloneqq \funfont{reduce} \ c_2 \ (\funfont{reduce} \ c_1 \ s) \\
   \funfont{reduce} \ (\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}) \ s &\coloneqq
@@ -1328,7 +1345,7 @@ the constructors for skip, assignment and concatenation are straightforward:
     (c_1; c_2, s_1) \bigstep s_3
   }
 \end{align*}
-In the concatenationwe have to introduce an intermediate state \(s_2\) that doesn't appear in the
+In the concatenation we have to introduce an intermediate state \(s_2\) that doesn't appear in the
 final result, in this way we account for \enquote{intermediate step} in the 
 evaluation.
 
@@ -1667,7 +1684,57 @@ a program and a state there is only one state that the program can evaluate to.
 
 \section{Small-Step Semantics}
 
+Another way of defining the semantics of the language are small-step semantics. 
+In this case instead of yielding directly the value of the expression we take one \enquote{single step}
+that relates two configurations, with the state before taking the step and the 
+state after, by doing this we can observe
+the \emph{intermediate states} of the execution of a program, so every single
+step of this semantics is \enquote{atomic}. This is very useful when we want to
+prove properties of parallel or concurrent programs, although we won't go into
+that in this text.
+\begin{definition}[Small-step]
+  We will denote the small-step relation \(\text{SmallStep}: \tyfont{Com} \times \tyfont{State}
+\to \tyfont{Com} \times \tyfont{State} \to \tyfont{Prop}\) as:
+  \[
+    (c_1, s_1) \rightsquigarrow (c_2, s_2) \coloneq \text{SmallStep} \ (c_1, s_1) \ (c_2, s_2)
+  \]
+\end{definition}
 
+The constructors of the relation are then:
+\[
+\begin{gathered}
+  \texttt{ass}: (v \ \texttt{:=} \ a, s) \rightsquigarrow (\texttt{skip}, s[v \leftarrow s]) \quad
+  \texttt{skipCat}: (\texttt{skip}; c, s) \rightsquigarrow (c, s) \quad
+  \texttt{cat}: \frac{(c, s) \rightsquigarrow (c', s')}{(c; c'', s) \rightsquigarrow (c', c'', s')} \\
+  \texttt{ifElse}: (\texttt{if} \ b \ \texttt{then} \ c \ \texttt{else} \ c' \ \texttt{end}, s)
+    \rightsquigarrow (\text{if} \ b \ s \ \text{then} \ c \ \text{else} \ c', s) \\
+  \texttt{whileLoop}: (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s)
+    \rightsquigarrow (\text{if} \ b \ s \ \text{then} \ c;\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}  \ \text{else} \ \texttt{skip}, s) 
+\end{gathered}
+\]
+These rules capture the evaluation of commands from left to right in a sequential
+fashion. Of course, we could have defined the \enquote{if} and \enquote{while}
+constructs in other ways depending on the \enquote{granularity} that we want
+in the semantics, evaluating the boolean could be a state and selecting the branch
+another, for example. 
+
+Let's see an example of how the small-step semantics work, for this we evaluate a
+simple program:
+\begin{example}
+  We have the evaluation tree:
+  \[
+  \texttt{cat}: \frac{
+    \texttt{ass}: (\texttt{x := 1} , s_0) \rightsquigarrow (\texttt{skip}, s_0[x \leftarrow 1])
+  }
+  {(\texttt{x := 1; while x <= 2 loop x := x + 1 end}, s_0)
+  \rightsquigarrow
+  (\texttt{skip; while x <= 2 loop x := x + 1 end}, s_0[x \leftarrow 1])
+  }
+  \]
+\end{example}
+
+In this case the computation ends when we can't apply any rule to the program, 
+that is when we have a configuration of the form \((\texttt{skip}, \cdot)\).
 
 % Appendices 
 
@@ -1676,10 +1743,23 @@ a program and a state there is only one state that the program can evaluate to.
 \section{Normalization in Lean}
 \subsection{Omega combinator}
 
+\section{Future work}
+
+Things to add:
+
+\begin{itemize}
+  \item Add formalization of \(\lambda\)-calculus and proofs.
+  \item \(\Omega\)-chain partial orders.
+  \item Compiler.
+  \item Typed \texttt{IMP}.
+  \item Hoare Logic.
+  \item Abstract interpretation.
+\end{itemize}
+
 % Bibliography
 
-\bibliographystyle{alpha} % We choose the "plain" reference style
-\bibliography{refs} % Entries are in the refs.bib file
+\bibliographystyle{alpha}
+\bibliography{refs}
 
 
 \end{document}

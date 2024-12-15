@@ -1,7 +1,4 @@
 {
-  // indent using 2 spaces
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
   "cSpell.language": "en_GB",
   "cSpell.words": [
     "Aexp",
