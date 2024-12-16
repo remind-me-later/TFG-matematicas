@@ -2,7 +2,7 @@
   a4paper, 
   10pt, 
   parskip=half, 
-  DIV=30,
+  DIV=20,
   toc=bibliography,
   usegeometry,
 ]{scrartcl}
@@ -345,7 +345,7 @@ of the following theorem, but we can give an informal one.
   we get the expression itself:
   \[
   (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) \longrightarrow
-  (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) \qedhere
+  (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x)
   \]
 \end{proof}
 
@@ -1727,14 +1727,16 @@ another, for example.
 Let's see an example of how the small-step semantics work, for this we evaluate a
 simple program:
 \begin{example}
+  Consider the program \texttt{x := 1; while x <= 2 loop x := x + 1 end},
+  to ease reading we will denote the \enquote{while} block as \(W\).
   We have the evaluation tree:
   \[
   \texttt{cat}: \frac{
     \texttt{ass}: (\texttt{x := 1} , s_0) \rightsquigarrow (\texttt{skip}, s_0[x \leftarrow 1])
   }
-  {(\texttt{x := 1; while x <= 2 loop x := x + 1 end}, s_0)
+  {(\texttt{x := 1;} W, s_0)
   \rightsquigarrow
-  (\texttt{skip; while x <= 2 loop x := x + 1 end}, s_0[x \leftarrow 1])
+  (\texttt{skip;} W, s_0[x \leftarrow 1])
   }
   \]
 \end{example}
