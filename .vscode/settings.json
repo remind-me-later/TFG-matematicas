@@ -17,5 +17,6 @@
     "substructural",
     "texttt",
     "Winskel's"
-  ]
+  ],
+  "makefile.configureOnOpen": false
 }

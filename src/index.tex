@@ -32,9 +32,6 @@
 % Use KOMA-Script's nice headers instead of fancyhdr
 % \usepackage[Conny]{fncychap}
 
-\usepackage{xcolor}
-\usepackage{soul}
-
 % === Math facilities ===
 
 % Theorem environments
@@ -107,15 +104,11 @@
 
 \tableofcontents
 
-\begin{itemize}
-\item Parts I'm not sure about or need sources are \hl{marked like this}.
-\end{itemize}
-
 \section{Introduction}
 
 Proof assistants such as Lean and Coq have gained significant popularity in
 recent years, specifically in the field of formal verification. As software
-systems become \hl{increasingly more complex}, and are responsible for more
+systems become increasingly more complex, and are responsible for more
 critical tasks, the need for formal verification becomes more apparent. Formal
 verification is a technique that uses mathematical logic to prove the
 correctness of a system, usually hardware or software. It involves using formal
@@ -133,7 +126,7 @@ Hoare logic, as it requires the use of invariants to prove the termination of
 the program. We will see that this is a common problem when reasoning about
 programs in general, as proving the termination of a given program is a
 non-trivial task, and in the most general case, is undecidable, this is known as
-the famous \hl{\emph{Halting Problem}}.
+the famous \emph{Halting Problem}.
 
 The inference rules for Hoare logic however are dependent on the \emph{semantics} of
 the programming language. The semantics of a language are the rules that define 
@@ -150,7 +143,7 @@ the presence of bugs, but not their absence, and is not exhaustive. In this way
 formal methods are more suitable for critical systems, such as avionics, medical
 devices, and financial systems, where the cost of failure is high. Alongside the
 correctness gains, formal methods can also improve the performance of programs,
-verified toolchains, \hl{such as CompCert, have been shown} to produce more
+verified toolchains, such as CompCert, have been shown to produce more
 efficient code than their unverified counterparts. This is due to more
 aggressive optimizations being possible when the correctness of the program is
 guaranteed: runtime checks can be removed, aggressive flow analysis can be
@@ -159,7 +152,7 @@ performed by modern compilers, using static analysis, but the guarantees
 provided by formal methods are stronger, as we said before we can ensure
 \emph{termination} in some cases.
 
-\hl{Proof of the relevance that program correctness has gained in recent years is
+Proof of the relevance that program correctness has gained in recent years is
 the adoption of the \emph{Rust} programming language, which has a strong type system
 that ensures memory safety and thread safety, and is designed to prevent common
 programming errors, such as null pointer dereferences, buffer overflows, and
@@ -169,7 +162,7 @@ ensures correctness of the programs. The borrow checker is based on
 \emph{substructural logic} and \emph{linear types}, concepts that we will not cover in
 this text, but that encode in the language itself the rules of the type system,
 ensuring that the programs are well-typed, and that the memory is used
-correctly.}
+correctly.
 
 \section{Proof assistants}
 
@@ -177,46 +170,46 @@ Proof assistants, or interactive theorem provers, are software systems that aid
 in the construction and verification of mathematical proofs using computers. The
 inception of proof assistants can be traced back to the 1950s and 1960s, with
 the \emph{Logic Theorist}\footnote{\url{https://en.wikipedia.org/wiki/Logic_Theorist}} 
-and \hl{\emph{Automath}} systems. These were the
-first systems to use a computer to check mathematical proofs.\ \hl{They were
+and \emph{Automath} systems. These were the
+first systems to use a computer to check mathematical proofs. They were
 created before the advent of modern type theory and the Curry-Howard
 isomorphism, and used a different logical foundation based on \emph{natural
-deduction}}. Although interesting these systems were limited in scope, and
+deduction}. Although interesting these systems were limited in scope, and
 could only prove simple theorems.
 
-In the 1970s more powerful systems were developed, such as \hl{\emph{LCF}}, based on
+In the 1970s more powerful systems were developed, such as \emph{LCF}, based on
 Dana Scott's \emph{Logic of Computable Functions}, this was one of the first systems
 to use proofs by induction, a feature fundamental to reason about recursively
 defined functions and that we will see in this text. The creation of the
-programming language ML, \hl{the father of all functional languages}, is also
-attributed to the development of LCF, \hl{as it was designed for writing tactics
-in LCF}. The modern approach of \enquote{step by step} proof construction, used by all
+programming language ML, the father of all functional languages, is also
+attributed to the development of LCF, as it was designed for writing tactics
+in LCF. The modern approach of \enquote{step by step} proof construction, used by all
 modern assistants, was also pioneered by LCF.\@
 
 The 1970s also saw the development of ideas such as type theory, in particular
 Martin-Löf type theory, and the Curry-Howard isomorphism, two key concepts that
 are the basis of all modern proof assistants. In the 1980s this ideas were
-implemented in systems such as \hl{\emph{Nuprl} and \emph{Coq}}. Nuprl is one of the
+implemented in systems such as \emph{Nuprl} and \emph{Coq}. Nuprl is one of the
 first systems to use a constructive type theory at its core, were proofs are
 first class objects, emphasizing their computational content and allowing
-\hl{\emph{code extraction} of programs from verified proofs}. Nuprl also introduced
+\emph{code extraction} of programs from verified proofs. Nuprl also introduced
 dependent types, a powerful feature that allows the type of a value to depend on
 the value itself. With this system a great deal of mathematics can be encoded
 and proved.
 
-A little later came Coq, a system based on the \hl{CIC (Calculus of Inductive
-Constructions)}, a type theory that extends the Calculus of Constructions with
+A little later came Coq, a system based on the CIC (Calculus of Inductive
+Constructions), a type theory that extends the Calculus of Constructions with
 inductive types. Coq is one of the most popular proof assistants, and is widely
 used in academia and industry to this day. We will see that the CIC is also the
 basis of Lean, a more recent proof assistant that has gained significant
 popularity in recent years.
 
 While this advancements where made with the theories of dependent types another
-line of research was being developed, the \hl{\emph{HOL}} family of proof assistants,
+line of research was being developed, the \emph{HOL} family of proof assistants,
 based on \emph{Higher Order Logic}, a logic that extends first-order logic with
 higher order quantifiers. These systems are based on the \emph{LCF} architecture, and
 use a \emph{kernel} to ensure the correctness of the proofs. The most popular system
-in this family is \hl{\emph{Isabelle}, a powerful proof assistant that is as
+in this family is \emph{Isabelle, a powerful proof assistant that is as
 powerful as Coq and Lean}, but with a different logical foundation.
 
 This brings us to Lean, the proof assistant that we will use in this text. Lean
@@ -233,9 +226,9 @@ first introduce the basics of type theory.
 
 Type theory is a branch of mathematical logic that deals with the study of
 types, an abstraction similar in some ways to the more familiar sets.
-\hl{It emerged in the early 20th century to solve the foundational crisis of
+It emerged in the early 20th century to solve the foundational crisis of
 mathematics, a series of problems that arose from the discovery of paradoxes in
-set theory, such as Russell's paradox.}
+set theory, such as Russell's paradox.
 
 Like \emph{sets} are a primitive notion in set theory, \emph{types} are a primitive notion
 in type theory, alongside \emph{functions}. This two primitives ensure that functions
@@ -269,6 +262,8 @@ classic type theory with the \(\lambda\)-calculus.
 
 \subsection{Lambda calculus}
 
+A complete treatment on \(\lambda\)-calculus can be found in~\cite{barendregt1984lambda}, 
+but for completeness we will give a brief introduction here.
 The \(\lambda\)-calculus is a formal system for expressing computation based on function abstraction 
 and application using variable binding and substitution. It was introduced by 
 Alonzo Church in the 1930s as a way to study the foundations of mathematics and 
@@ -393,7 +388,7 @@ Numbers also have a church encoding but we skip presenting it since later we
 will see a more general way to encode data types.
 
 As we've seen the \(\lambda\)-calculus is a simple but powerful formal system
-that can be used to reason about computation, \hl{it is in fact \emph{Turing complete},
+that can be used to reason about computation, it is in fact \emph{Turing complete,
 meaning that it can express any computable function.} However, as we have 
 shown with the \(\Omega\)-combinator, it is not very \enquote{safe} to use.
 
@@ -450,15 +445,26 @@ We can combine these extensions arbitrarily obtaining different system with
 different expressive power, a taxonomy of these systems is the Barendregt's 
 \(\lambda\)-cube. At the apex of generality we have the \emph{Calculus of
 Constructions}, which is the basis of Coq and Lean. The following sections will
-introduce the concepts of the Calculus of Constructions. And in general of
-modern type theory, we will follow the exposition in~\cite{hottbook}.
+introduce the concepts of the Calculus of Constructions. For a complete
+treatment of the \(\lambda\)-cube we refer the reader to~\cite{lambda_with_types}.
 
 \subsection{Type theory vs set theory}
+
+We follow the type theory developed in~\cite{hottbook}, although any 
+Martin-Löf type theory would suffice. In fact getting into the differences 
+between Martin-Löf type theory, the Calculus of Constructions, and the
+Calculus of Inductive Constructions is beyond the scope of this text, and we
+will use the term \enquote{type theory} to refer to all of them.
+We can think of the \(\lambda\)-calculus
+presented before as a \enquote{syntax} for our type theory, the types will give
+meaning to the expressions of the \(\lambda\)-calculus. In fact a long deal
+of the next sections will be dedicated to show how to \emph{construct} types
+that can encode the object of our proofs.
 
 A key point to remark is that types don't \emph{contain} values, they \emph{classify}
 values, while in set theory a value is a \emph{member} of a set, in type theory a
 value \emph{has} a type. The analogous to the
-membership notation in set theory is the \hl{\emph{typing judgement}} in type theory,
+membership notation in set theory is the \emph{typing judgement} in type theory,
 which is written as \(x: \alpha\), and reads as \enquote{x has type \(\alpha\)}.
 While in type theory \(x \in S\) are \(x \notin S\) are both valid expressions,
 the typing judgement is \enquote{always true}, it is not a proposition that can be
@@ -494,23 +500,23 @@ rules}. The reduction rules of type theories typically include:
   pattern matching for inductive data types.
 \end{itemize}
 
-\hl{These rules normally satisfy a series of desirable properties, such as
+These rules normally satisfy a series of desirable properties, such as
 \emph{confluence}, \emph{termination}, and \emph{consistency}, that ensure that 
 the reduction process is well defined, and that the equality relation is an 
 equivalence relation. In some cases other nice properties are added, such as 
-\emph{congruence}, \emph{strong normalization}, and \emph{canonicity}}.
+\emph{congruence}, \emph{strong normalization}, and \emph{canonicity}.
 
 Another type of equality is \emph{propositional equality}, which is states that two
 terms are equal if they can be proven to be equal in the type theory. This is
 more akin to the classic notion of equality, and is used to prove properties of
-the terms.\ \hl{A special case of propositional equality is \emph{functional
-extensionality}}, 
+the terms.\ A special case of propositional equality is \emph{functional
+extensionality}, 
 which states that two functions are equal if they are
 equal for all arguments, a classic result of set theory that follows from the
 axiom of extensionality, which states that two sets are equal if they contain
-the same elements.\ \hl{(The relationship may depend on axiom K)}.
+the same elements.\ (The relationship may depend on axiom K).
 
-Another important axiom is \hl{\emph{propositional extensionality}}, which
+Another important axiom is \emph{propositional extensionality}, which
 states that two propositions are definitionally equal if they are equivalent,
 that is, if they imply each other. This is a key property of type theory, as it
 allows us to rewrite propositions in proofs, and simplify the reasoning process.
@@ -539,16 +545,16 @@ And we can define the relation of equality as:
   \]
 \end{definition}
 
-\hl{Equality is much more than an equivalence relation, however. It has the important 
+Equality is much more than an equivalence relation, however. It has the important 
 property that every assertion respects the equivalence, in the sense that we can 
-substitute equal expressions without changing the truth value}. 
+substitute equal expressions without changing the truth value. 
 
 \subsubsection{Equivalence}
 
-\hl{In type theory, the notion of equivalence is more general than equality, and
+In type theory, the notion of equivalence is more general than equality, and
 refers to a relation between two types that is reflexive, symmetric, and
 transitive. This relation is normally defined as a setoid in the type theory,
-and is used to define the notion of isomorphism between types.}
+and is used to define the notion of isomorphism between types.
 
 \subsection{Universes}
 
@@ -556,7 +562,7 @@ Before we introduced the judgement \(x: \alpha\), but now we ask ourselves
 what is the type of \(\alpha\)? The answer is that \(\alpha\) is of type
 \(\texttt{Type}\), but what is the type of \(\texttt{Type}\)? Of course it is
 also a type so \(\texttt{Type}: \texttt{Type}\), this leads to a problem known as
-\hl{\emph{impredicativity}}.
+\emph{impredicativity}.
 
 Impredicativity arises when a definition of an object or type relies on
 a quantifier that ranges over a totality encompassing the very object being
@@ -564,16 +570,16 @@ defined. This self-referential aspect can lead to logical paradoxes, akin to
 Russell's Paradox in set theory, where a set is defined to contain all sets that
 do not contain themselves.
 
-The type theory analogous to Russell's paradox is the \hl{\emph{Girard's paradox}}, in
+The type theory analogous to Russell's paradox is the \emph{Girard's paradox}, in
 a system that allows impredicativity, we can define a type \(U\) that contains all
 types that do not contain themselves, and then ask if \(U: U\), if it is, then it
 should not be of type \(U\), and if it is not, then it should be. A system that
 shows this paradox is not very useful for theorem proving, as it is
 inconsistent, so any proposition can be proven.\footnote{
-  \hl{Historically this problem has been solved with System U}.} 
+  Historically this problem has been solved with System U}. 
 To avoid this, we introduce a hierarchy of \emph{type universes}.
 
-Each universe is a \hl{\emph{collection} of types, whether they are types or not
+Each universe is a \emph{collection of types, whether they are types or not
 depends on the particular type theory}, in Lean and Coq they are not. Each
 universe contains the types of the previous universe, and is contained in the
 next universe. For example: \(\texttt{Type}: \texttt{Type} \ 1\),
@@ -590,7 +596,7 @@ types of the first universe, and so on.
 \subsection{Constructors}
 
 For now we have focused on types, but we need a way to create values of these
-types, this is done using \hl{\emph{type constructors}}, which are functions that
+types, this is done using \emph{type constructors}, which are functions that
 create elements of a type and define the possible forms an element of a type can
 take. For example, we can define a type \(\texttt{Bool}\) that represents the
 booleans, and define two constructors \(\texttt{true}\) and \(\texttt{false}\) that
@@ -630,8 +636,8 @@ an inductive type, and define functions that operate on them, such as addition,
 multiplication, and exponentiation. This is the essence of inductive types, the
 ability to define types that are created by a set of constructors, and define
 functions that operate on them. And as is the case in classical mathematics, we
-can use induction to prove properties of these types, \hl{in this case \emph{structural
-induction}}.
+can use induction to prove properties of these types, in this case \emph{structural
+induction}.
 
 Following the natural number example, let's construct a function
 \(f: \mathbb{N} \to C\) by recursion on the naturals, it's enough to provide a
@@ -678,7 +684,7 @@ with constructors:
 \end{example}
 In this way \(\Pi\)-types give us a way to type complex data structures, such as
 lists, trees, and graphs, that depend on the values of their elements,
-\hl{ensuring type safety}.
+ensuring type safety.
 
 \subsection{Product types}
 
@@ -704,7 +710,7 @@ represent unprovability is represented as a type with no constructors,
 and the \(\top\) judgement which represents a tautology is represented as the unit 
 type, which has only one constructor with no arguments.
 
-\hl{Let's consider the example of implication} (\(\implies\)) in propositional
+Let's consider the example of implication (\(\implies\)) in propositional
 logic, the proposition \(P \implies Q\) states that if \(P\) is true, then \(Q\)
 must be true. In type theory this corresponds to the function type
 \(P \to \ Q\), which states that if we have a proof of \(P\), then
@@ -715,7 +721,7 @@ that takes a proof of \(P\) and returns a proof of \(Q\).
 This correspondence is not limited to propositional logic, but extends to
 predicate logic, and higher order logics. For example, the universal quantifier
 \(\forall\) corresponds to the dependent function type \(\Pi\), and the existential
-quantifier \(\exists\) corresponds to the \hl{dependent pair type} \(\Sigma\). This
+quantifier \(\exists\) corresponds to the dependent pair type \(\Sigma\). This
 correspondence is the basis of all modern proof assistants, and allows us to
 reason about programs using the tools of logic, and vice versa.
 
@@ -790,7 +796,7 @@ designed to be proof-irrelevant. Proof-irrelevance is a property of a type
 theory that states that all proofs of a proposition are definitionally equal,
 meaning that they are indistinguishable by the type checker.
 
-\hl{For example, imagine we have two proofs of the fact that} \(2 + 2 = 4\), one that
+For example, imagine we have two proofs of the fact that \(2 + 2 = 4\), one that
 uses the Peano axioms, and another that uses the definition of addition. In a
 proof-irrelevant type theory, these two proofs would be considered equal, and
 could be used interchangeably.
@@ -800,13 +806,13 @@ don't have to worry about the details of the proof, only that it exists. This
 also has computational benefits, as we can erase the proofs from the final
 program, and only keep the results.
 
-It also aids in \hl{\emph{code extraction}}, the process of extracting a program from
+It also aids in \emph{code extraction}, the process of extracting a program from
 proofs and definitions. This is a key feature when using Lean as tool in formal
 verification, as we can first formally prove the correctness of the program, and
 then extract an efficient implementation from the proof. Irrelevancy ensures
-that the extracted code is independent of the proof used.\ \hl{Code extraction is
+that the extracted code is independent of the proof used. Code extraction is
 an area where Lean 4 has made significant improvements over Lean 3, as it
-supports a better compiler backend, and more target languages.}
+supports a better compiler backend, and more target languages.
 
 Proof irrelevance is also supported in Coq, but not as a definitional equality,
 but a set of axioms that ensure that all proofs of a proposition are equal. In
@@ -821,7 +827,7 @@ Now that we have introduced type theory and proof assistants, we can move on to
 using them to define the semantics of programming languages. The exposition
 will follow closely the one in~\cite{winskel_formal_semantics}.
 Semantics are the
-study of the \hl{\emph{meaning} of programs}, and can be defined in different ways, we
+study of the \emph{meaning} of programs, and can be defined in different ways, we
 will focus on operational semantics, and denotational semantics.
 
 We first describe a simple imperative language \(\texttt{IMP}\) that we will use
@@ -859,7 +865,7 @@ b \Coloneqq \texttt{true} \ | \ \texttt{false} \ | \
 \]
 and the syntax of \(\texttt{Com}\) as:
 \[
-c \Coloneqq \texttt{skip} \ | \ x := a \ | \ c_1; c_2 \ | \
+c \Coloneqq \texttt{skip} \ | \ x \ \texttt{:=} \ a \ | \ c_1; c_2 \ | \
       \texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end} 
       \ | \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}
 \]
@@ -1110,7 +1116,7 @@ we will call this relation \(\funfont{big\_step}\), and define it as:
   \]  
 \end{definition}
 
-\hl{This is what is generally known as \emph{big step semantics}, as it evaluates
+This is what is generally known as \emph{big step semantics, as it evaluates
 the expression to a value in a single step, from configuration directly to value.}
 Let's introduce a notation more familiar to classic text on formal semantics.
 \begin{notation}[Arithmetic big step]
@@ -1200,7 +1206,7 @@ take a configuration and return a value.
   \]
 \end{definition}
 
-\hl{This time, instead of a Cartesian product, we will use a \emph{curried} function.}
+This time, instead of a Cartesian product, we will use a \emph{curried} function.
 We can easily define the evaluation rules with pattern matching:
 \begin{align*}
   \funfont{reduce} \ (\texttt{val} \ v) \ \cdot &\coloneqq v \\
@@ -1226,8 +1232,8 @@ evaluated by the reduce function:
   ((x + 5) + (9 - 7)) \ s_0 = 7
 \]
 
-\hl{This approach has some clear advantages over the relation definition, as
-it can compute the result of the evaluation directly}, instead of 
+This approach has some clear advantages over the relation definition, as
+it can compute the result of the evaluation directly, instead of 
 just saying if some \enquote{evaluation tree} is valid or not. That is only if
 both evaluation rules are equivalent, fortunately they are, and we can prove it.
 
@@ -1318,7 +1324,7 @@ the functions are easier to define and use. The reason is that
 function to evaluate commands that looks something like this:
 \begin{align*}
   \funfont{reduce} \ \texttt{skip} \ s &\coloneqq s \\
-  \funfont{reduce} \ (x := a) \ s &\coloneqq s[x \leftarrow a \ s] \\
+  \funfont{reduce} \ (x \ \texttt{:=} \ a) \ s &\coloneqq s[x \leftarrow a \ s] \\
   \funfont{reduce} \ (c_1; c_2) \ s &\coloneqq \funfont{reduce} \ c_2 \ (\funfont{reduce} \ c_1 \ s) \\
   \funfont{reduce} \ (\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}) \ s &\coloneqq
     \text{if} \ b \ s \ \text{then} \ \funfont{reduce} \ c_1 \ s \ \text{else} \ \funfont{reduce} \ c_2 \ s \\
@@ -1330,8 +1336,8 @@ it could loop indefinitely, for example, the evaluation of the command
 \texttt{while true loop skip end}
 would never terminate. This is why we
 need a relation to define the semantics of commands, later we will see
-an approach that will give us a \enquote{function} to evaluate commands, \hl{that
-is \emph{denotational semantics}}.
+an approach that will give us a \enquote{function} to evaluate commands, that
+is \emph{denotational semantics}.
 
 To define the big step semantics of commands we will use a relation, as 
 before, this time associating configurations to states. The definition of
@@ -1393,10 +1399,10 @@ program like this:
   to simplify the notation we will denote the program as \(P\), and the if construct as \(\text{Ifelse}\), then:
   \[
   \texttt{cat}: \frac{
-    \texttt{ass}: (x := 2, s_0) \bigstep s_0[x \leftarrow 2]
+    \texttt{ass}: (\texttt{x := 2}, s_0) \bigstep s_0[x \leftarrow 2]
     \quad
     \texttt{ifFalse}: \displaystyle{\frac{
-      \texttt{ass}: (z := 4, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+      \texttt{ass}: (\texttt{z := 4}, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
     }
     {
       (\text{Ifelse}, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
@@ -1453,7 +1459,7 @@ or, equivalently:
 \end{theorem}
 
 In the previous theorems we have to be careful to not confuse the \enquote{if}
-construct of the language \texttt{IMP} \hl{and that of the meta-language (in this case Lean).}
+construct of the language \texttt{IMP} and that of the meta-language (in this case Lean).
 To aid in this distinction we will use \texttt{monospace} font for the constructs
 of the language, and normal font for the constructs of the meta-language.
 
@@ -1505,8 +1511,8 @@ on the left, to completely remove them without consequence we need the following
 \end{theorem}
 
 A more interesting equivalence that mirrors Theorem~\ref{thm:while_rewrite} is
-loop unfolding, a common optimization in compilers, \hl{used when memory is cheaper
-than computation.}
+loop unfolding, a common optimization in compilers, used when memory is cheaper
+than computation.
 
 \begin{theorem}
   The \texttt{while} construct can be unfolded:
@@ -1735,6 +1741,10 @@ simple program:
 
 In this case the computation ends when we can't apply any rule to the program, 
 that is when we have a configuration of the form \((\texttt{skip}, \cdot)\).
+We will define the execution of a program from beginning to end with the small-step
+semantics by using its \emph{reflexive transitive closure}.
+
+\subsection{Reflexive transitive closure}
 
 % Appendices 
 
