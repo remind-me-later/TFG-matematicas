@@ -23,11 +23,21 @@
 % \usepackage[shortlabels]{enumitem}
 % \usepackage{epigraph}
 
-% \usepackage{fontspec}
+\usepackage{fontspec}
 % switch to a monospace font supporting more Unicode characters
-% \setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
+\setmonofont{JetBrains Mono}[
+    Contextuals = Alternate,
+    Ligatures = TeX,
+    Scale=MatchLowercase
+]
+
 % \usepackage[outputdir=../build]{minted}
 % \usemintedstyle{pastie}
+\usepackage{listings}
+\lstset{
+    basicstyle = \ttfamily,
+    columns = flexible,
+}
 
 % Use KOMA-Script's nice headers instead of fancyhdr
 % \usepackage[Conny]{fncychap}
@@ -52,6 +62,13 @@
 \usepackage{centernot}
 \usepackage{amssymb}
 \usepackage{mathtools}
+\usepackage{tikz-cd}
+
+\newcommand{\funfont}[1]{\text{#1}}
+\newcommand{\tyfont}[1]{\texttt{#1}}
+\renewcommand{\implies}{\rightarrow}
+\renewcommand{\impliedby}{\leftarrow}
+\renewcommand{\mapsto}{\Rightarrow}
 
 % === End math facilities ===
 
@@ -84,12 +101,6 @@
 %   \small	
 %   \textbf{\textit{Palabras clave---}} #1
 % }
-
-\newcommand{\funfont}[1]{\text{#1}}
-\newcommand{\tyfont}[1]{\texttt{#1}}
-\renewcommand{\implies}{\rightarrow}
-\renewcommand{\impliedby}{\leftarrow}
-\renewcommand{\mapsto}{\Rightarrow}
 
 % define math symbol for big step arrow
 \newcommand{\bigstep}{\Longrightarrow}
@@ -244,21 +255,22 @@ that takes two natural numbers and returns their sum. This ensures that the
 function \(\texttt{add}\) can only be applied to natural numbers, and not to any
 other type.
 
-Modern type theory is arises from the work of Pier Martin-Löf, who developed an
-\emph{intuitionistic} type theory in the 1970s. In intuitionistic type theory
+Historically the origins of type theory can be traced back to multiple 
+developments in logic, by Church, Curry, Russell, and others. But modern type
+theory is based on the work of Pier Martin-Löf, who developed a type theory that
+combines classic type theory with the \(\lambda\)-calculus. In this way
+the \enquote{nice} properties of previous type theories are given a 
+\emph{computational interpretation}, via the Curry-Howard isomorphism which
+we will discuss in more detail later, that allows computers to reason about
+mathematical proofs.
+
+The type theory of Martin-Löf is \emph{intuitionistic}, that is
 proofs are not just a logical argument but a method of constructing a
 \emph{witness} of the truth of a proposition. This is in contrast to classical
 logic, where proofs are just a sequence of logical steps that show the truth of a
 proposition. In intuitionistic logic, the law of the excluded middle is not
 valid, and the principle of \emph{proof by contradiction} is not allowed (with
-some caveats). Another important feature of Martin-Löf type theory is that it
-has a \emph{computational interpretation} via the Curry-Howard isomorphism, which
-we will discuss in more detail later.
-This computational interpretation is what 
-allows computers to reason about mathematical proofs.
-
-To achieve this computational interpretation, Martin-Löf type theory combines
-classic type theory with the \(\lambda\)-calculus.
+some caveats).
 
 \subsection{Lambda calculus}
 
@@ -270,6 +282,11 @@ Alonzo Church in the 1930s as a way to study the foundations of mathematics and
 has since become a fundamental concept in computer science. We can think of
 it as a \enquote{programming language} with only one data type, the function, and
 two operations, abstraction and application.
+
+The \(\lambda\)-calculus treats functions as \emph{rules} rather than
+relationships, this stresses the computational aspect of functions, and allows
+us to reason about computation in a more abstract way. This is in contrast to
+set theory, where functions are seen as \emph{graphs}.
 
 The syntax of lambda calculus is simple, it consists of variables (\(x, y, z\)),
 abstraction (\(\lambda x \mapsto M\)), and application (\(M \ M\)), in 
@@ -420,7 +437,7 @@ the base type \(\texttt{Bool}\), which represents the booleans.
 
 The syntax of the STLC is:
 \begin{align*}
-  M \Coloneqq & \ x \mid \lambda x: \alpha \mapsto M \mid M \ M \\
+  M \Coloneqq x & \mid \lambda x: \alpha \mapsto M \mid M \ M \\
     & \mid \texttt{true} \mid \texttt{false} \\
     & \mid \text{if} \ M \ \text{then} \ M \ \text{else} \ M
 \end{align*}
@@ -1653,7 +1670,7 @@ Another important property of \texttt{IMP} that we can prove using the big step
 semantics is that the evaluation of a program is deterministic, that is, given
 a program and a state there is only one state that the program can evaluate to.
 
-\begin{theorem}
+\begin{theorem}[\texttt{deterministic}]\label{thm:deterministic}
   The evaluation of a program is deterministic:
   \[
   \forall c \ s \ s_1 \ s_2, ((c, s) \bigstep s_1 \land (c, s) \bigstep s_2) \implies s_1 = s_2
@@ -1685,7 +1702,7 @@ a program and a state there is only one state that the program can evaluate to.
   \((c_2', s_3) \bigstep s_2\) and applying the second 
   induction hypothesis \(s_1 = s_2\), which is what we wanted to prove.
 
-  The rest of the cases are analogous, the details can be found in the code.
+  The rest of the cases are analogous.
 \end{proof}
 
 \section{Small-Step Semantics}
@@ -1726,8 +1743,8 @@ another, for example.
 
 Let's see an example of how the small-step semantics work, for this we evaluate a
 simple program:
-\begin{example}
-  Consider the program \texttt{x := 1; while x <= 2 loop x := x + 1 end},
+\begin{example}\label{ex:small_step}
+  Consider the program \texttt{x := 1; while x <= 1 loop x := x + 1 end},
   to ease reading we will denote the \enquote{while} block as \(W\).
   We have the evaluation tree:
   \[
@@ -1748,10 +1765,188 @@ semantics by using its \emph{reflexive transitive closure}.
 
 \subsection{Reflexive transitive closure}
 
+The reflexive transitive closure takes a binary relation and gives us he 
+\enquote{minimal extension} of this relation that is \emph{reflexive}
+and \emph{transitive}. Formally we can define it as a function that 
+takes a binary relationship and return another.
+
+\begin{definition}[Reflexive transitive closure]
+  The reflexive transitive closure of a binary relation \(\mathcal{R}\) is the smallest 
+  relation that contains \(\mathcal{R}\) and is both reflexive and transitive. 
+  We can construct a relation \(\mathcal{R}^*\) from \(\mathcal{R}\) as an inductive type
+  \(\tyfont{ReflTrans}: (\alpha \to \alpha \to \texttt{Prop}) \to
+  (\alpha \to \alpha \to \texttt{Prop})\) and denote it as 
+  \(\mathcal{R}^* \coloneqq \tyfont{ReflTrans} \ \mathcal{R}\).
+
+  The type \(\tyfont{ReflTrans}\) has two constructors:
+  \[
+    \texttt{refl}: a \mathcal{R}^* a
+    \qquad 
+    \texttt{tail}: \frac{
+      a \mathcal{R}^* b
+      \quad b \mathcal{R} c
+    }{a \mathcal{R}^* c}
+  \]
+\end{definition}
+
+As we can see this relation is not transitive by definition, but it is easy
+to prove by induction.
+
+\begin{theorem}
+  The reflexive transitive closure is transitive, that is given 
+  \(x \mathcal{R}^* y\) and \(y \mathcal{R}^* z\) we have \(x \mathcal{R}^* z\).
+\end{theorem}
+
+Another immediate but important property is that the relation itself contained
+in the reflexive transitive closure.
+
+\begin{theorem}
+  The relation is contained in its reflexive transitive closure, that is
+  \(a \mathcal{R} b \implies x \mathcal{R}^* y\).
+\end{theorem}
+
+Of course, we can not only append to the \enquote{tail} of the relation, but also
+push to the \enquote{head}.
+
+\begin{theorem}
+  We can push a relation to the head of its reflexive transitive closure, that is,
+  if we have \(a \mathcal{R} b\) and \(b mathcal{R}^* c\) then
+  \(a \mathcal{R}^* c\).
+\end{theorem}
+
+This will become important soon, as we can define a principle of induction
+on the \emph{head} of the relation, note that the structural induction
+on the constructors works only on the \emph{tail} of the relation.
+
+\begin{theorem}
+  We can perform induction on the \emph{head} of the relationship, with the base
+  case being the reflexivity, and the inductive step being the transitivity on
+  the \emph{head} of the relation.
+\end{theorem}
+
+Another important theorem that we will use is the \emph{lifting} of a reflexive
+transitive closure via a function, that is, if we have a relation between two
+elements of a set we can lift this relation to the image of a function.
+
+\begin{theorem}\label{thm:rel_lift}
+  We can lift a reflexive transitive \(x \mathcal{R}^* y\) closure through a function
+  \(f: \alpha \to \beta\). 
+  Suppose that one relationship implies the other: 
+  \[h: \forall a \ b, a \mathcal{R} b \to (f \ a) \mathcal{P} (f \ b),\]
+  then we have \((f \ a) \mathcal{P}^* (f \ b)\). We can represent this as the 
+  diagram~\ref{fig:rel_lift}, where
+  the hypothesis \(h\) is expressed by the fact that the diagram commutes.
+\end{theorem}
+
+\begin{figure}[htb]\label{fig:rel_lift}
+  \centering
+  \begin{tikzcd}
+    \alpha \times \alpha \arrow[dd, "f \times f"] \arrow[dr, "\mathcal{R}^*"] & \\
+     & \texttt{Prop} \\
+    \beta \times \beta \arrow[ur, "\mathcal{P}^*"] &
+  \end{tikzcd}
+  \caption{Lifting of a reflexive transitive closure through a function.
+           In reality, instead of \(\alpha \times \alpha\)
+           and \(\beta \times \beta\) we should use
+           the \emph{exponential objects} \(\alpha^\alpha\) and 
+            \(\beta^\beta\). 
+  }
+\end{figure}
+
+\begin{proof}
+  We proceed by induction on \(a \mathcal{R}^* b\), the base case 
+  \(\texttt{refl}: a \mathcal{R}^* a\) implies that \(a = b\), so
+  \((f \ a) \mathcal{P}^* (f \ a)\)
+  which is immediate by the reflexivity of the relation. For the inductive step:
+  \[
+    \texttt{tail}: \frac{
+      a \mathcal{R}^* b 
+      \quad 
+      b \mathcal{R} c
+    }{a \mathcal{R}^* c}
+  \]
+  we have to prove that \((f \ a) \mathcal{P}^* (f \ c)\), applying the
+  constructor:
+  \[
+    \funfont{tail}: \frac{
+      \text{ih}: (f \ a) \mathcal{P}^* (f \ b)
+      \quad
+      h: \displaystyle{\frac{
+        b \mathcal{R} c
+      }{
+        (f \ b) \mathcal{P} (f \ c)
+      }}
+    }{
+      (f \ a) \mathcal{P}^* (f \ c)
+    }
+  \]
+  where \(\text{ih}\) is the induction hypothesis, we get the result.
+\end{proof}
+
+Now we can define the reflexive transitive closure of the small-step semantics.
+
+\begin{notation}
+  We will denote the reflexive transitive closure of the small-step semantics as
+  \(\rightsquigarrow^*\).
+\end{notation}
+
+Now we can revisit the example~\ref{ex:small_step} with the reflexive transitive
+closure of the small-step semantics.
+
+\begin{example}
+  As before, we consider the program \texttt{x := 1; while x <= 1 loop x := x + 1 end},
+  to ease reading we will denote the \enquote{while} block as \(W\). We have the 
+  partial derivation tree:
+  \[
+    \funfont{head}: \frac{
+      \funfont{cat}: \displaystyle{\frac{
+        \funfont{ass}: (\texttt{x := 1} , s_0) \rightsquigarrow (\texttt{skip}, s_0[x \leftarrow 1])
+      }
+      {(\texttt{x := 1;} W, s_0)
+      \rightsquigarrow
+      (\texttt{skip;} W, s_0[x \leftarrow 1])
+      }}
+      \quad
+      \funfont{head}: \displaystyle{\frac{
+        \funfont{skipcat}: \texttt{skip}
+        \quad
+        \vdots
+      }{
+        (W, s_0[x \leftarrow 1]) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
+      }}
+    }{
+      (\texttt{x := 1;} W, s_0) \rightsquigarrow^* (\texttt{skip;} W, s_0[x \leftarrow 1][x \leftarrow 2])
+    }
+  \]
+  By successive applications of the constructors we get the result.
+\end{example}
+
+We preset now some theorems that will be very useful when proving the equivalence of
+the big and small-step semantics.
+
+\begin{theorem}
+  If an expression evaluates to a state concatenating that expression with another
+  has that state as an intermediate. That is if \((c, s) \rightsquigarrow^* (\texttt{skip}, s')\)
+  then \((c;c', s) \rightsquigarrow^* (\texttt{skip};c', s')\).
+\end{theorem}
+
+\begin{proof}
+  The proof follows immediately by theorem~\ref{thm:rel_lift}.
+  The relations \(\mathcal{R}\) and \(\mathcal{P}\) are both the small-step semantics
+  \(\rightsquigarrow\), and the function \(f\) is the concatenation of commands:
+  \(f: \texttt{Com} \times \texttt{State} \to \texttt{Com} \times \texttt{State}\)
+  with \(f \coloneqq \lambda (c, s) \mapsto (c; c', s)\). Our hypothesis \(h\)
+  is the concatenation of the small-step semantics, that is:
+  \[h: \prod_{(c, s), (d, t)} (c, s) \rightsquigarrow (d, t) \to (c; c', s) \rightsquigarrow (d; c', t)
+     \coloneqq \lambda x \mapsto \funfont{cat} \ x\]
+  and finally \((c, s) \rightsquigarrow^* (\texttt{skip}, s')\) by hypothesis.
+\end{proof}
+
 % Appendices 
 
 % appendix
 \appendix
+
 \section{Normalization in Lean}
 \subsection{Omega combinator}
 
@@ -1767,6 +1962,8 @@ Things to add:
   \item Hoare Logic.
   \item Abstract interpretation.
 \end{itemize}
+
+\section{Code}
 
 % Bibliography
 
