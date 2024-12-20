@@ -69,6 +69,12 @@
 \renewcommand{\implies}{\rightarrow}
 \renewcommand{\impliedby}{\leftarrow}
 \renewcommand{\mapsto}{\Rightarrow}
+\newcommand{\Prop}{\mathbf{Prop}}
+
+\usepackage{scalerel}
+
+\DeclareMathOperator*{\Forall}{\scalerel*{\forall}{\sum}}
+
 
 % === End math facilities ===
 
@@ -309,24 +315,24 @@ The rules to evaluate lambda calculus expressions are known as
 \emph{reduction rules} and they are:
 \begin{itemize}
   \item \(\alpha\)-conversion: Allows us to rename bound variables:
-    \[(\lambda x \mapsto M) \ N \longrightarrow M[x \coloneqq N]\]
+    \[(\lambda x \mapsto M) \ N \rightsquigarrow M[x \coloneqq N]\]
   \item Substitution: Allows us to replace all \emph{free} occurrences of the 
   variable \(x\) in the expression \(M\) with expression \(N\) and is denoted as
   \(M[x \coloneqq N]\).
   \item \(\beta\)-reduction: Allows us to apply a function to an argument, and
     is defined in terms of substitution as:
-    \[(\lambda x \mapsto M) \ N \longrightarrow M[x \coloneqq N]\]
+    \[(\lambda x \mapsto M) \ N \rightsquigarrow M[x \coloneqq N]\]
   \item \(\eta\)-conversion: Expresses the concept of \emph{extensionality} of functions, 
     and states that two functions are equal if they are equal for all arguments.
     To give an example when \(x\) is not free in \(f\):
-    \[(\lambda x \mapsto f \ x) \longrightarrow f\]
+    \[(\lambda x \mapsto f \ x) \rightsquigarrow f\]
 \end{itemize}
 
 \begin{example}
   We can apply the \(\beta\)-reduction rule to the expression in
   Example~\ref{ex:lambda_expr} as:
   \[
-  (\lambda x \mapsto x + 1) \ 3 \longrightarrow 3 + 1 
+  (\lambda x \mapsto x + 1) \ 3 \rightsquigarrow 3 + 1 
   \]
 \end{example}
 
@@ -361,7 +367,7 @@ of the following theorem, but we can give an informal one.
   If we apply the \(\beta\)-reduction rule to~\ref{def:omega_combinator}
   we get the expression itself:
   \[
-  (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) \longrightarrow
+  (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) \rightsquigarrow
   (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x)
   \]
 \end{proof}
@@ -548,7 +554,7 @@ and false otherwise.
   proposition.
   \[
   \texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
-    \coloneqq \alpha \to \beta \to \texttt{Prop} 
+    \coloneqq \alpha \to \beta \to \Prop 
   \]
 \end{definition}
 
@@ -713,7 +719,7 @@ The Curry-Howard isomorphism is a result that establishes a correspondence
 between \emph{propositions} and \emph{types} and between \emph{terms} and \emph{proofs}.
 This is know as the \emph{propositions as types} principle, and is the basis of
 all modern proof assistants, such as Coq, Lean, and Agda. In our type system
-a proposition is a type \(\tyfont{Prop}\), \enquote{proofs} are terms of that type,
+a proposition is a type \(\Prop\), \enquote{proofs} are terms of that type,
 and the proposition is true if the type is inhabited, that is, if there is a
 term of that type, this is our \emph{witness}.
 
@@ -747,7 +753,7 @@ checking that the terms are well-typed, and that the terms correspond to valid
 proofs. This mechanism ensures that the proofs are correct, and that the
 programs are well-typed.
 
-\subsection{Sets}
+\subsection{Sets}\label{sec:sets}
 
 We can express a set in type theory as a function that takes an element of the
 type and returns a proposition, this propsition tells us if the element is in
@@ -756,7 +762,7 @@ the set or not.
 \begin{definition}[Set]
   A set is a function that takes an element of a type and returns a proposition.
   \[
-  \texttt{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \texttt{Prop} 
+  \texttt{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \Prop 
   \]
 \end{definition}
 
@@ -783,9 +789,19 @@ A subset is defined in a way similar to classic set theory.
 
 \begin{definition}[Subset]
   A subset is a function that takes an element of a type and two sets and returns
-  a proposition, let \(A B: \texttt{Set} \ \alpha\):
+  a proposition, let \(A \ B: \texttt{Set} \ \alpha\):
   \[
-  A \subset B \coloneqq \forall x, x \in A \mapsto x \in B 
+  A \subseteq B \coloneqq \forall x, x \in A \implies x \in B 
+  \]
+\end{definition}
+
+And with this a strict subset is defined as:
+
+\begin{definition}[Strict subset]
+  A strict subset is subset different from the set itself, let
+  \(A \ B: \texttt{Set} \ \alpha\), then:
+  \[
+  A \subset B \coloneqq A \subseteq B \land A \neq B
   \]
 \end{definition}
 
@@ -833,7 +849,7 @@ supports a better compiler backend, and more target languages.
 
 Proof irrelevance is also supported in Coq, but not as a definitional equality,
 but a set of axioms that ensure that all proofs of a proposition are equal. In
-Coq \(\texttt{Prop}\) is a universe, separate from data types which reside in
+Coq \(\Prop\) is a universe, separate from data types which reside in
 \(\texttt{Type}\), inside this universe two proofs of the same proposition are
 \emph{propositionally equal}. Coq also supports definitional proof irrelevance, by
 using the \(\texttt{SProp}\) but it's not the default.
@@ -1129,7 +1145,7 @@ we will call this relation \(\funfont{big\_step}\), and define it as:
   The step relation is a binary relation between configurations and values, it 
   has type:
   \[
-  \funfont{big\_step} : \tyfont{Aexp} \times \tyfont{State} \to \mathbb{Z} \to \tyfont{Prop}
+  \funfont{big\_step} : \tyfont{Aexp} \times \tyfont{State} \to \mathbb{Z} \to \Prop
   \]  
 \end{definition}
 
@@ -1216,27 +1232,27 @@ down the expression into its components and evaluates them, the rules are
 analogous to the ones we have defined before, but this time the function will
 take a configuration and return a value.
 
-\begin{definition}[Arithmetic reduce]
-  The reduce function takes a configuration and returns a value, it has type:
+\begin{definition}[Arithmetic evaluation]
+  The evaluation function takes a configuration and returns a value, it has type:
   \[
-  \funfont{reduce} : \tyfont{Aexp} \to \tyfont{State} \to \mathbb{Z}
+  \funfont{eval} : \tyfont{Aexp} \to \tyfont{State} \to \mathbb{Z}
   \]
 \end{definition}
 
 This time, instead of a Cartesian product, we will use a \emph{curried} function.
 We can easily define the evaluation rules with pattern matching:
 \begin{align*}
-  \funfont{reduce} \ (\texttt{val} \ v) \ \cdot &\coloneqq v \\
-  \funfont{reduce} \ (\texttt{var} \ x) \ s &\coloneqq s \ x \\
-  \funfont{reduce} \ (\texttt{add} \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s + \funfont{reduce} \ a_2 \ s \\
-  \funfont{reduce} \ (\texttt{sub} \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s - \funfont{reduce} \ a_2 \ s \\
-  \funfont{reduce} \ (\texttt{mul} \ a_1 \ a_2) \ s &\coloneqq \funfont{reduce} \ a_1 \ s * \funfont{reduce} \ a_2 \ s
+  \funfont{eval} \ (\texttt{val} \ v) \ \cdot &\coloneqq v \\
+  \funfont{eval} \ (\texttt{var} \ x) \ s &\coloneqq s \ x \\
+  \funfont{eval} \ (\texttt{add} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s + \funfont{eval} \ a_2 \ s \\
+  \funfont{eval} \ (\texttt{sub} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s - \funfont{eval} \ a_2 \ s \\
+  \funfont{eval} \ (\texttt{mul} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s * \funfont{eval} \ a_2 \ s
 \end{align*}
 
 We can introduce some notation to denote the evaluation of an expression on a state.
 
-\begin{notation}[Arithmetic reduce]
-  We will denote the reduce function (\(\funfont{reduce} \ a \ s\)) as applying
+\begin{notation}[Arithmetic evaluation]
+  We will denote the evaluation function (\(\funfont{eval} \ a \ s\)) as applying
   the expression \(a\) to the state \(s\):
   \[
   a \ s
@@ -1244,7 +1260,7 @@ We can introduce some notation to denote the evaluation of an expression on a st
 \end{notation}
 
 Now the example~\ref{ex:arithmetic_evaluation} can the be directly 
-evaluated by the reduce function:
+evaluated by the \(\funfont{eval}\) function:
 \[
   ((x + 5) + (9 - 7)) \ s_0 = 7
 \]
@@ -1255,7 +1271,7 @@ just saying if some \enquote{evaluation tree} is valid or not. That is only if
 both evaluation rules are equivalent, fortunately they are, and we can prove it.
 
 \begin{theorem}
-  The step relation and the reduce function are equivalent, that is, for all
+  The step relation and the \(\funfont{eval}\) function are equivalent, that is, for all
   expressions \(a\), states \(s\), and values \(n\), we have:
   \[
   ((a, s) \bigstep n) = (a \ s = n)
@@ -1277,7 +1293,7 @@ expression has the form \(a_1 + a_2\), and so we have to prove that
 \]
 for some \(n_1\) and \(n_2\), by the induction hypothesis we have that
 \(a_1 \ s = n_1\) and \(a_2 \ s = n_2\), and so we just have to apply the
-definition of the reduce function to prove the equality.
+definition of the \(\funfont{eval}\) function to prove the equality.
 The cases for the subtraction and multiplication are analogous.
 
 The right to left implication \(a \ s = n \implies (a, s) \bigstep n\)
@@ -1325,9 +1341,9 @@ expressions depend on the evaluation of arithmetic expressions.
 \end{gathered}
 \]
 
-Notice that in the last two rules we are using the reduce function to evaluate
+Notice that in the last two rules we are using the (\funfont{eval}) function to evaluate
 the arithmetic expressions, we could have used the evaluation relation, but
-this approach is easier. Everything that we said about the reduce function
+this approach is easier. Everything that we said about the (\funfont{eval}) function
 and its equivalence to the big step relation holds for boolean expressions.
 
 \subsection{Evaluating commands}
@@ -1337,16 +1353,16 @@ boolean expressions, and also their reduction functions, one could wonder
 why do we bother with introducing the big step semantics since 
 the functions are easier to define and use. The reason is that 
 \emph{commands} cannot be evaluated by a function, this is due to the 
-\texttt{while} construct. We could define a \(\funfont{reduce}: \tyfont{Com} \to \tyfont{State} \to \tyfont{State}\) 
+\texttt{while} construct. We could define a \(\funfont{eval}: \tyfont{Com} \to \tyfont{State} \to \tyfont{State}\) 
 function to evaluate commands that looks something like this:
 \begin{align*}
-  \funfont{reduce} \ \texttt{skip} \ s &\coloneqq s \\
-  \funfont{reduce} \ (x \ \texttt{:=} \ a) \ s &\coloneqq s[x \leftarrow a \ s] \\
-  \funfont{reduce} \ (c_1; c_2) \ s &\coloneqq \funfont{reduce} \ c_2 \ (\funfont{reduce} \ c_1 \ s) \\
-  \funfont{reduce} \ (\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}) \ s &\coloneqq
-    \text{if} \ b \ s \ \text{then} \ \funfont{reduce} \ c_1 \ s \ \text{else} \ \funfont{reduce} \ c_2 \ s \\
-  \funfont{reduce} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ s &\coloneqq
-    \text{if} \ b \ s \ \text{then} \ \funfont{reduce} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ (\funfont{reduce} \ c \ s) \ \text{else} \ s
+  \funfont{eval} \ \texttt{skip} \ s &\coloneqq s \\
+  \funfont{eval} \ (x \ \texttt{:=} \ a) \ s &\coloneqq s[x \leftarrow a \ s] \\
+  \funfont{eval} \ (c_1; c_2) \ s &\coloneqq \funfont{eval} \ c_2 \ (\funfont{eval} \ c_1 \ s) \\
+  \funfont{eval} \ (\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}) \ s &\coloneqq
+    \text{if} \ b \ s \ \text{then} \ \funfont{eval} \ c_1 \ s \ \text{else} \ \funfont{eval} \ c_2 \ s \\
+  \funfont{eval} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ s &\coloneqq
+    \text{if} \ b \ s \ \text{then} \ \funfont{eval} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ (\funfont{eval} \ c \ s) \ \text{else} \ s
 \end{align*}
 The problem with this function is that it is not \emph{well founded}, that is,
 it could loop indefinitely, for example, the evaluation of the command
@@ -1608,7 +1624,7 @@ than computation.
 
 \subsection{Non termination}
 
-When we attempted to define a \tyfont{reduce} function to evaluate commands before
+When we attempted to define a \funfont{eval} function to evaluate commands before
 we said that some programs could not end, what we mean by this is that the
 big step relationship doesn't relate the program in some state to any state.
 
@@ -1624,7 +1640,7 @@ We will prove that there are programs in \texttt{IMP} that don't terminate,
 we will show that there is in fact a program that doesn't terminate in any
 state.
 
-\begin{theorem}
+\begin{theorem}\label{thm:non_termination}
   The program \texttt{while b loop c end}, where \(b \sim \texttt{true}\)
   doesn't terminate in any state.
   \[
@@ -1717,7 +1733,7 @@ prove properties of parallel or concurrent programs, although we won't go into
 that in this text.
 \begin{definition}[Small-step]
   We will denote the small-step relation \(\text{SmallStep}: \tyfont{Com} \times \tyfont{State}
-\to \tyfont{Com} \times \tyfont{State} \to \tyfont{Prop}\) as:
+\to \tyfont{Com} \times \tyfont{State} \to \Prop\) as:
   \[
     (c_1, s_1) \rightsquigarrow (c_2, s_2) \coloneq \text{SmallStep} \ (c_1, s_1) \ (c_2, s_2)
   \]
@@ -1774,8 +1790,8 @@ takes a binary relationship and return another.
   The reflexive transitive closure of a binary relation \(\mathcal{R}\) is the smallest 
   relation that contains \(\mathcal{R}\) and is both reflexive and transitive. 
   We can construct a relation \(\mathcal{R}^*\) from \(\mathcal{R}\) as an inductive type
-  \(\tyfont{ReflTrans}: (\alpha \to \alpha \to \texttt{Prop}) \to
-  (\alpha \to \alpha \to \texttt{Prop})\) and denote it as 
+  \(\tyfont{ReflTrans}: (\alpha \to \alpha \to \Prop) \to
+  (\alpha \to \alpha \to \Prop)\) and denote it as 
   \(\mathcal{R}^* \coloneqq \tyfont{ReflTrans} \ \mathcal{R}\).
 
   The type \(\tyfont{ReflTrans}\) has two constructors:
@@ -1842,7 +1858,7 @@ elements of a set we can lift this relation to the image of a function.
   \centering
   \begin{tikzcd}
     \alpha \times \alpha \arrow[dd, "f \times f"] \arrow[dr, "\mathcal{R}^*"] & \\
-     & \texttt{Prop} \\
+     & \Prop \\
     \beta \times \beta \arrow[ur, "\mathcal{P}^*"] &
   \end{tikzcd}
   \caption{Lifting of a reflexive transitive closure through a function.
@@ -1922,7 +1938,11 @@ closure of the small-step semantics.
 \end{example}
 
 We preset now some theorems that will be very useful when proving the equivalence of
-the big and small-step semantics.
+the big and small-step semantics, paying attention to the constructors of the small-step
+relation we can see that the only \enquote{special} one is \texttt{cat}, since
+it is the only one that requires an argument. For this reason all the following
+theorems will give us analogous in \(\rightsquigarrow^*\) to the 
+big-step semantics.
 
 \begin{theorem}
   If an expression evaluates to a state concatenating that expression with another
@@ -1937,10 +1957,102 @@ the big and small-step semantics.
   \(f: \texttt{Com} \times \texttt{State} \to \texttt{Com} \times \texttt{State}\)
   with \(f \coloneqq \lambda (c, s) \mapsto (c; c', s)\). Our hypothesis \(h\)
   is the concatenation of the small-step semantics, that is:
-  \[h: \prod_{(c, s), (d, t)} (c, s) \rightsquigarrow (d, t) \to (c; c', s) \rightsquigarrow (d; c', t)
+  \[h: \Forall_{(c, s), (d, t)} (c, s) \rightsquigarrow (d, t) \to (c; c', s) \rightsquigarrow (d; c', t)
      \coloneqq \lambda x \mapsto \funfont{cat} \ x\]
   and finally \((c, s) \rightsquigarrow^* (\texttt{skip}, s')\) by hypothesis.
 \end{proof}
+
+\begin{theorem}
+  Concatenating an expression that evaluates to an intermediate configuration to
+  another that evaluates in that configuration gives us the configuration of the
+  second expression. That is if \((c, s) \rightsquigarrow^* (\texttt{skip}, s')\)
+  and \((c', s') \rightsquigarrow^* (\texttt{skip}, s'')\) then
+  \((c;c', s) \rightsquigarrow^* (\texttt{skip}, s'')\).
+\end{theorem}
+
+\begin{theorem}
+  Concatenating an evaluation that doesn't change the state with another
+  evaluation is equivalent to evaluating the second expression. That is
+  if \((c, s) \rightsquigarrow^* (\texttt{skip}, s)\) then
+  \((c;c', s) \rightsquigarrow^* (c', s)\).
+\end{theorem}
+
+\section{Denotational semantics}
+
+We follow the construction presented  in~\cite[Chapter~11]{semantics_with_isabelle} 
+and define a \emph{relational} denotational semantics for the language \texttt{IMP}.
+
+As we saw before, defining a function that evaluates a program is not trivial,
+in fact this function can never be \emph{total} as there are programs that don't
+terminate (Theorem~\ref{thm:non_termination}). The function then
+has to necessarily be \emph{partial}, that is, it doesn't return a value for
+all inputs. This is a problem as in type theory all our functions are
+total. To circumvent this problem we could use the \texttt{Option} monad,
+and return \texttt{none} when the program doesn't terminate:
+\[
+  \funfont{eval} : \tyfont{Com} \to \tyfont{State} \to \tyfont{Option} \ \tyfont{State}.
+\]
+
+Instead of this, we will use the classic definition of relations as sets
+\(\tyfont{Set} \ (\alpha \times \beta)\), this will allow us to use the 
+partial ordering of subsets to define the semantics of the language via
+the \emph{Knaster-Tarski} fix-point theorem.
+
+\subsection{The Knaster-Tarski fix-point theorem}
+
+The \emph{Knaster-Tarski} fix-point theorem is a generalization of the
+\emph{Banach} fix-point theorem, it states that every monotone function
+on a complete lattice has a least fix-point. This will be essential when defining
+the denotational semantics if the \texttt{while} construct.
+We begin by defining a \emph{partial order}.
+
+\begin{definition}
+  A partial order is a binary relation (usually denoted by \(\leq\)) that 
+  satisfies the following properties:
+  \begin{itemize}
+    \item Reflexivity: \(a \leq a\).
+    \item Transitivity: If \(a \leq b\) and \(b \leq c\) then \(a \leq c\).
+    \item Less-than iff less-than-or-equal: \(a < b \iff a \leq b \land b \not\leq a\). 
+    \item Antisymmetry: If \(a \leq b\) and \(b \leq a\) then \(a = b\).
+  \end{itemize}
+\end{definition}
+
+Now we consider a set of elements with a partial order, if every set has an
+an \emph{infimum} we call it a \emph{complete lattice}. Usually a complete lattice 
+is defined as a  partially ordered type in which every set has a \emph{least upper bound}
+and a \emph{greatest lower bound}, but these definitions are interchangeable.
+
+\begin{definition}
+  A complete lattice is a partially ordered type that has an infimum in every set. 
+  That is, exists a function \(\funfont{Inf}: \tyfont{Set} \ \alpha \to \alpha\)
+  that returns an element of the set satisfying the following properties:
+  \begin{itemize}
+    \item \(\forall S, \forall x \in S, \funfont{Inf} \ s \leq x\).
+    \item \(\forall S, (\forall y \in S, x \leq y) \implies x \leq \funfont{Inf} \ s\).
+  \end{itemize}
+\end{definition}
+
+Additionally, this infimum is \emph{unique}.
+
+\begin{theorem}
+  The infimum of a set in a complete lattice is unique.
+  That is if \(\funfont{Inf} \ s = a\) and \(\funfont{Inf} \ s = b\) then \(a = b\).
+\end{theorem}
+
+Now we need to recall the definition of subsets in~\ref{sec:sets},
+as sets, with the inclusion relation, form a partial order.
+
+\begin{theorem}
+  Sets with the inclusion relation form a partial order. Where
+  \(A \leq B \coloneqq A \subseteq B\), \(A < B \coloneqq A \subset B\).
+  and the infimum of a set is the intersection of all the sets in the set,
+  that is \(\funfont{Inf} \ S = \{x \mid \forall A \in S, x \in A\}\).
+\end{theorem}
+
+One could read the infimum of the previous theorem as:
+\(\funfont{Inf} \ S = \bigcap_{A \in S} A\), but we will refrain from doing so
+since the definition of the infimum is more general than the intersection of sets,
+and the indexed intersection is a bit subtle to define.
 
 % Appendices 
 
@@ -1949,6 +2061,10 @@ the big and small-step semantics.
 
 \section{Normalization in Lean}
 \subsection{Omega combinator}
+
+\section{Equality: rec, ndrec and subst}
+
+\section{\texttt{IMP} Turing completeness}
 
 \section{Future work}
 
