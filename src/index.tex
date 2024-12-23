@@ -1162,13 +1162,13 @@ Let's introduce a notation more familiar to classic text on formal semantics.
 Now the constructors will be the rules of the evaluation, for example the
 constructor for the constant expression will be:
 \[
-  \texttt{val} : (n, \cdot) \bigstep n
+  \texttt{val} : (n, \square) \bigstep n
 \]
 
-Which relates the configuration \((n, \cdot)\), where the \(n\) of the left is
+Which relates the configuration \((n, \square)\), where the \(n\) of the left is
 a constant expression (in reality we should write \(\texttt{val} n\) 
 to denote that its the first constructor of the \(\tyfont{Aexp}\) type, but
-we will omit it for brevity) and the \(\cdot\) denotes any state, to the
+we will omit it for brevity) and the \(\square\) denotes any state, to the
 integer value \(n\). Some attention is needed to not confuse the constructor
 of the \emph{syntactic expression} with that of the \emph{evaluation relation},
 but the distinction is clear from the context.
@@ -1242,7 +1242,7 @@ take a configuration and return a value.
 This time, instead of a Cartesian product, we will use a \emph{curried} function.
 We can easily define the evaluation rules with pattern matching:
 \begin{align*}
-  \funfont{eval} \ (\texttt{val} \ v) \ \cdot &\coloneqq v \\
+  \funfont{eval} \ (\texttt{val} \ v) \ \square &\coloneqq v \\
   \funfont{eval} \ (\texttt{var} \ x) \ s &\coloneqq s \ x \\
   \funfont{eval} \ (\texttt{add} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s + \funfont{eval} \ a_2 \ s \\
   \funfont{eval} \ (\texttt{sub} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s - \funfont{eval} \ a_2 \ s \\
@@ -1329,8 +1329,8 @@ the rules for arithmetic expressions because some of the rules for boolean
 expressions depend on the evaluation of arithmetic expressions.
 \[
 \begin{gathered}
-  \texttt{true}: (\texttt{true}, \cdot) \bigstep \texttt{true} \quad
-  \texttt{false}: (\texttt{false}, \cdot) \bigstep \texttt{false} \\
+  \texttt{true}: (\texttt{true}, \square) \bigstep \texttt{true} \quad
+  \texttt{false}: (\texttt{false}, \square) \bigstep \texttt{false} \\
   \texttt{not}: \frac{(b, s) \bigstep b'}{\lnot (b, s) \bigstep \lnot b'} \quad
   \texttt{and}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
     {(b_1 \land b_2, s) \bigstep b_1' \land b_2'} \quad
@@ -1775,7 +1775,7 @@ simple program:
 \end{example}
 
 In this case the computation ends when we can't apply any rule to the program, 
-that is when we have a configuration of the form \((\texttt{skip}, \cdot)\).
+that is when we have a configuration of the form \((\texttt{skip}, \square)\).
 We will define the execution of a program from beginning to end with the small-step
 semantics by using its \emph{reflexive transitive closure}.
 
@@ -1977,7 +1977,7 @@ big-step semantics.
   \((c;c', s) \rightsquigarrow^* (c', s)\).
 \end{theorem}
 
-\section{Denotational semantics}
+\section{Relational denotational semantics}
 
 We follow the construction presented  in~\cite[Chapter~11]{semantics_with_isabelle} 
 and define a \emph{relational} denotational semantics for the language \texttt{IMP}.
@@ -2050,9 +2050,178 @@ as sets, with the inclusion relation, form a partial order.
 \end{theorem}
 
 One could read the infimum of the previous theorem as:
-\(\funfont{Inf} \ S = \bigcap_{A \in S} A\), but we will refrain from doing so
-since the definition of the infimum is more general than the intersection of sets,
-and the indexed intersection is a bit subtle to define.
+\(\funfont{Inf} \ S = \bigcap_{A \in S} A\), we will not define the general 
+indexed intersection since we will only use it here. Since the proofs are
+straightforward we will not present them, but they can be found in the code.
+
+Now we can begin defining the concepts of \emph{pre fix-point} and \emph{monotonic}
+functions.
+
+\begin{definition}[Pre fix-point]
+  A pre fix-point of a function \(f: \alpha \to \alpha\) is a point \(a: \alpha\) 
+  such that \(f \ a \leq a\).
+\end{definition}
+
+
+\begin{definition}[Least pre fix-point]
+  The least pre fix-point of a function \(f: \alpha \to \alpha\) is the infimum of 
+  the set of all pre fix-points of \(f\).
+  \[
+    \funfont{lfp} \ f = \funfont{Inf} \ \{a \mid f \ a \leq a\}
+  \]
+\end{definition}
+
+As before, we can read it as \(\funfont{lfp} \ f = \bigcap \{a \mid f \ a \leq a\}\),
+which in the case of sets is \(\funfont{lfp} \ f = \bigcap \{a \mid f \ a \subseteq a\}\),
+that is the intersection of all the pre fix-points of \(f\).
+
+Now we present two important pre fix-point inequalities.
+
+\begin{theorem}
+  The least pre fix-point of a function is less than or equal to any
+  pre fix-point of that function. That is if \(a\) is a pre fix-point
+  of \(f\) then \(\funfont{lfp} \ f \leq a\).
+\end{theorem}
+
+\begin{theorem}
+  If a point is less than or equal to any pre fix-point of a function
+  then it is less than or equal to the least pre fix-point of that function.
+  If for all pre fix-points \(b\) of \(f\) we have \(a \leq b\) then
+  \(a \leq \funfont{lfp} \ f\).
+\end{theorem}
+
+The last step before being able to enunciate the \emph{Knaster-Tarski} theorem
+is defining the concept of a \emph{monotonic} function.
+
+\begin{definition}[Monotonic function]
+  A function \(f: \alpha \to \alpha\) is monotonic if for all \(a, b: \alpha\)
+  we have that \(a \leq b \implies f \ a \leq f \ b\).
+\end{definition}
+
+That is, a monotonic function preserves the order of the elements of the set.
+Some functions that conserve the order are the \emph{identity} function and the
+constant functions. 
+
+\begin{theorem}
+  The identity function is monotonic.
+\end{theorem}
+
+\begin{theorem}
+  A constant function is monotonic.
+\end{theorem}
+
+Now we can state the \emph{Knaster-Tarski} fix-point theorem.
+
+\begin{theorem}[Knaster-Tarski]
+  If \(f: \alpha \to \alpha\) is a monotonic function on a complete lattice
+  then the least fix-point of \(f\) exists and is equal to the least
+  pre fix-point of \(f\). In other words:
+  \[
+    \funfont{lfp} \ f = f \ (\funfont{lfp} \ f)
+  \]
+\end{theorem}
+
+\subsection{Functions as sets}
+
+As we said before we will use the set theoretic view of functions as relations
+to define the denotational semantics of the language. 
+
+\begin{notation}
+  We will denote the set of pairs of elements of \(\alpha\) and \(\beta\) as
+  \(\alpha \to_s \beta \coloneqq \tyfont{Set} \ (\alpha \times \beta)\).
+\end{notation}
+
+This notation captures the idea of a function as a set of pairs, in reality
+it is a \emph{partial multifunction} as it can have more than one pair with
+the same first element. This will not be an issue for us, as the 
+only function that we will define is single-valued.
+
+With our brand new notation in place we can define the \enquote{identity function},
+which in reality is the graph of the identity function.
+
+\begin{definition}
+  The identity \enquote{function} \(\funfont{id}: \alpha \to_s \alpha\) is the 
+  set of pairs \(\funfont{id} = \{(x, y) \mid x = y\}\).
+\end{definition}
+
+We can also define the composition of functions as the relational composition
+of the graphs of the functions.
+
+\begin{definition}
+  The composition of two functions \(f: \alpha \to_s \beta\) and \(g: \beta \to_s \gamma\)
+  is the set of pairs:
+  \[
+    f \circ g = \{(x, z) \mid \exists y, (x, y) \in f \land (y, z) \in g\}
+  \]
+\end{definition}
+
+Of course we can prove that composing functions with the identity function
+is the same as the function itself.
+
+\begin{theorem}
+  The composition of a function with the identity function is the function itself.
+  That is \(f \circ \funfont{id} = f\).
+\end{theorem}
+
+The same holds from the left. More importantly we can prove that the composition
+is monotonic.
+
+\begin{theorem}
+  The composition of two functions is monotonic, that is if \(f \subseteq h\) and
+  \(g \subseteq k\) then \(f \circ g \subseteq h \circ k\).
+\end{theorem}
+
+The last piece before defining the denotational semantics is the definition of
+the \emph{set if then else}.
+
+\begin{definition}
+  The \emph{set if then else} (\(\funfont{Set.ite}\)) is a function that given three sets \(P, A, B\)
+  returns the set:
+  \[
+    \funfont{Set.ite} \ P \ A \ B = A \cap P \cup B \setminus P
+  \]
+  where \(P\) is the \emph{predicate} or \emph{condition} set.
+\end{definition}
+
+\begin{theorem}
+  The \(\funfont{Set.ite}\) function is monotonic in all its arguments.
+  That is if \(a \subseteq b\) and \(a' \subseteq b'\) then
+  \[
+  \funfont{Set.ite} \ p \ a \ b \subseteq \funfont{Set.ite} \ p \ a' \ b'
+  \]
+\end{theorem}
+
+\subsection{Denotational semantics}
+
+We can finally define our function that given a command returns the 
+\enquote{function} from state to state that represents the evaluation of that
+command.
+
+\begin{definition}[Denote]
+We define the \(\funfont{denote}: \tyfont{Com} \to (\tyfont{State} \to_s \tyfont{State})\) 
+function as:
+  \begin{align*}
+    \funfont{denote} \ \texttt{skip} &\coloneqq \funfont{id} \\
+    \funfont{denote} \ (v \ \texttt{:=} \ a) &\coloneqq \{(s, t) \mid t = s[v \leftarrow a \ s]\} \\
+    \funfont{denote} \ c;c' &\coloneqq \funfont{denote} \ c \circ \funfont{denote} \ c' \\
+    \funfont{denote} \ (\texttt{if} \ b \ \texttt{then} \ c \ \texttt{else} \ c' \ \texttt{end}) &\coloneqq \funfont{Set.ite} \ \{(s, \square) \mid b \ s\} \ (\funfont{denote} \ c) \ (\funfont{denote} \ c') \\
+    \funfont{denote} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) &\coloneqq \funfont{lfp} \ (W \ b \ (\funfont{denote} \ c))
+  \end{align*}
+  where \(W \ b \ f: (\tyfont{State} \to_s \tyfont{State}) \to (\tyfont{State} \to_s \tyfont{State})\) is:
+  \[
+    W \ b \ f = \funfont{Set.ite} \ \{(s, \square) \mid b \ s\} \ (f \circ g) \ \funfont{id}
+  \]
+\end{definition}
+
+Of course this is only well defined if the least fix-point of \(W \ b \ f\) exists,
+for this it suffices to show that \(W \ b \ f\) is monotonic, as we can then apply
+the \emph{Knaster-Tarski} theorem.
+
+\begin{theorem}
+  The function \(W \ b \ f\) is monotonic.
+\end{theorem}
+
+\section{Equivalence of semantics}
 
 % Appendices 
 
@@ -2079,7 +2248,51 @@ Things to add:
   \item Abstract interpretation.
 \end{itemize}
 
-\section{Code}
+\section{Code listings}
+
+\subsection{Maps}
+
+\lstinputlisting{../SemanticsLean/Semantics/Maps.lean}
+
+\subsection{Sets}
+
+\lstinputlisting{../SemanticsLean/Semantics/Set.lean}
+
+\subsection{IMP}
+
+\lstinputlisting{../SemanticsLean/Semantics/Imp/Lang.lean}
+
+\subsection{Aexp}
+
+\lstinputlisting{../SemanticsLean/Semantics/Imp/Aexp.lean}
+
+\subsection{Bexp}
+
+\lstinputlisting{../SemanticsLean/Semantics/Imp/Bexp.lean}
+
+\subsection{Big-step}
+
+\lstinputlisting{../SemanticsLean/Semantics/Imp/BigStep.lean}
+
+\subsection{Reflexive transitive closure}
+
+\lstinputlisting{../SemanticsLean/Semantics/ReflTransRel.lean}
+
+\subsection{Small-step}
+
+\lstinputlisting{../SemanticsLean/Semantics/Imp/SmallStep.lean}
+
+\subsection{Knaster-Tarski}
+
+\lstinputlisting{../SemanticsLean/Semantics/KnasterTarski.lean}
+
+\subsection{Denotational semantics}
+
+\lstinputlisting{../SemanticsLean/Semantics/Imp/Denotational.lean}
+
+\subsection{Equivalence}
+
+\lstinputlisting{../SemanticsLean/Semantics/Imp/Equivalence.lean}
 
 % Bibliography
 
