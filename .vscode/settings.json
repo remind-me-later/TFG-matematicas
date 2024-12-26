@@ -6,6 +6,8 @@
     "Automath",
     "Bexp",
     "extensionality",
+    "fixpoint",
+    "fixpoints",
     "Girard's",
     "Hoare",
     "impredicativity",

@@ -1996,39 +1996,53 @@ and return \texttt{none} when the program doesn't terminate:
 Instead of this, we will use the classic definition of relations as sets
 \(\tyfont{Set} \ (\alpha \times \beta)\), this will allow us to use the 
 partial ordering of subsets to define the semantics of the language via
-the \emph{Knaster-Tarski} fix-point theorem.
+the \emph{Knaster-Tarski} fixpoint theorem. Of course, relations are not 
+partial functions, to circumvent this we will introduce the concept
+of \(\omega\)-chains.
 
-\subsection{The Knaster-Tarski fix-point theorem}
+\subsection{Knaster-Tarski fixpoint theorem}
 
-The \emph{Knaster-Tarski} fix-point theorem is a generalization of the
-\emph{Banach} fix-point theorem, it states that every monotone function
-on a complete lattice has a least fix-point. This will be essential when defining
-the denotational semantics if the \texttt{while} construct.
-We begin by defining a \emph{partial order}.
+The \emph{Knaster-Tarski} fixpoint theorem is a generalization of the
+\emph{Banach} fixpoint theorem, it states that every monotone function
+on a complete lattice has a least fixpoint. This will be essential when defining
+the denotational semantics if the \texttt{while} construct. Before
+we can enunciate the theorem we have to introduce some definitions.
 
-\begin{definition}
-  A partial order is a binary relation (usually denoted by \(\leq\)) that 
-  satisfies the following properties:
+\subsubsection{Order theory}
+
+We begin by defining a \emph{preorder}, which is the \enquote{weakest} form of
+order that we can define.
+
+\begin{definition}[Preorder]
+  A preorder is a binary relation (usually denoted by \(\leq\)) that satisfies
+  the following properties:
   \begin{itemize}
     \item Reflexivity: \(a \leq a\).
-    \item Transitivity: If \(a \leq b\) and \(b \leq c\) then \(a \leq c\).
-    \item Less-than iff less-than-or-equal: \(a < b \iff a \leq b \land b \not\leq a\). 
-    \item Antisymmetry: If \(a \leq b\) and \(b \leq a\) then \(a = b\).
+    \item Transitivity: \(a \leq b \to b \leq c \to a \leq c\).
+    \item Less-than iff less-than-or-equal: \(a < b \iff a \leq b \land b \not\leq a\).
   \end{itemize}
+\end{definition}
+
+Adding antisimmetry to the preorder we obtain a \emph{partial order}.
+
+\begin{definition}[Partial order]
+  A partial order is a preorder that is antisymmetric, that is, it satisfies:
+  \(a \leq b \to b \leq a \to a = b\).
 \end{definition}
 
 Now we consider a set of elements with a partial order, if every set has an
 an \emph{infimum} we call it a \emph{complete lattice}. Usually a complete lattice 
-is defined as a  partially ordered type in which every set has a \emph{least upper bound}
+is defined as a partially ordered type in which every set has a \emph{least upper bound}
 and a \emph{greatest lower bound}, but these definitions are interchangeable.
+Although we won't prove it, the existence of one implies the existence of the other.
 
 \begin{definition}
   A complete lattice is a partially ordered type that has an infimum in every set. 
   That is, exists a function \(\funfont{Inf}: \tyfont{Set} \ \alpha \to \alpha\)
   that returns an element of the set satisfying the following properties:
   \begin{itemize}
-    \item \(\forall S, \forall x \in S, \funfont{Inf} \ s \leq x\).
-    \item \(\forall S, (\forall y \in S, x \leq y) \implies x \leq \funfont{Inf} \ s\).
+    \item \(\forall S, \forall x \in S, \funfont{Inf} \ S \leq x\).
+    \item \(\forall S, (\forall y \in S, x \leq y) \implies x \leq \funfont{Inf} \ S\).
   \end{itemize}
 \end{definition}
 
@@ -2046,120 +2060,124 @@ as sets, with the inclusion relation, form a partial order.
   Sets with the inclusion relation form a partial order. Where
   \(A \leq B \coloneqq A \subseteq B\), \(A < B \coloneqq A \subset B\).
   and the infimum of a set is the intersection of all the sets in the set,
-  that is \(\funfont{Inf} \ S = \{x \mid \forall A \in S, x \in A\}\).
+  that is \(\funfont{Inf} \ S = \bigcap_{A \in S} A\).
 \end{theorem}
 
-One could read the infimum of the previous theorem as:
-\(\funfont{Inf} \ S = \bigcap_{A \in S} A\), we will not define the general 
-indexed intersection since we will only use it here. Since the proofs are
+The intersection of a set of sets is the set of elements that are in all the sets
+of the set, that is:
+\[
+  \bigcap_{A \in S} A = \{x \mid \forall A \in S, x \in A\}
+\]
+Since the proofs are
 straightforward we will not present them, but they can be found in the code.
 
-Now we can begin defining the concepts of \emph{pre fix-point} and \emph{monotonic}
-functions.
+\subsubsection{Order homomorphims}
 
-\begin{definition}[Pre fix-point]
-  A pre fix-point of a function \(f: \alpha \to \alpha\) is a point \(a: \alpha\) 
+Of special interest to us are the functions that preserve the order of the elements
+of a lattice, these are called \emph{order homomorphisms}, and as we will see
+later they admit a \emph{least fixpoint}.
+
+\begin{definition}[Monotonic function]
+  A function \(f: \alpha \to \alpha\) is monotonic if for all \(a, b: \alpha\)
+  we have that \(a \leq b \implies f \ a \leq f \ b\). We call these functions
+  \emph{Order homomorphisms}.
+\end{definition}
+
+\begin{notation}
+  We will denote an order homomorphism as \(f: \alpha \to_o \alpha\).
+\end{notation}
+
+Some order homomorphisms are the identity function and constant functions.
+
+\begin{theorem}
+  The identity function is an order homomorphism.
+\end{theorem}
+
+\begin{theorem}
+  Any constant function is an order homomorphism.
+\end{theorem}
+
+\subsubsection{Fix-points}
+
+As we said before, monotonic functions on a complete lattice have a least fixpoint,
+we will define the concept of fixpoint and least fixpoint, but first we need
+to define the concept of pre-fixpoint.
+
+\begin{definition}[Pre-fixpoint]
+  A pre-fixpoint of a function \(f: \alpha \to_o \alpha\) is a point \(a: \alpha\) 
   such that \(f \ a \leq a\).
 \end{definition}
 
+Now we can define the \emph{least pre-fixpoint} of an order homomorphism.
 
-\begin{definition}[Least pre fix-point]
-  The least pre fix-point of a function \(f: \alpha \to \alpha\) is the infimum of 
-  the set of all pre fix-points of \(f\).
+\begin{definition}[Least pre-fixpoint]
+  The least pre-fixpoint of a function \(f: \alpha \to_o \alpha\) is the infimum of 
+  the set of all pre-fixpoints of \(f\).
   \[
     \funfont{lfp} \ f = \funfont{Inf} \ \{a \mid f \ a \leq a\}
   \]
 \end{definition}
 
-As before, we can read it as \(\funfont{lfp} \ f = \bigcap \{a \mid f \ a \leq a\}\),
-which in the case of sets is \(\funfont{lfp} \ f = \bigcap \{a \mid f \ a \subseteq a\}\),
-that is the intersection of all the pre fix-points of \(f\).
+In the case of sets this turns into 
+\(\funfont{lfp} \ f = \bigcap \{a \mid f \ a \subseteq a\}\), 
+where \(f: \tyfont{Set} \ \alpha \to \tyfont{Set} \ \alpha\).
 
-Now we present two important pre fix-point inequalities.
+Now we present two important pre-fixpoint inequalities.
 
 \begin{theorem}
-  The least pre fix-point of a function is less than or equal to any
-  pre fix-point of that function. That is if \(a\) is a pre fix-point
+  The least pre-fixpoint of a function is less than or equal to any
+  pre-fixpoint of that function. That is if \(a\) is a pre-fixpoint
   of \(f\) then \(\funfont{lfp} \ f \leq a\).
 \end{theorem}
 
-\begin{theorem}
-  If a point is less than or equal to any pre fix-point of a function
-  then it is less than or equal to the least pre fix-point of that function.
-  If for all pre fix-points \(b\) of \(f\) we have \(a \leq b\) then
+\begin{theorem}\label{thm:lfp_le}
+  If a point is less than or equal to any pre-fixpoint of a function
+  then it is less than or equal to the least pre-fixpoint of that function.
+  If for all pre-fixpoints \(b\) of \(f\) we have \(a \leq b\) then
   \(a \leq \funfont{lfp} \ f\).
 \end{theorem}
 
-The last step before being able to enunciate the \emph{Knaster-Tarski} theorem
-is defining the concept of a \emph{monotonic} function.
+We can now state the \emph{Knaster-Tarski} fixpoint theorem, which states that
+the least fixpoint of a monotonic function on a complete lattice exists, and
+is equal to the least pre-fixpoint of that function.
 
-\begin{definition}[Monotonic function]
-  A function \(f: \alpha \to \alpha\) is monotonic if for all \(a, b: \alpha\)
-  we have that \(a \leq b \implies f \ a \leq f \ b\).
-\end{definition}
-
-That is, a monotonic function preserves the order of the elements of the set.
-Some functions that conserve the order are the \emph{identity} function and the
-constant functions. 
-
-\begin{theorem}
-  The identity function is monotonic.
-\end{theorem}
-
-\begin{theorem}
-  A constant function is monotonic.
-\end{theorem}
-
-Now we can state the \emph{Knaster-Tarski} fix-point theorem.
-
-\begin{theorem}[Knaster-Tarski]
+\begin{theorem}[Knaster-Tarski]\label{thm:lfp_eq}
   If \(f: \alpha \to \alpha\) is a monotonic function on a complete lattice
-  then the least fix-point of \(f\) exists and is equal to the least
-  pre fix-point of \(f\). In other words:
+  then the least fixpoint of \(f\) exists and is equal to the least
+  pre-fixpoint of \(f\). In other words:
   \[
     \funfont{lfp} \ f = f \ (\funfont{lfp} \ f)
   \]
 \end{theorem}
 
-\subsection{Functions as sets}
+\subsection{Set relations}
 
-As we said before we will use the set theoretic view of functions as relations
-to define the denotational semantics of the language. 
-
-\begin{notation}
-  We will denote the set of pairs of elements of \(\alpha\) and \(\beta\) as
-  \(\alpha \to_s \beta \coloneqq \tyfont{Set} \ (\alpha \times \beta)\).
-\end{notation}
-
-This notation captures the idea of a function as a set of pairs, in reality
-it is a \emph{partial multifunction} as it can have more than one pair with
-the same first element. This will not be an issue for us, as the 
-only function that we will define is single-valued.
-
-With our brand new notation in place we can define the \enquote{identity function},
-which in reality is the graph of the identity function.
+As we said before we will use the set theoretic view of relations, that is
+a relation is a set of pairs.
+We can, for example, define the \emph{identity relation}, as the the graph of the identity
+function.
 
 \begin{definition}
-  The identity \enquote{function} \(\funfont{id}: \alpha \to_s \alpha\) is the 
-  set of pairs \(\funfont{id} = \{(x, y) \mid x = y\}\).
+  The identity function graph \(\funfont{SRel.id}: \alpha \to_s \alpha\) is the 
+  set of pairs \(\funfont{SRel.id} = \{(x, y) \mid x = y\}\).
 \end{definition}
 
-We can also define the composition of functions as the relational composition
-of the graphs of the functions.
+We can also define the composition of relations if there is a common element
+between the codomain of the first relation and the domain of the second.
 
 \begin{definition}
-  The composition of two functions \(f: \alpha \to_s \beta\) and \(g: \beta \to_s \gamma\)
+  The composition of two relations \(f: \alpha \to_s \beta\) and \(g: \beta \to_s \gamma\)
   is the set of pairs:
   \[
     f \circ g = \{(x, z) \mid \exists y, (x, y) \in f \land (y, z) \in g\}
   \]
 \end{definition}
 
-Of course we can prove that composing functions with the identity function
-is the same as the function itself.
+Of course we can prove that composing relations with the identity relation
+is the same as the relation itself.
 
 \begin{theorem}
-  The composition of a function with the identity function is the function itself.
+  The composition of a relation with the identity relation is the relation itself.
   That is \(f \circ \funfont{id} = f\).
 \end{theorem}
 
@@ -2201,25 +2219,136 @@ command.
 We define the \(\funfont{denote}: \tyfont{Com} \to (\tyfont{State} \to_s \tyfont{State})\) 
 function as:
   \begin{align*}
-    \funfont{denote} \ \texttt{skip} &\coloneqq \funfont{id} \\
+    \funfont{denote} \ \texttt{skip} &\coloneqq \funfont{SRel.id} \\
     \funfont{denote} \ (v \ \texttt{:=} \ a) &\coloneqq \{(s, t) \mid t = s[v \leftarrow a \ s]\} \\
     \funfont{denote} \ c;c' &\coloneqq \funfont{denote} \ c \circ \funfont{denote} \ c' \\
     \funfont{denote} \ (\texttt{if} \ b \ \texttt{then} \ c \ \texttt{else} \ c' \ \texttt{end}) &\coloneqq \funfont{Set.ite} \ \{(s, \square) \mid b \ s\} \ (\funfont{denote} \ c) \ (\funfont{denote} \ c') \\
     \funfont{denote} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) &\coloneqq \funfont{lfp} \ (W \ b \ (\funfont{denote} \ c))
   \end{align*}
-  where \(W \ b \ f: (\tyfont{State} \to_s \tyfont{State}) \to (\tyfont{State} \to_s \tyfont{State})\) is:
+  where \(W \ b \ f:\tyfont{Set} \ (\tyfont{State} \times \tyfont{State}) \to_o 
+    \tyfont{Set} \ (\tyfont{State} \times \tyfont{State})\) is:
   \[
-    W \ b \ f = \funfont{Set.ite} \ \{(s, \square) \mid b \ s\} \ (f \circ g) \ \funfont{id}
+    W \ b \ f = \lambda g \mapsto \funfont{Set.ite} \ \{(s, \square) \mid b \ s\} \ (f \circ g) \ \funfont{id}
   \]
 \end{definition}
 
-Of course this is only well defined if the least fix-point of \(W \ b \ f\) exists,
-for this it suffices to show that \(W \ b \ f\) is monotonic, as we can then apply
-the \emph{Knaster-Tarski} theorem.
+Of course this is only well defined if the least fixpoint of \(W \ b \ f\) exists,
+for this it suffices to show that \(W \ b \ f\) is an order homomorphism, as we 
+can then apply the \emph{Knaster-Tarski} theorem.
 
 \begin{theorem}
-  The function \(W \ b \ f\) is monotonic.
+  The function \(W \ b \ f\) is an order homomorphism.
 \end{theorem}
+
+Then, the fixpoint of \(W \ b \ f\)
+is a \emph{relation} from the first state in which the \enquote{while} is
+evaluated to the last state, that is, if the loop terminates. If the loop
+doesn't terminate the relation is the \emph{empty set}, that is no state
+is related to any other state.
+Let's see a concrete example of what happens to the infinite loop 
+\(L \coloneqq \texttt{while true {skip}}\).
+Applying the definition of the denotational semantics we have:
+\[
+  \funfont{denote} \ L = \funfont{lfp} \ (W \ \texttt{true} \ \funfont{SRel.id})
+\]
+unfolding the definition of \(W\) we have:
+\begin{align*}
+  W &= \lambda g \mapsto \funfont{SRel.id} \circ g \cap \funfont{Univ} \cup \funfont{SRel.id} \setminus \funfont{Univ} \\
+    &= \lambda g \mapsto g = \funfont{id}
+\end{align*}
+Now, the least fixpoint of \(W\) is
+\[
+  \funfont{lfp} \ W = \bigcap \{a \mid \funfont{id} \ a \leq a\} = 
+    \bigcap \funfont{Univ} = \emptyset
+\]
+
+\subsection{Kleene fixpoint theorem}
+
+Defining the semantics with a relation works, but it makes computation difficult,
+as we don't have a general way of computing the least fixpoint. We now 
+introduce a theory, originally developed by \emph{Dana Scott}, that allows us
+use \emph{partial functions} instead of relation. The problem with
+partial functions is that they \emph{don't} form a complete lattice, as they
+don't have an infimum. To solve this problem we will use the \emph{Kleene fixpoint}
+theorem, which operates on \emph{\(\omega\)-continuous} functions.
+
+We start by defining the concept of \(\omega\)-chain, which is a sequence of
+sets where each set is a subset of the next.
+
+\begin{definition}[\(\omega\)-chain]
+  An \(\omega\)-chain is a sequence of sets \(\{S_i\}_{i \in \mathbb{N}}\) such that
+  \(S_i \subseteq S_{i+1}\) for all \(i \in \mathbb{N}\).
+\end{definition}
+
+An \(\omega\)-continuous function is a function that \enquote{preserves the limit} of
+\(\omega\)-chains.
+
+\begin{definition}[\(\omega\)-continuous]
+  A function \(f: \alpha \to \alpha\) is \(\omega\)-continuous if it commutes with the
+  indexed union for every chain, that is for every \(\omega\)-chain 
+  \(\{S_i\}_{i \in \mathbb{N}}\) we have:
+  \[
+    f \left( \bigcup_{i \in \mathbb{N}} S_i \right) = \bigcup_{i \in \mathbb{N}} f \ S_i
+  \]
+\end{definition}
+
+\begin{notation}
+  We will denote an \(\omega\)-continuous function as \(f: \alpha \to_\omega \alpha\).
+\end{notation}
+
+Continuity is a \enquote{stronger} property than monotonicity, as every continuous
+function is monotonic, but not every monotonic function is continuous.
+
+\begin{theorem}
+  Every \(\omega\)-continuous function is monotonic.
+\end{theorem}
+
+As an example of a \(\omega\)-chain we consider the sequence \emph{power function} of
+an order homomorphism from sets to sets.
+
+\begin{theorem}\label{thm:fpow_chain}
+  The sequence of power functions of an order homomorphism \(f: \tyfont{Set} \ \alpha \to_o \tyfont{Set} \ \alpha\)
+   is an \(\omega\)-chain. That is \(\{f^n \ \emptyset\}_{n \in \mathbb{N}}\) is an \(\omega\)-chain.
+\end{theorem}
+
+This will be useful later, as we prove that the least fixpoint of an \(\omega\)-continuous
+function is a \emph{fixed point}.
+
+\begin{definition}[Least fixpoint]
+  The least fixpoint of a function \(f: \alpha \to_\omega \alpha\) is the 
+  \enquote{limit} of the sequence of the power functions of \(f\), that is:
+  \[
+    \funfont{lfp} \ f = \bigcup_{n \in \mathbb{N}} f^n \ \emptyset
+  \]
+\end{definition}
+
+Now we can state the \emph{Kleene fixpoint theorem}.
+
+\begin{theorem}[Kleene fixpoint]
+  If \(f: \alpha \to_\omega \alpha\) is an \(\omega\)-continuous function
+  then the least fixpoint of \(f\) exists and is equal to the least fixpoint
+  of \(f\) as an order homomorphism.
+\end{theorem}
+
+\begin{proof}
+  We have to prove that \(\funfont{OrderHom.lfp f = ContinuousHom.lfp f}\),
+  we do this by proving that both sets contain the other.
+  \begin{itemize}
+    \item[(\(\subseteq\))] Suffices to show that \(\bigcup_{n \in \mathbb{N}} f^n \ \emptyset\)
+      is a pre-fixpoint of \(f\), as we can then apply~\ref{thm:lfp_le} obtaining
+      the result. That the leastt fixpoint is a pre-fixpoint is more or less
+      immediate by using~\ref{thm:fpow_chain}.
+
+    \item[(\(\supseteq\))] For this it suffices: \(\funfont{lfp} \ f \supseteq f^n \ \emptyset\),
+      we proceed by induction on \(n\). The base case is trivially contradictory,
+      the inductive step is immediate by applying Knaster-Tarski~\ref{thm:lfp_eq}
+      as \(f\) is an order homomorphism.
+  \end{itemize}
+\end{proof}
+
+This fixpoint definition has the advantage of giving us an easy approximation
+of the least fixpoint, as we can take the union of the first \(n\) power functions
+of \(f\).
 
 \section{Equivalence of semantics}
 
@@ -2241,7 +2370,6 @@ Things to add:
 
 \begin{itemize}
   \item Add formalization of \(\lambda\)-calculus and proofs.
-  \item \(\Omega\)-chain partial orders.
   \item Compiler.
   \item Typed \texttt{IMP}.
   \item Hoare Logic.
@@ -2249,6 +2377,9 @@ Things to add:
 \end{itemize}
 
 \section{Code listings}
+
+All the code can be found in GitHub at \url{
+  https://github.com/remind-me-later/SemanticsLean}.
 
 \subsection{Maps}
 
@@ -2282,9 +2413,13 @@ Things to add:
 
 \lstinputlisting{../SemanticsLean/Semantics/Imp/SmallStep.lean}
 
-\subsection{Knaster-Tarski}
+\subsection{Order and Knaster-Tarski}
 
-\lstinputlisting{../SemanticsLean/Semantics/KnasterTarski.lean}
+\lstinputlisting{../SemanticsLean/Semantics/Lattice.lean}
+
+\subsection{Chains and Kleene}
+
+\lstinputlisting{../SemanticsLean/Semantics/Chain.lean}
 
 \subsection{Denotational semantics}
 
