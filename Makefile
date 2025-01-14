@@ -1,9 +1,17 @@
 .POSIX:
 
-all: 
-	tectonic -X build --keep-intermediates --keep-logs
+NAME=main
+OUTDIR=build
+
+all: $(OUTDIR)/$(NAME).pdf
+
+$(OUTDIR)/$(NAME).pdf: src/$(NAME).tex
+	latexmk -xelatex -output-directory=../$(OUTDIR) -shell-escape -cd -silent
+
+$(OUTDIR):
+	mkdir -p $(OUTDIR)
 
 clean:
-	rm -rf build
+	$(RM) -r $(OUTDIR)
 
 .PHONY: all clean

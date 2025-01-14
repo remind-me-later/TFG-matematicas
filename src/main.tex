@@ -4,7 +4,7 @@
   parskip=half, 
   DIV=20,
   toc=bibliography,
-  usegeometry,
+  % usegeometry,
 ]{scrartcl}
 
 % \usepackage{showframe}
@@ -31,13 +31,8 @@
     Scale=MatchLowercase
 ]
 
-% \usepackage[outputdir=../build]{minted}
-% \usemintedstyle{pastie}
-\usepackage{listings}
-\lstset{
-    basicstyle = \ttfamily,
-    columns = flexible,
-}
+\usepackage[outputdir=../build]{minted}
+\usemintedstyle{pastie}
 
 % Use KOMA-Script's nice headers instead of fancyhdr
 % \usepackage[Conny]{fncychap}
@@ -1951,7 +1946,7 @@ big-step semantics.
 \end{theorem}
 
 \begin{proof}
-  The proof follows immediately by theorem~\ref{thm:rel_lift}.
+  The proof follows immediately by Theorem~\ref{thm:rel_lift}.
   The relations \(\mathcal{R}\) and \(\mathcal{P}\) are both the small-step semantics
   \(\rightsquigarrow\), and the function \(f\) is the concatenation of commands:
   \(f: \texttt{Com} \times \texttt{State} \to \texttt{Com} \times \texttt{State}\)
@@ -2383,51 +2378,51 @@ All the code can be found in GitHub at \url{
 
 \subsection{Maps}
 
-\lstinputlisting{../SemanticsLean/Semantics/Maps.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Maps.lean}
 
 \subsection{Sets}
 
-\lstinputlisting{../SemanticsLean/Semantics/Set.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Set.lean}
 
 \subsection{IMP}
 
-\lstinputlisting{../SemanticsLean/Semantics/Imp/Lang.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Lang.lean}
 
 \subsection{Aexp}
 
-\lstinputlisting{../SemanticsLean/Semantics/Imp/Aexp.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Aexp.lean}
 
 \subsection{Bexp}
 
-\lstinputlisting{../SemanticsLean/Semantics/Imp/Bexp.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Bexp.lean}
 
 \subsection{Big-step}
 
-\lstinputlisting{../SemanticsLean/Semantics/Imp/BigStep.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/BigStep.lean}
 
 \subsection{Reflexive transitive closure}
 
-\lstinputlisting{../SemanticsLean/Semantics/ReflTransRel.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/ReflTransRel.lean}
 
 \subsection{Small-step}
 
-\lstinputlisting{../SemanticsLean/Semantics/Imp/SmallStep.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/SmallStep.lean}
 
 \subsection{Order and Knaster-Tarski}
 
-\lstinputlisting{../SemanticsLean/Semantics/Lattice.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Lattice.lean}
 
 \subsection{Chains and Kleene}
 
-\lstinputlisting{../SemanticsLean/Semantics/Chain.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Chain.lean}
 
 \subsection{Denotational semantics}
 
-\lstinputlisting{../SemanticsLean/Semantics/Imp/Denotational.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Denotational.lean}
 
 \subsection{Equivalence}
 
-\lstinputlisting{../SemanticsLean/Semantics/Imp/Equivalence.lean}
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Equivalence.lean}
 
 % Bibliography
 
