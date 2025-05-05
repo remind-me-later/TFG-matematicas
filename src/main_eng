@@ -1,0 +1,2432 @@
+\documentclass[
+  a4paper, 
+  10pt, 
+  parskip=half, 
+  % DIV=20,
+  toc=bibliography,
+]{scrartcl}
+
+% \usepackage{showframe}
+
+% \usepackage[spanish, es-lcroman]{babel}
+
+% \usepackage{multicol}
+
+% \usepackage{subfiles} 
+% \usepackage{tocbibind}
+% \usepackage[toc]{appendix}
+
+% \usepackage[justification=centering]{caption}
+% \usepackage{subcaption}
+
+% \usepackage[shortlabels]{enumitem}
+% \usepackage{epigraph}
+
+\usepackage{fontspec}
+% switch to a monospace font supporting more Unicode characters
+\setmonofont{JetBrains Mono}[
+    Contextuals = Alternate,
+    Ligatures = TeX,
+    Scale=MatchLowercase
+]
+
+\usepackage{minted}
+\usemintedstyle{pastie}
+
+% Use KOMA-Script's nice headers instead of fancyhdr
+% \usepackage[Conny]{fncychap}
+
+% === Math facilities ===
+
+% Theorem environments
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}[section]
+% \newtheorem{proposition}[theorem]{Proposition}
+% \newtheorem{corollary}[theorem]{Corollary}
+% \newtheorem{lemma}[theorem]{Lemma}
+
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{problem}[theorem]{Problem}
+
+% \newtheorem{remark}[theorem]{Remark}
+\newtheorem{notation}[theorem]{Notation}
+
+\usepackage{centernot}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{tikz-cd}
+
+\newcommand{\funfont}[1]{\text{#1}}
+\newcommand{\tyfont}[1]{\texttt{#1}}
+\renewcommand{\implies}{\rightarrow}
+\renewcommand{\impliedby}{\leftarrow}
+\renewcommand{\mapsto}{\Rightarrow}
+\newcommand{\Prop}{\mathbf{Prop}}
+
+\usepackage{scalerel}
+
+\DeclareMathOperator*{\Forall}{\scalerel*{\forall}{\sum}}
+
+
+% === End math facilities ===
+
+\usepackage{csquotes}
+
+\usepackage{bookmark}
+\hypersetup{
+    colorlinks=true,
+    % linkcolor=blue,
+    % filecolor=magenta,      
+    % urlcolor=cyan,
+    % pdftitle={Overleaf Example},
+    % pdfpagemode=FullScreen,
+    }
+
+% Los apéndices se llaman apéndices
+% \renewcommand\appendixpagename{Apéndices}
+% \renewcommand{\appendixtocname}{Apéndices}
+
+% mainmatter no reinicia el contador de páginas
+% \makeatletter
+% \renewcommand\mainmatter{
+%     \@mainmattertrue\cleardoublepage\renewcommand\thepage{\arabic{page}}}
+% \makeatother
+
+% \renewcommand{\thesubsection}{\thesection.\alph{subsection}}
+
+% \providecommand{\keywords}[1]
+% {
+%   \small	
+%   \textbf{\textit{Palabras clave---}} #1
+% }
+
+% define math symbol for big step arrow
+\newcommand{\bigstep}{\Longrightarrow}
+
+\title{Classic results on programming language semantics in Lean 4 (Draft)}
+\author{Ricardo Maurizio Paul}
+% \date{2020--2024}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+Proof assistants such as Lean and Coq have gained significant popularity in
+recent years, specifically in the field of formal verification. As software
+systems become increasingly more complex, and are responsible for more
+critical tasks, the need for formal verification becomes more apparent. Formal
+verification is a technique that uses mathematical logic to prove the
+correctness of a system, usually hardware or software. It involves using formal
+methods and tools to prove that the system satisfies a set of well defined
+properties that model the desired behaviour. A classic approach to formal
+verification is Hoare logic, a formal system that deconstructs programs into
+components each with a set of pre and post conditions, these conditions and
+components, called commands, are represented as \emph{Hoare triples} of the form
+\(\{P\} \ C \ \{Q\}\),
+where P is the precondition, C is the command, and Q is the postcondition. By
+using inference rules, Hoare logic can be used to show the correctness of a
+program by proving that the postcondition of the program is satisfied given the
+precondition. However, reasoning about loops and recursion can be difficult in
+Hoare logic, as it requires the use of invariants to prove the termination of
+the program. We will see that this is a common problem when reasoning about
+programs in general, as proving the termination of a given program is a
+non-trivial task, and in the most general case, is undecidable, this is known as
+the famous \emph{Halting Problem}.
+
+The inference rules for Hoare logic however are dependent on the \emph{semantics} of
+the programming language. The semantics of a language are the rules that define 
+the meaning of the programs, we
+will see that these rules can present themselves in different forms, such as
+operational semantics, denotational semantics, and axiomatic semantics. In this
+text we will focus on operational semantics, and denotational semantics.
+Axiomatic semantics, such as Hoare logic, are derived from operational
+semantics.
+
+These formal methods ensure \emph{correctness} of the programs, and are a more
+rigorous approach to program verification than testing. Testing can only show
+the presence of bugs, but not their absence, and is not exhaustive. In this way
+formal methods are more suitable for critical systems, such as avionics, medical
+devices, and financial systems, where the cost of failure is high. Alongside the
+correctness gains, formal methods can also improve the performance of programs,
+verified toolchains, such as CompCert, have been shown to produce more
+efficient code than their unverified counterparts. This is due to more
+aggressive optimizations being possible when the correctness of the program is
+guaranteed: runtime checks can be removed, aggressive flow analysis can be
+performed, and dead code can be eliminated. Some of these optimizations can be
+performed by modern compilers, using static analysis, but the guarantees
+provided by formal methods are stronger, as we said before we can ensure
+\emph{termination} in some cases.
+
+Proof of the relevance that program correctness has gained in recent years is
+the adoption of the \emph{Rust} programming language, which has a strong type system
+that ensures memory safety and thread safety, and is designed to prevent common
+programming errors, such as null pointer dereferences, buffer overflows, and
+data races. It ensures these properties by using a \emph{borrow checker} that
+enforces strict rules on the use of memory, and by using a \emph{type system} that
+ensures correctness of the programs. The borrow checker is based on
+\emph{substructural logic} and \emph{linear types}, concepts that we will not cover in
+this text, but that encode in the language itself the rules of the type system,
+ensuring that the programs are well-typed, and that the memory is used
+correctly.
+
+\section{Proof assistants}
+
+Proof assistants, or interactive theorem provers, are software systems that aid
+in the construction and verification of mathematical proofs using computers. The
+inception of proof assistants can be traced back to the 1950s and 1960s, with
+the \emph{Logic Theorist}\footnote{\url{https://en.wikipedia.org/wiki/Logic_Theorist}} 
+and \emph{Automath} systems. These were the
+first systems to use a computer to check mathematical proofs. They were
+created before the advent of modern type theory and the Curry-Howard
+isomorphism, and used a different logical foundation based on \emph{natural
+deduction}. Although interesting these systems were limited in scope, and
+could only prove simple theorems.
+
+In the 1970s more powerful systems were developed, such as \emph{LCF}, based on
+Dana Scott's \emph{Logic of Computable Functions}, this was one of the first systems
+to use proofs by induction, a feature fundamental to reason about recursively
+defined functions and that we will see in this text. The creation of the
+programming language ML, the father of all functional languages, is also
+attributed to the development of LCF, as it was designed for writing tactics
+in LCF. The modern approach of \enquote{step by step} proof construction, used by all
+modern assistants, was also pioneered by LCF.\@
+
+The 1970s also saw the development of ideas such as type theory, in particular
+Martin-Löf type theory, and the Curry-Howard isomorphism, two key concepts that
+are the basis of all modern proof assistants. In the 1980s this ideas were
+implemented in systems such as \emph{Nuprl} and \emph{Coq}. Nuprl is one of the
+first systems to use a constructive type theory at its core, were proofs are
+first class objects, emphasizing their computational content and allowing
+\emph{code extraction} of programs from verified proofs. Nuprl also introduced
+dependent types, a powerful feature that allows the type of a value to depend on
+the value itself. With this system a great deal of mathematics can be encoded
+and proved.
+
+A little later came Coq, a system based on the CIC (Calculus of Inductive
+Constructions), a type theory that extends the Calculus of Constructions with
+inductive types. Coq is one of the most popular proof assistants, and is widely
+used in academia and industry to this day. We will see that the CIC is also the
+basis of Lean, a more recent proof assistant that has gained significant
+popularity in recent years.
+
+While this advancements where made with the theories of dependent types another
+line of research was being developed, the \emph{HOL} family of proof assistants,
+based on \emph{Higher Order Logic}, a logic that extends first-order logic with
+higher order quantifiers. These systems are based on the \emph{LCF} architecture, and
+use a \emph{kernel} to ensure the correctness of the proofs. The most popular system
+in this family is \emph{Isabelle, a powerful proof assistant that is as
+powerful as Coq and Lean}, but with a different logical foundation.
+
+This brings us to Lean, the proof assistant that we will use in this text. Lean
+is a modern proof assistant developed by Leonardo de Moura at Microsoft Research
+and based on the CIC.\@ We can see Lean as an evolution of Coq, with a more modern
+syntax, and a more powerful type system, later we will discuss the differences
+in more detail.
+
+Leaving HOL aside, all these systems are based on the Curry-Howard isomorphism,
+a fundamental concept that relates proofs and programs. To understand it we must
+first introduce the basics of type theory.
+
+\section{Type theory}
+
+Type theory is a branch of mathematical logic that deals with the study of
+types, an abstraction similar in some ways to the more familiar sets.
+It emerged in the early 20th century to solve the foundational crisis of
+mathematics, a series of problems that arose from the discovery of paradoxes in
+set theory, such as Russell's paradox.
+
+Like \emph{sets} are a primitive notion in set theory, \emph{types} are a primitive notion
+in type theory, alongside \emph{functions}. This two primitives ensure that functions
+are only applied to the correct types, this is known as \emph{type safety}. This
+concept may be familiar to programmers, as it is the basis of static type
+systems in programming languages, such as Haskell, Rust, and Scala.
+
+As an informal introduction to types we can think of them as sets with
+additional structure which dictates with functions can be applied to them. For
+example, we can define a type \(\mathbb{N}\) that represents the natural numbers,
+and define a function \(\texttt{add}: \mathbb{N} \to \mathbb{N} \to \mathbb{N}\)
+that takes two natural numbers and returns their sum. This ensures that the
+function \(\texttt{add}\) can only be applied to natural numbers, and not to any
+other type.
+
+Historically the origins of type theory can be traced back to multiple 
+developments in logic, by Church, Curry, Russell, and others. But modern type
+theory is based on the work of Pier Martin-Löf, who developed a type theory that
+combines classic type theory with the \(\lambda\)-calculus. In this way
+the \enquote{nice} properties of previous type theories are given a 
+\emph{computational interpretation}, via the Curry-Howard isomorphism which
+we will discuss in more detail later, that allows computers to reason about
+mathematical proofs.
+
+The type theory of Martin-Löf is \emph{intuitionistic}, that is
+proofs are not just a logical argument but a method of constructing a
+\emph{witness} of the truth of a proposition. This is in contrast to classical
+logic, where proofs are just a sequence of logical steps that show the truth of a
+proposition. In intuitionistic logic, the law of the excluded middle is not
+valid, and the principle of \emph{proof by contradiction} is not allowed (with
+some caveats).
+
+\subsection{Lambda calculus}
+
+A complete treatment on \(\lambda\)-calculus can be found in~\cite{barendregt1984lambda}, 
+but for completeness we will give a brief introduction here.
+The \(\lambda\)-calculus is a formal system for expressing computation based on function abstraction 
+and application using variable binding and substitution. It was introduced by 
+Alonzo Church in the 1930s as a way to study the foundations of mathematics and 
+has since become a fundamental concept in computer science. We can think of
+it as a \enquote{programming language} with only one data type, the function, and
+two operations, abstraction and application.
+
+The \(\lambda\)-calculus treats functions as \emph{rules} rather than
+relationships, this stresses the computational aspect of functions, and allows
+us to reason about computation in a more abstract way. This is in contrast to
+set theory, where functions are seen as \emph{graphs}.
+
+The syntax of lambda calculus is simple, it consists of variables (\(x, y, z\)),
+abstraction (\(\lambda x \mapsto M\)), and application (\(M \ M\)), in 
+BNF:
+\[
+  M \Coloneqq x \mid \lambda x \mapsto M \mid M \ M
+\]
+Our usage of the (\(\mapsto\)) symbol, in contrast to the traditional (\(.\))
+is not accidental, and reveals a profound connection between function abstraction
+and logical implication, a connection that we will explore later.
+
+\begin{example}\label{ex:lambda_expr}
+We can apply the successor function to the number 3 as
+\(
+(\lambda x \mapsto x + 1) \ 3
+\).
+\end{example}
+
+The rules to evaluate lambda calculus expressions are known as
+\emph{reduction rules} and they are:
+\begin{itemize}
+  \item \(\alpha\)-conversion: Allows us to rename bound variables:
+    \[(\lambda x \mapsto M) \ N \rightsquigarrow M[x \coloneqq N]\]
+  \item Substitution: Allows us to replace all \emph{free} occurrences of the 
+  variable \(x\) in the expression \(M\) with expression \(N\) and is denoted as
+  \(M[x \coloneqq N]\).
+  \item \(\beta\)-reduction: Allows us to apply a function to an argument, and
+    is defined in terms of substitution as:
+    \[(\lambda x \mapsto M) \ N \rightsquigarrow M[x \coloneqq N]\]
+  \item \(\eta\)-conversion: Expresses the concept of \emph{extensionality} of functions, 
+    and states that two functions are equal if they are equal for all arguments.
+    To give an example when \(x\) is not free in \(f\):
+    \[(\lambda x \mapsto f \ x) \rightsquigarrow f\]
+\end{itemize}
+
+\begin{example}
+  We can apply the \(\beta\)-reduction rule to the expression in
+  Example~\ref{ex:lambda_expr} as:
+  \[
+  (\lambda x \mapsto x + 1) \ 3 \rightsquigarrow 3 + 1 
+  \]
+\end{example}
+
+These reduction rules are called like that because they only go one way, from
+left to right. Seeing the previous example one could think that they also
+\enquote{reduce} expressions to \enquote{simpler} ones: applying the rules one
+after another we would arrive to a version of the expression on which the reduction rules cannot 
+be applied any more, this is called the \emph{normal form} of the expression.
+
+\begin{definition}[Normal form]
+  An expression is in normal form if it cannot be reduced further.
+\end{definition}
+
+Sadly, not all expressions have a normal form, as we will see in the next example.
+
+\begin{definition}[\(\Omega\)-combinator]\label{def:omega_combinator}
+  The \(\Omega\)-combinator is the \(\lambda\)-expression:
+  \[
+  \Omega \coloneqq (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) 
+  \]
+\end{definition}
+
+Without going into the details of the definition if the rules of the syntax and
+reduction of \(\lambda\)-calculus we can't give a real \enquote{rigorous} proof
+of the following theorem, but we can give an informal one.
+
+\begin{theorem}
+  The \(\Omega\)-combinator does not have a normal form.
+\end{theorem}
+
+\begin{proof}
+  If we apply the \(\beta\)-reduction rule to~\ref{def:omega_combinator}
+  we get the expression itself:
+  \[
+  (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x) \rightsquigarrow
+  (\lambda x \mapsto x \ x) \ (\lambda x \mapsto x \ x)
+  \]
+\end{proof}
+
+Since our only \enquote{data types} are functions, we need to encode numbers,
+booleans, and any other data types using functions. We can use the
+\emph{Church encodings}, which represents the booleans as functions that take two
+arguments and return one of them. For example, we can define the boolean literals
+as follows:
+
+\begin{definition}[Church booleans]
+  We can define the boolean literals as:
+  \[
+    \texttt{true} \coloneqq \lambda x \mapsto \lambda y \mapsto x \qquad
+    \texttt{false} \coloneqq \lambda x \mapsto \lambda y \mapsto y 
+  \]
+\end{definition}
+
+We can then define the logical operations \(\texttt{and}\), \(\texttt{or}\), and
+\(\texttt{not}\) as functions that take two booleans and return a boolean.
+
+\begin{definition}[Logical operators]
+  We can define the logical operators as:
+  \[
+    \texttt{and} \coloneqq \lambda x \mapsto \lambda y \mapsto x \ y \ x \quad
+    \texttt{or} \coloneqq \lambda x \mapsto \lambda y \mapsto x \ x \ y \quad
+    \texttt{not} \coloneqq \lambda x \mapsto x \ \texttt{false} \ \texttt{true} 
+  \]
+\end{definition}
+
+And even an if-then-else construct:
+
+\begin{definition}[If-then-else]
+  We can define the if-then-else construct as:
+  \[
+  \texttt{ifthen} \coloneqq \lambda b \mapsto \lambda x \mapsto \lambda y \mapsto b \ x \ y 
+  \]
+\end{definition}
+
+Numbers also have a church encoding but we skip presenting it since later we 
+will see a more general way to encode data types.
+
+As we've seen the \(\lambda\)-calculus is a simple but powerful formal system
+that can be used to reason about computation, it is in fact \emph{Turing complete,
+meaning that it can express any computable function.} However, as we have 
+shown with the \(\Omega\)-combinator, it is not very \enquote{safe} to use.
+
+\subsection{Typed lambda calculi}
+
+To avoid the problem introduced by non-terminating computations such as the 
+\(\Omega\)-combinator we can introduce \emph{types} to the lambda calculus\footnote{
+  In some type systems the \(\Omega\)-combinator can be well typed, this is not
+  the case in the type systems normally used in theorem provers, such as CIC.
+}. 
+Types allow us to classify the expressions
+of the lambda calculus and ensure that the expressions are well-typed, that is,
+that the functions are applied to the correct arguments. This is known as
+\emph{type safety} and is a fundamental concept in programming languages.
+
+By adding types we also ensure that nonsensical expressions, such as applying a
+boolean to an integer are not possible, and so expressions cannot get
+\enquote{stuck} in a non-terminating computation.
+
+\subsubsection{Simply typed lambda calculus}
+
+The simplest typed lambda calculus is the \emph{simply typed lambda calculus} or
+\emph{STLC}. In the STLC each variable has a type, and each function has a type
+function abstraction now has the form \(\lambda x: \alpha \mapsto M\), where
+\(\alpha\) is the type of the variable \(x\). The two mandatory types in the STLC
+are the function type \(\alpha \to \beta\), which represents a function that
+takes an argument of type \(\alpha\) and returns a value of type \(\beta\), and
+the base type \(\texttt{Bool}\), which represents the booleans.
+
+The syntax of the STLC is:
+\begin{align*}
+  M \Coloneqq x & \mid \lambda x: \alpha \mapsto M \mid M \ M \\
+    & \mid \texttt{true} \mid \texttt{false} \\
+    & \mid \text{if} \ M \ \text{then} \ M \ \text{else} \ M
+\end{align*}
+
+Now besides the evaluation rules that we saw before we have to add the 
+\emph{typing rules}, which are the rules that define the well-typed expressions 
+of the calculus. These rules require a \emph{typing context} normally denoted as
+\(\Gamma\), which is a map that associates variables with types. These rules
+for example ensure that the if-then-else construct is applied to booleans, and
+that the branches of the if-then-else construct have the same type.
+
+\subsubsection{Generalization}
+
+The STLC is the basis of most typed lambda calculi, and can be extended allowing
+\emph{terms that depend on types}, this is known as \emph{polymorphism} and
+the calculus is known as System F. We can also extend the STLC with
+\emph{types that depend on other types}, we will call this later a 
+\emph{type constructor}, and the calculus is known as System F\(_\omega\).
+If we add \emph{dependent types} we get \(\lambda P\), etc...
+
+We can combine these extensions arbitrarily obtaining different system with 
+different expressive power, a taxonomy of these systems is the Barendregt's 
+\(\lambda\)-cube. At the apex of generality we have the \emph{Calculus of
+Constructions}, which is the basis of Coq and Lean. The following sections will
+introduce the concepts of the Calculus of Constructions. For a complete
+treatment of the \(\lambda\)-cube we refer the reader to~\cite{lambda_with_types}.
+
+\subsection{Type theory vs set theory}
+
+We follow the type theory developed in~\cite{hottbook}, although any 
+Martin-Löf type theory would suffice. In fact getting into the differences 
+between Martin-Löf type theory, the Calculus of Constructions, and the
+Calculus of Inductive Constructions is beyond the scope of this text, and we
+will use the term \enquote{type theory} to refer to all of them.
+We can think of the \(\lambda\)-calculus
+presented before as a \enquote{syntax} for our type theory, the types will give
+meaning to the expressions of the \(\lambda\)-calculus. In fact a long deal
+of the next sections will be dedicated to show how to \emph{construct} types
+that can encode the object of our proofs.
+
+A key point to remark is that types don't \emph{contain} values, they \emph{classify}
+values, while in set theory a value is a \emph{member} of a set, in type theory a
+value \emph{has} a type. The analogous to the
+membership notation in set theory is the \emph{typing judgement} in type theory,
+which is written as \(x: \alpha\), and reads as \enquote{x has type \(\alpha\)}.
+While in type theory \(x \in S\) are \(x \notin S\) are both valid expressions,
+the typing judgement is \enquote{always true}, it is not a proposition that can be
+proven or disproven.
+Because of this we cannot introduce a variable without
+specifying its type, when we write \(x\) we are implicitly writing \(x: \alpha\),
+where \(\alpha\) is the type of \(x\).
+
+The most important difference between type theory and set theory is that type
+theory its own deductive system, while set theory is formulated within
+first-order logic. This means that set theory has two primitive notions, sets
+and propositions, while type theory has types and functions. With just these two
+we can recreate all first-order logic, and in fact, we can use types to encode
+propositions, and functions to encode proofs. The type judgement \(x: \alpha\)
+can also be read as \enquote{x is a proof of \(\alpha\)}, and the function type
+\(\alpha \to \beta\) can be read as \enquote{if we have a proof of \(\alpha\) we can
+construct a proof of \(\beta\)}. This means that function abstraction corresponds
+to a \emph{logical implication} in classical logic, we will expand on this 
+in Section~\ref{sec:curry_howard}.
+
+\subsection{Equality}
+
+Equality in type theory is slightly more complex than in classic mathematics,
+the equality that we have by default is \emph{definitional equality}. That is two
+terms are equal if they can be transformed into each other via \emph{rewriting
+rules}. The reduction rules of type theories typically include:
+
+\begin{itemize}
+\item \(\beta\)-reduction. Replacing a function application with the function 
+  body where the argument is substituted for the bound variable.
+\item \(\delta\)-reduction. Replacing a constant with its definition.
+\item \(\iota\)-reduction. Simplifying expressions involving constructors and 
+  pattern matching for inductive data types.
+\end{itemize}
+
+These rules normally satisfy a series of desirable properties, such as
+\emph{confluence}, \emph{termination}, and \emph{consistency}, that ensure that 
+the reduction process is well defined, and that the equality relation is an 
+equivalence relation. In some cases other nice properties are added, such as 
+\emph{congruence}, \emph{strong normalization}, and \emph{canonicity}.
+
+Another type of equality is \emph{propositional equality}, which is states that two
+terms are equal if they can be proven to be equal in the type theory. This is
+more akin to the classic notion of equality, and is used to prove properties of
+the terms.\ A special case of propositional equality is \emph{functional
+extensionality}, 
+which states that two functions are equal if they are
+equal for all arguments, a classic result of set theory that follows from the
+axiom of extensionality, which states that two sets are equal if they contain
+the same elements.\ (The relationship may depend on axiom K).
+
+Another important axiom is \emph{propositional extensionality}, which
+states that two propositions are definitionally equal if they are equivalent,
+that is, if they imply each other. This is a key property of type theory, as it
+allows us to rewrite propositions in proofs, and simplify the reasoning process.
+
+Equality is also a \emph{binary relation}, that is, a relation that relates two
+values of a type. In type theory binary relations are functions that take two
+values and return a proposition, this proposition is true if the relation holds,
+and false otherwise.
+
+\begin{definition}[Relation]
+  A relation is a function that takes two elements of a type and returns a
+  proposition.
+  \[
+  \texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
+    \coloneqq \alpha \to \beta \to \Prop 
+  \]
+\end{definition}
+
+And we can define the relation of equality as:
+
+\begin{definition}[Equality]
+  The relation of equality is a function that takes two elements of a type and
+  returns a proposition.
+  \[
+  \texttt{Eq} \ (\alpha: \texttt{Type}) \coloneqq \texttt{Rel} \ \alpha \ \alpha  
+  \]
+\end{definition}
+
+Equality is much more than an equivalence relation, however. It has the important 
+property that every assertion respects the equivalence, in the sense that we can 
+substitute equal expressions without changing the truth value. 
+
+\subsubsection{Equivalence}
+
+In type theory, the notion of equivalence is more general than equality, and
+refers to a relation between two types that is reflexive, symmetric, and
+transitive. This relation is normally defined as a setoid in the type theory,
+and is used to define the notion of isomorphism between types.
+
+\subsection{Universes}
+
+Before we introduced the judgement \(x: \alpha\), but now we ask ourselves 
+what is the type of \(\alpha\)? The answer is that \(\alpha\) is of type
+\(\texttt{Type}\), but what is the type of \(\texttt{Type}\)? Of course it is
+also a type so \(\texttt{Type}: \texttt{Type}\), this leads to a problem known as
+\emph{impredicativity}.
+
+Impredicativity arises when a definition of an object or type relies on
+a quantifier that ranges over a totality encompassing the very object being
+defined. This self-referential aspect can lead to logical paradoxes, akin to
+Russell's Paradox in set theory, where a set is defined to contain all sets that
+do not contain themselves.
+
+The type theory analogous to Russell's paradox is the \emph{Girard's paradox}, in
+a system that allows impredicativity, we can define a type \(U\) that contains all
+types that do not contain themselves, and then ask if \(U: U\), if it is, then it
+should not be of type \(U\), and if it is not, then it should be. A system that
+shows this paradox is not very useful for theorem proving, as it is
+inconsistent, so any proposition can be proven.\footnote{
+  Historically this problem has been solved with System U}. 
+To avoid this, we introduce a hierarchy of \emph{type universes}.
+
+Each universe is a \emph{collection of types, whether they are types or not
+depends on the particular type theory}, in Lean and Coq they are not. Each
+universe contains the types of the previous universe, and is contained in the
+next universe. For example: \(\texttt{Type}: \texttt{Type} \ 1\),
+\(\texttt{Type} \ 1: \texttt{Type} \ 2\), and so on. The function type inhabits
+the smallest universe that contains the types of its domain and codomain. For
+example, \(\mathbb{N} \to \mathbb{N}: \texttt{Type} \ 1\), and
+\(\texttt{Type} \ 1 \to \texttt{Type} \ 2: \texttt{Type} \ 3\).
+
+The first type universe, \(\texttt{Type} \ 0\), contains the types of the
+programming language itself, such as \(\mathbb{N}\), \(\texttt{Bool}\), and
+\(\texttt{List}\). The second type universe, \(\texttt{Type} \ 1\), contains the
+types of the first universe, and so on.
+
+\subsection{Constructors}
+
+For now we have focused on types, but we need a way to create values of these
+types, this is done using \emph{type constructors}, which are functions that
+create elements of a type and define the possible forms an element of a type can
+take. For example, we can define a type \(\texttt{Bool}\) that represents the
+booleans, and define two constructors \(\texttt{true}\) and \(\texttt{false}\) that
+create the elements of the type. This ensures that the elements of the type are
+either \(\texttt{true}\) or \(\texttt{false}\), and no other value.
+
+\subsection{Pattern matching}
+
+To define functions that operate on types we need a way to distinguish between
+the different forms an element of a type can take, this is done using
+\emph{pattern matching}. Pattern matching is a way to define functions by
+defining a different case for each constructor of the type. For example, we can
+define a function \(\texttt{not}\) that takes a boolean and returns its negation
+as:
+\[
+  \texttt{not} \ \texttt{true} = \texttt{false} \qquad
+  \texttt{not} \ \texttt{false} = \texttt{true}
+\]
+
+\subsection{Inductive types}
+
+Of course defining finite types such as \(\texttt{Bool}\) is not very
+interesting, we need a way to define infinite types, such as the natural
+numbers. This is done using \emph{inductive types}, which are types that are defined
+by a set of constructors that define the possible forms an element of the type
+can take. For example, we can define the natural numbers as an inductive type
+with two constructors, \(0\) and \(\texttt{succ}\), that create the
+elements of the type, in a way analogous to the \emph{Peano axioms}.
+\[
+0 : \mathbb{N} \qquad
+    \texttt{succ}: \mathbb{N} \to \mathbb{N}
+\]
+Similar to the classic principle of induction, we have defined a base case
+\(0\) and an inductive case \(\texttt{succ}\), that creates the
+successor of a natural number. In this way we can create the natural numbers as
+an inductive type, and define functions that operate on them, such as addition,
+multiplication, and exponentiation. This is the essence of inductive types, the
+ability to define types that are created by a set of constructors, and define
+functions that operate on them. And as is the case in classical mathematics, we
+can use induction to prove properties of these types, in this case \emph{structural
+induction}.
+
+Following the natural number example, let's construct a function
+\(f: \mathbb{N} \to C\) by recursion on the naturals, it's enough to provide a
+base case \(c_0 : C\) and a \enquote{next step} function \(c_s: \mathbb{N} \to C \to C\),
+then we can define \(f\) via pattern matching as:
+\begin{align*}
+  f \ 0 & = c_0 \\
+  f \ (\texttt{succ} \ n) & = c_s \ n \ (f \ n)
+\end{align*}
+To use this proof technique we must ensure that the inductive type is
+\emph{well-founded}, that is, that the constructors of the type are applied a finite
+number of times to create an element of the type.
+
+\subsection{Dependent function type}
+
+In type theory, functions are first class citizens, and can be passed as
+arguments, returned as results, and stored in data structures. In some cases we
+need to define functions whose return type depends on the value of the
+arguments, this is done using \emph{Pi types}, which are types that depend on a
+value.
+
+The notation for a Pi type is \(\Pi_{x: \alpha} B \ x\), where \(x\) is the argument
+on which the type depends, \(A\) is the type of the argument, and \(B\) is a family
+of types indexed by \(x\) (\(B: \alpha \to \texttt{Type}\)). For example, we can
+define a function that takes a natural
+
+To better understand this we introduce an example were \(\Pi\)-types are used to
+to define a vector of a given length, which type depends on the length of the
+vector.
+
+\begin{example}[Vector]
+  We can define a vector of a given length as an inductive type that depends on
+  the length of the vector. We define the type \(\texttt{Vec}\) as:
+\[
+ \Pi_{n: \mathbb{N}} \texttt{Vec} \ \alpha \ n
+\]
+with constructors:
+\begin{align*}
+  \texttt{nil} & : \texttt{Vec} \ \alpha \ 0 \\
+  \texttt{cons} & : \Pi_{n: \mathbb{N}}
+  (\alpha \to \texttt{Vec} \ \alpha \ n
+    \to \texttt{Vec} \ \alpha \ (\texttt{succ} \ n)) 
+\end{align*}
+\end{example}
+In this way \(\Pi\)-types give us a way to type complex data structures, such as
+lists, trees, and graphs, that depend on the values of their elements,
+ensuring type safety.
+
+\subsection{Product types}
+
+\subsection{Sum types}
+
+\subsection{The Curry-Howard isomorphism}\label{sec:curry_howard}
+
+The Curry-Howard isomorphism is a result that establishes a correspondence
+between \emph{propositions} and \emph{types} and between \emph{terms} and \emph{proofs}.
+This is know as the \emph{propositions as types} principle, and is the basis of
+all modern proof assistants, such as Coq, Lean, and Agda. In our type system
+a proposition is a type \(\Prop\), \enquote{proofs} are terms of that type,
+and the proposition is true if the type is inhabited, that is, if there is a
+term of that type, this is our \emph{witness}.
+
+Proofs of terms can be manipulated in classical logic, for example we can
+obtain a proof that two propositions hold by using the \(\land\) operator,
+which states that if \(P\) and \(Q\) are true, then \(P \land Q\) is true. In
+type theory this corresponds to the \emph{pair type} \(P \times Q\), which
+states that if we have a proof of \(P\) and a proof of \(Q\), then we can
+construct a proof of \(P \times Q\). The \(\bot\) judgement which 
+represent unprovability is represented as a type with no constructors,
+and the \(\top\) judgement which represents a tautology is represented as the unit 
+type, which has only one constructor with no arguments.
+
+Let's consider the example of implication (\(\implies\)) in propositional
+logic, the proposition \(P \implies Q\) states that if \(P\) is true, then \(Q\)
+must be true. In type theory this corresponds to the function type
+\(P \to \ Q\), which states that if we have a proof of \(P\), then
+we can construct a proof of \(Q\). The proof of the proposition corresponds to a
+term of the type, and the proof of the implication corresponds to a function
+that takes a proof of \(P\) and returns a proof of \(Q\).
+
+This correspondence is not limited to propositional logic, but extends to
+predicate logic, and higher order logics. For example, the universal quantifier
+\(\forall\) corresponds to the dependent function type \(\Pi\), and the existential
+quantifier \(\exists\) corresponds to the dependent pair type \(\Sigma\). This
+correspondence is the basis of all modern proof assistants, and allows us to
+reason about programs using the tools of logic, and vice versa.
+
+The \emph{type checker} of the system then allows us to \emph{verify} the proofs, by
+checking that the terms are well-typed, and that the terms correspond to valid
+proofs. This mechanism ensures that the proofs are correct, and that the
+programs are well-typed.
+
+\subsection{Sets}\label{sec:sets}
+
+We can express a set in type theory as a function that takes an element of the
+type and returns a proposition, this propsition tells us if the element is in
+the set or not.
+
+\begin{definition}[Set]
+  A set is a function that takes an element of a type and returns a proposition.
+  \[
+  \texttt{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \Prop 
+  \]
+\end{definition}
+
+We can also use the familiar \emph{set builder} notation to define sets.
+\begin{notation}[Set builder]
+  We can define a set using the set builder notation as:
+  \[
+  \{x \mid P\} \coloneqq \lambda x \mapsto P 
+  \]
+\end{notation}
+
+The definition of the membership relation is immediate as the definition of the
+set itself captures the concept of membership.
+
+\begin{definition}[Membership]
+  The membership relation is a function that takes an element of a type and a set
+  and returns a proposition, let \(x: \alpha\) and \(S: \texttt{Set} \ \alpha\):
+  \[
+  x \in S \coloneqq S \ x 
+  \]
+\end{definition}
+
+A subset is defined in a way similar to classic set theory.
+
+\begin{definition}[Subset]
+  A subset is a function that takes an element of a type and two sets and returns
+  a proposition, let \(A \ B: \texttt{Set} \ \alpha\):
+  \[
+  A \subseteq B \coloneqq \forall x, x \in A \implies x \in B 
+  \]
+\end{definition}
+
+And with this a strict subset is defined as:
+
+\begin{definition}[Strict subset]
+  A strict subset is subset different from the set itself, let
+  \(A \ B: \texttt{Set} \ \alpha\), then:
+  \[
+  A \subset B \coloneqq A \subseteq B \land A \neq B
+  \]
+\end{definition}
+
+With this definitions set operations are defined in exactly the same way as in
+classic set theory, and we can reason about sets using the tools of type theory.
+
+\begin{definition}[Set operations]
+  We can define the set operations as:
+  \begin{align*}
+    A \cup B & \coloneqq \{x \mid x \in A \lor x \in B\} \\
+    A \cap B & \coloneqq \{x \mid x \in A \land x \in B\} \\
+    A \setminus B & \coloneqq \{x \mid x \in A \land x \notin B\} \\
+    A^\complement & \coloneqq \{x \mid x \notin A\} 
+  \end{align*}
+\end{definition}
+
+So we can also use sets to reason if necessary, and it will be, as we will see
+in the definition of denotational semantics.
+
+\section{Proof irrelevance}
+
+We've seen that Lean and Coq share much of their type theory, so what are the
+key differences between the two? The most important difference is that Lean is
+designed to be proof-irrelevant. Proof-irrelevance is a property of a type
+theory that states that all proofs of a proposition are definitionally equal,
+meaning that they are indistinguishable by the type checker.
+
+For example, imagine we have two proofs of the fact that \(2 + 2 = 4\), one that
+uses the Peano axioms, and another that uses the definition of addition. In a
+proof-irrelevant type theory, these two proofs would be considered equal, and
+could be used interchangeably.
+
+Why does this matter? First of all it helps to simplify complex proofs, as we
+don't have to worry about the details of the proof, only that it exists. This
+also has computational benefits, as we can erase the proofs from the final
+program, and only keep the results.
+
+It also aids in \emph{code extraction}, the process of extracting a program from
+proofs and definitions. This is a key feature when using Lean as tool in formal
+verification, as we can first formally prove the correctness of the program, and
+then extract an efficient implementation from the proof. Irrelevancy ensures
+that the extracted code is independent of the proof used. Code extraction is
+an area where Lean 4 has made significant improvements over Lean 3, as it
+supports a better compiler backend, and more target languages.
+
+Proof irrelevance is also supported in Coq, but not as a definitional equality,
+but a set of axioms that ensure that all proofs of a proposition are equal. In
+Coq \(\Prop\) is a universe, separate from data types which reside in
+\(\texttt{Type}\), inside this universe two proofs of the same proposition are
+\emph{propositionally equal}. Coq also supports definitional proof irrelevance, by
+using the \(\texttt{SProp}\) but it's not the default.
+
+\section{Big-Step Semantics}
+
+Now that we have introduced type theory and proof assistants, we can move on to
+using them to define the semantics of programming languages. The exposition
+will follow closely the one in~\cite{winskel_formal_semantics}.
+Semantics are the
+study of the \emph{meaning} of programs, and can be defined in different ways, we
+will focus on operational semantics, and denotational semantics.
+
+We first describe a simple imperative language \(\texttt{IMP}\) that we will use
+to illustrate the concepts.\ \(\texttt{IMP}\) is a simple language that consists of
+a set of commands, such as assignment, sequencing, conditionals, and loops. It
+is constrained by design to be simple, so that we can focus on introducing the
+techniques of formal semantics, but this approach can be extended to widely used
+languages, such as C, Java, and Python.
+
+\subsection{Syntax}
+
+As an informal introduction to the syntax of \(\texttt{IMP}\) we can define the
+\enquote{syntactic sets} of the language as:
+
+\begin{itemize}
+\item Integers \(n \in \mathbb{Z}\).
+\item Boolean values \(b \in \texttt{Bool} = \{\texttt{true}, \texttt{false}\}\).
+\item Variables \(x \in \texttt{Var}\), that store integers.
+\item Arithmetic expressions \(a \in \texttt{Aexp}\), that can be constants,
+  variables, or arithmetic operations.
+\item Boolean expressions \(b \in \texttt{Bexp}\), that can be constants, variables,
+  or boolean operations.
+\item Commands \(c \in \texttt{Com}\), that can be assignments, conditionals, loops,
+  or sequences of commands.
+\end{itemize}
+
+Now we could define the syntax of \(\texttt{Aexp}\) in Backus-Naur form:
+\[
+a \Coloneqq n \ | \ x \ | \ a_1 + a_2 \ | \ a_1 - a_2 \ | \ a_1 \times a_2
+\]
+the syntax of \(\texttt{Bexp}\) as:
+\[
+b \Coloneqq \texttt{true} \ | \ \texttt{false} \ | \ 
+  !b \ | \ b_1 \land b_2 \ | \ b_1 \lor b_2 \ | \ a_1 = a_2 \ | \ a_1 \leq a_2
+\]
+and the syntax of \(\texttt{Com}\) as:
+\[
+c \Coloneqq \texttt{skip} \ | \ x \ \texttt{:=} \ a \ | \ c_1; c_2 \ | \
+      \texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end} 
+      \ | \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}
+\]
+In type theory we can encode this as inductive types, the type of arithmetic 
+expressions can be defined as an inductive type \(\texttt{Aexp}\) with 
+constructors for each \enquote{syntactic construct}:
+\begin{align*}
+  \texttt{val} &\coloneqq \mathbb{Z} \to \texttt{Aexp} \\
+  \texttt{var} &\coloneqq \texttt{String} \to \texttt{Aexp} \\
+  \texttt{add} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
+  \texttt{sub} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} \\
+  \texttt{mul} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp}
+\end{align*}
+While the first to simply \enquote{coerce} a value or a variable into an
+expression, the others \enquote{construct} an expression from two other
+expressions. The constructors for boolean expressions are defined in a similar
+fashion:
+\begin{align*}
+  \texttt{true} &\coloneqq \texttt{Bexp} \\
+  \texttt{false} &\coloneqq \texttt{Bexp} \\
+  \texttt{not} &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{and} &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{or} &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
+  \texttt{eq} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp} \\
+  \texttt{le} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp}
+\end{align*}
+And the same goes for commands:
+\begin{align*}
+  \texttt{skip} &\coloneqq \texttt{Com} \\
+  \texttt{assign} &\coloneqq \texttt{String} \to \texttt{Aexp} \to \texttt{Com} \\
+  \texttt{seq} &\coloneqq \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
+  \texttt{ifElse} &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
+  \texttt{whileLoop} &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com}
+\end{align*}
+
+Now a simple expression in our language would look something like:
+\[
+  \texttt{add} \ (\texttt{var} \ \textit{``x''}) \ (\texttt{val} \ 3)
+\]
+this is not very readable, so we will use some \enquote{abuse of notation} and
+say that \(x + 3\) is an arithmetic expression of \texttt{IMP} for example,
+when defining our language in Lean we have to be more careful about mixing
+our language and meta-language, by using some facilities provided by Lean's 
+macros we can make a little parser for our language, and by using type
+classes and coercions we can even use some familiar notation in the host language,
+all of the details can be found in 
+\url{https://github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean}.
+
+An example program in \texttt{IMP} could then be:
+
+\begin{example}[Factorial in \texttt{IMP}]
+  The factorial of a number can be computed using a simple loop, we can define
+  the factorial of a number \(n\) as:
+  \begin{verbatim}
+  n := 5; i := 2; res := 1;
+
+  while i <= n loop
+      res := res * i;
+      i := i + 1
+  end
+  \end{verbatim}
+\end{example}
+
+\subsection{States}
+
+As we've seen in the syntax our imperative language supports a feature that
+characterizes all imperative languages are states, and assignments, the
+definition of states is more nuanced that one could expect at first. A state is
+a function that maps variables to values, we could define it as:
+\[
+\funfont{state} : \tyfont{String} \to \mathbb{Z}
+\]
+But we will take a more roundabout way, and define first a \(\tyfont{Map}\)
+type.
+
+\begin{definition}[Map]
+  A map is a function that maps keys (strings) to values, we can define it as:
+  \[
+  \tyfont{Map} \ (\alpha : \tyfont{Type}) \coloneqq \tyfont{String} \to \alpha
+  \]
+\end{definition}
+
+Of course this map is not particularly useful if we don't have a way to relate
+keys to values, this is done using the \texttt{update} function:
+
+\begin{definition}[Map update]
+  The update function takes a map, a key, and a value, and returns a new map
+  that maps the key to the value, and all other keys to the same value as the
+  original map.
+  \begin{align*}
+  \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneqq \\
+                      &\lambda k' \mapsto \funfont{cond} \ (k = k') \ v \ (m \ k')
+  \end{align*}
+\end{definition}
+
+The \funfont{cond} function is nothing more than syntactic sugar for 
+pattern matching, we can define it as:
+\begin{align*}
+  \funfont{cond} \ \texttt{true} \ v \ w &\coloneqq v \\
+  \funfont{cond} \ \texttt{false} \ v \ w &\coloneqq w
+\end{align*}
+We can even denote the \funfont{cond} function as an \emph{if then else}:
+\begin{align*}
+  \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneqq \\
+                      &\lambda k' \mapsto \text{if} \ k = k' \ \text{then} \ v \ \text{else} \ m \ k'
+\end{align*}
+Not to be confused with the \texttt{if then else} construct of the language 
+\texttt{IMP}. While we are introducing notation we can also introduce some to 
+denote the \enquote{assignments} of a map in a more familiar way:
+\begin{notation}[Map update]
+  We will denote \((\funfont{update} \ m \ k \ v)\) as \(m[k \leftarrow v]\).
+\end{notation}
+
+With these definitions we can prove a lot of interesting properties that hold
+in the majority of programming languages, for example:
+
+\begin{theorem}
+  If we assign a value to a variable, the map evaluates to that value.
+  \[
+  (m[k \leftarrow v]) \ k = v
+  \]
+\end{theorem}
+
+\begin{theorem}
+  If we assign a value to a variable, the map does not evaluate to that value
+  for other variables (\(k \neq k'\)).
+  \[
+  (m[k \leftarrow v]) \ k' = m \ k'
+  \]
+\end{theorem}
+
+Both these fact are pretty intuitive, let's see another theorem that is also
+intuitive but not so easy to prove. Usually assigning a value to a
+variable makes the computer \enquote{forget} the previous value. With the
+\funfont{update} function as defined above this is not true by definition,
+but we can easily prove it.
+
+\begin{theorem}
+  If we assign a value to a variable, and then assign another value to the same
+  variable, the map \enquote{forgets} the first value.
+  \[
+  m[k \leftarrow v_2][k \leftarrow v_1] = m[k \leftarrow v_1]
+  \]
+\end{theorem}
+
+\begin{proof}
+  To prove the equality of both functions we use the axiom of \emph{function
+  extensionality}, this transforms the problem into:
+  \[
+  \forall k' , (m[k \leftarrow v_2][k \leftarrow v_1]) \ k' = (m[k \leftarrow v_1]) \ k'
+  \]
+  Now we can distinguish two cases:
+  \begin{itemize}
+    \item[(\(k = k'\))] In this case the equality holds by \enquote{unfolding} the
+      definition of the \funfont{update} function.
+      \[
+        \text{if} \ k = k' \ \text{then} \ v_1 \ \text{else} \ 
+          \text{if} \ k = k' \ \text{then} \ v_2 \ \text{else} \ m \ k' = 
+          \text{if} \ k = k' \ \text{then} \ v_1 \ \text{else} \ m \ k'
+      \]
+      noting that \(k = k'\) is true, we can simplify the expression to \(v_1 = v_1\).
+    \item[(\(k \neq k'\))] This case is analogous.
+  \end{itemize}
+\end{proof}
+
+The proof of other similar properties, such as the commutativity of the update
+function, or the idempotence of the update function, are proved in a similar
+fashion, and can be found in the code.
+
+\begin{theorem}
+  If we assign a value to a variable, and then assign another value to another
+  variable (\(k_1 \neq k_2\)), the order of the assignments does not matter.
+  \[
+  m[k_2 \leftarrow v_2][k_1 \leftarrow v_1] = m[k_1 \leftarrow v_1][k_2 \leftarrow v_2]
+  \]
+\end{theorem}
+
+\begin{theorem}
+  If we assign to a key the value it already has, the map does not change.
+  \[
+  m[k \leftarrow m \ k] = m
+  \]
+\end{theorem}
+
+With these properties proven we can finally define our \(\tyfont{State}\).
+
+\begin{definition}[State]
+  A state is a map that maps variables to values, we can define it as:
+  \[
+  \tyfont{State} \coloneqq \tyfont{Map} \ \mathbb{Z}
+  \]
+\end{definition}
+
+Now we have a problem, what value do the variables have when the program starts?
+In some popular programming languages, like C, wen variables are read before
+they are assigned the hold a random value, this value depends on whatever
+the contents of the memory now used to store the variable used to hold, we could
+model this by defining an \emph{undefined} state, but the \(\tyfont{Map}\)
+that we have defined is \emph{total}, that is, it is defined for all inputs. 
+We could define a partial map:
+
+\begin{definition}[Partial Map]
+  A partial map is a map that is not defined for all inputs, we can define
+  it as:
+  \[
+  \tyfont{PMap} \ (\alpha : \tyfont{Type}) \coloneqq \tyfont{String} \to \tyfont{Option} \ \alpha
+  \]
+\end{definition}
+
+But this would complicate the definitions, and proofs, needlessly so we will
+take the simpler approach of setting all variables to zero in the \emph{initial state},
+of course, setting them to zero is just a convention, we could set them to any
+value.
+
+\begin{definition}[Initial state]
+  We will define the \emph{initial state} of an \(\texttt{IMP}\) program as the
+  constant function that maps all variables to zero.
+  \[
+  s_0 \coloneqq \lambda x \mapsto 0
+  \]
+\end{definition}
+
+With all this evaluating the state of a program is as simple as applying it to
+a string:
+\[
+(s_0[k \leftarrow 3][k \leftarrow 4][k \leftarrow 7]) \ k = 7
+\]
+
+\subsection{Evaluating expressions}
+
+Now that we have in place the syntax of the language, we can start to wonder
+what does it mean to evaluate an expression. Because our expressions
+contain variables, they don't have any meaning without a state associated to
+them, so our evaluation will act on a pair of an expression and a state 
+\(\tyfont{Aexp} \times \tyfont{State}\), we 
+will call this pair a \emph{configuration}.
+
+Our evaluation will be \emph{syntax-directed}, that is, for every syntactic
+construct of the language we will define a rule that tells us how to evaluate
+it. This rule will be a \emph{binary relation} between configurations and values,
+we will call this relation \(\funfont{big\_step}\), and define it as:
+
+\begin{definition}[Step relation]
+  The step relation is a binary relation between configurations and values, it 
+  has type:
+  \[
+  \funfont{big\_step} : \tyfont{Aexp} \times \tyfont{State} \to \mathbb{Z} \to \Prop
+  \]  
+\end{definition}
+
+This is what is generally known as \emph{big step semantics, as it evaluates
+the expression to a value in a single step, from configuration directly to value.}
+Let's introduce a notation more familiar to classic text on formal semantics.
+\begin{notation}[Arithmetic big step]
+  We will denote the step relation \(\funfont{big\_step} \ (a, s) \ n\) as
+  \[
+  (a, s) \bigstep n
+  \]
+\end{notation}
+
+Now the constructors will be the rules of the evaluation, for example the
+constructor for the constant expression will be:
+\[
+  \texttt{val} : (n, \square) \bigstep n
+\]
+
+Which relates the configuration \((n, \square)\), where the \(n\) of the left is
+a constant expression (in reality we should write \(\texttt{val} n\) 
+to denote that its the first constructor of the \(\tyfont{Aexp}\) type, but
+we will omit it for brevity) and the \(\square\) denotes any state, to the
+integer value \(n\). Some attention is needed to not confuse the constructor
+of the \emph{syntactic expression} with that of the \emph{evaluation relation},
+but the distinction is clear from the context.
+
+The constructor for the variable expression is similar, but this time we need
+to look up the value of the variable in the state:
+\[
+  \texttt{var} : (x, s) \bigstep s \ x
+\]
+
+Now we can define the constructors for the arithmetic operations, since these 
+are \emph{binary} operations we will need to know the value of the left and
+right expressions to evaluate the operation, this is done by requiring
+the evaluation of the left and right expressions in the premises of the rule.
+For example the constructor for the addition operation is:
+\[
+  \texttt{add} : \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+   {(a_1 + a_2, s) \bigstep n_1 + n_2}
+\]
+The previous rule states that if the configuration \((a_1, s)\) evaluates to
+\(n_1\) and the configuration \((a_2, s)\) evaluates to \(n_2\), then the
+configuration \((a_1 + a_2, s)\) evaluates to \(n_1 + n_2\).
+
+The constructors of the subtraction and multiplication operations are analogous.
+\begin{align*}
+  \texttt{sub} &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+   {(a_1 - a_2, s) \bigstep n_1 - n_2} \\
+  \texttt{mul} &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+   {(a_1 * a_2, s) \bigstep n_1 * n_2}
+\end{align*}
+
+One can think that while applying the syntactic rules of the language we are
+\enquote{building up} the expression while we apply the evaluation rules
+we will \enquote{break down} the expression to its value.
+Let's see an example of a valid \emph{evaluation tree}.
+
+\begin{example}[Arithmetic evaluation]\label{ex:arithmetic_evaluation}
+  Let's evaluate the value of the expression
+  \((x + 5) + (9 - 7)\) in the state \(s_0\) by applying the \enquote{rules} 
+  (constructors) of the evaluation relation:
+\[
+  \texttt{add}: \frac{
+    \texttt{add}: \displaystyle{\frac{
+      \texttt{var}: (x, s_0) \bigstep 0
+      \quad
+      \texttt{val}: (5, s_0) \bigstep 5
+    }{(x + 5, s_0) \bigstep 5}}
+    \quad 
+    \texttt{sub}: \displaystyle{\frac{
+      \texttt{val}: (9, s_0) \bigstep 9
+      \quad
+      \texttt{val}: (7, s_0) \bigstep 7
+    }{(9 - 7, s_0) \bigstep 2}}
+  }
+  {((x + 5) + (9 - 7), s_0) \bigstep 7}
+\]
+\end{example}
+
+Another way to express evaluation is via a \emph{recursive function} that breaks
+down the expression into its components and evaluates them, the rules are
+analogous to the ones we have defined before, but this time the function will
+take a configuration and return a value.
+
+\begin{definition}[Arithmetic evaluation]
+  The evaluation function takes a configuration and returns a value, it has type:
+  \[
+  \funfont{eval} : \tyfont{Aexp} \to \tyfont{State} \to \mathbb{Z}
+  \]
+\end{definition}
+
+This time, instead of a Cartesian product, we will use a \emph{curried} function.
+We can easily define the evaluation rules with pattern matching:
+\begin{align*}
+  \funfont{eval} \ (\texttt{val} \ v) \ \square &\coloneqq v \\
+  \funfont{eval} \ (\texttt{var} \ x) \ s &\coloneqq s \ x \\
+  \funfont{eval} \ (\texttt{add} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s + \funfont{eval} \ a_2 \ s \\
+  \funfont{eval} \ (\texttt{sub} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s - \funfont{eval} \ a_2 \ s \\
+  \funfont{eval} \ (\texttt{mul} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s * \funfont{eval} \ a_2 \ s
+\end{align*}
+
+We can introduce some notation to denote the evaluation of an expression on a state.
+
+\begin{notation}[Arithmetic evaluation]
+  We will denote the evaluation function (\(\funfont{eval} \ a \ s\)) as applying
+  the expression \(a\) to the state \(s\):
+  \[
+  a \ s
+  \]
+\end{notation}
+
+Now the example~\ref{ex:arithmetic_evaluation} can the be directly 
+evaluated by the \(\funfont{eval}\) function:
+\[
+  ((x + 5) + (9 - 7)) \ s_0 = 7
+\]
+
+This approach has some clear advantages over the relation definition, as
+it can compute the result of the evaluation directly, instead of 
+just saying if some \enquote{evaluation tree} is valid or not. That is only if
+both evaluation rules are equivalent, fortunately they are, and we can prove it.
+
+\begin{theorem}
+  The step relation and the \(\funfont{eval}\) function are equivalent, that is, for all
+  expressions \(a\), states \(s\), and values \(n\), we have:
+  \[
+  ((a, s) \bigstep n) = (a \ s = n)
+  \]
+\end{theorem}
+
+\begin{proof}
+The proof, follows by applying \emph{propositional extensionality} to
+transform the equals into a double implication, and then proving each
+implication separately.
+
+Let's first prove the left to right implication 
+\((a, s) \bigstep n \implies a \ s = n\). We proceed by induction
+on the evaluation relation, the cases for the constructors \(\texttt{val}\)
+and \(\texttt{var}\) are immediate. In the case of \(\texttt{add}\) the
+expression has the form \(a_1 + a_2\), and so we have to prove that
+\[
+(a_1 + a_2 \ s) = n_1 + n_2
+\]
+for some \(n_1\) and \(n_2\), by the induction hypothesis we have that
+\(a_1 \ s = n_1\) and \(a_2 \ s = n_2\), and so we just have to apply the
+definition of the \(\funfont{eval}\) function to prove the equality.
+The cases for the subtraction and multiplication are analogous.
+
+The right to left implication \(a \ s = n \implies (a, s) \bigstep n\)
+is proven by induction on arithmetic expression, again the cases for 
+\(\texttt{val}\) and \(\texttt{var}\) are immediate, so let's focus on
+\(\texttt{add}\). Like before we have to prove that 
+\((a_1 + a_2, s) \bigstep n\), with the induction hypotheses:
+\[
+\begin{gathered}
+  \forall n, a_1 \ s = n \implies (a_1, s) \bigstep n \qquad
+  \forall n, a_2 \ s = n \implies (a_2, s) \bigstep n
+\end{gathered}
+\]
+by choosing \(n\) to be \(a_1 \ s\) and \(a_2 \ s\) respectively we can construct
+the evaluation tree:
+\[
+  \texttt{add}: \frac{
+    (a_1, s) \bigstep a_1 \ s
+    \quad
+    (a_2, s) \bigstep a_2 \ s
+  }
+  {
+   (a_1 + a_2, s) \bigstep a_1 \ s + a_2 \ s
+  }
+\]
+And now we simply apply the hypothesis (\((a_1 + a_2) \ s = n\)) to obtain the result. The cases for
+subtraction and multiplication are analogous.
+\end{proof}
+
+We present the rules of evaluation of boolean expression without much detail,
+as they are analogous to the arithmetic expressions, we have presented first
+the rules for arithmetic expressions because some of the rules for boolean
+expressions depend on the evaluation of arithmetic expressions.
+\[
+\begin{gathered}
+  \texttt{true}: (\texttt{true}, \square) \bigstep \texttt{true} \quad
+  \texttt{false}: (\texttt{false}, \square) \bigstep \texttt{false} \\
+  \texttt{not}: \frac{(b, s) \bigstep b'}{\lnot (b, s) \bigstep \lnot b'} \quad
+  \texttt{and}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+    {(b_1 \land b_2, s) \bigstep b_1' \land b_2'} \quad
+  \texttt{or}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+    {(b_1 \lor b_2, s) \bigstep b_1' \lor b_2'} \\
+  \texttt{eq}: (a_1 = a_2, s) \bigstep a_1 \ s = a_2 \ s \quad
+  \texttt{le}: (a_1 \leq a_2, s) \bigstep a_1 \ s \leq a_2 \ s
+\end{gathered}
+\]
+
+Notice that in the last two rules we are using the (\funfont{eval}) function to evaluate
+the arithmetic expressions, we could have used the evaluation relation, but
+this approach is easier. Everything that we said about the (\funfont{eval}) function
+and its equivalence to the big step relation holds for boolean expressions.
+
+\subsection{Evaluating commands}
+
+In the previous section defined the big step semantics for arithmetic and
+boolean expressions, and also their reduction functions, one could wonder
+why do we bother with introducing the big step semantics since 
+the functions are easier to define and use. The reason is that 
+\emph{commands} cannot be evaluated by a function, this is due to the 
+\texttt{while} construct. We could define a \(\funfont{eval}: \tyfont{Com} \to \tyfont{State} \to \tyfont{State}\) 
+function to evaluate commands that looks something like this:
+\begin{align*}
+  \funfont{eval} \ \texttt{skip} \ s &\coloneqq s \\
+  \funfont{eval} \ (x \ \texttt{:=} \ a) \ s &\coloneqq s[x \leftarrow a \ s] \\
+  \funfont{eval} \ (c_1; c_2) \ s &\coloneqq \funfont{eval} \ c_2 \ (\funfont{eval} \ c_1 \ s) \\
+  \funfont{eval} \ (\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}) \ s &\coloneqq
+    \text{if} \ b \ s \ \text{then} \ \funfont{eval} \ c_1 \ s \ \text{else} \ \funfont{eval} \ c_2 \ s \\
+  \funfont{eval} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ s &\coloneqq
+    \text{if} \ b \ s \ \text{then} \ \funfont{eval} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) \ (\funfont{eval} \ c \ s) \ \text{else} \ s
+\end{align*}
+The problem with this function is that it is not \emph{well founded}, that is,
+it could loop indefinitely, for example, the evaluation of the command
+\texttt{while true loop skip end}
+would never terminate. This is why we
+need a relation to define the semantics of commands, later we will see
+an approach that will give us a \enquote{function} to evaluate commands, that
+is \emph{denotational semantics}.
+
+To define the big step semantics of commands we will use a relation, as 
+before, this time associating configurations to states. The definition of
+the constructors for skip, assignment and concatenation are straightforward:
+\begin{align*}
+  \texttt{skip} &: (\texttt{skip}, s) \bigstep s \\
+  \texttt{ass} &: (v \ \texttt{:=} \ a, s) \bigstep s[v \leftarrow a \ s] \\
+  \texttt{cat} &: \frac{
+    (c_1, s_1) \bigstep s_2 \quad (c_2, s_2) \bigstep s_3
+  }{
+    (c_1; c_2, s_1) \bigstep s_3
+  }
+\end{align*}
+In the concatenation we have to introduce an intermediate state \(s_2\) that doesn't appear in the
+final result, in this way we account for \enquote{intermediate step} in the 
+evaluation.
+
+The rules for the \texttt{if} construct require two constructors,
+one for the case when the condition is false:
+\[
+\texttt{ifFalse} : \frac{b \ s_1 = \texttt{false}  \quad (c_1, s_1) \bigstep s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2}
+\]
+and another for the case when the condition is true:
+\[
+\texttt{ifTrue} : \frac{b \ s_1 = \texttt{true}  \quad (c_2, s_1) \bigstep s_2}
+{(\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2}
+\]
+The evaluation rule for \texttt{while} follows the same principle but with a more
+recursive approach, the case when the condition is false is easy:
+\[
+\texttt{whileFalse} : \frac{b \ s = \texttt{false}}
+  {(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s) \bigstep s}
+\]
+but when the condition is true, we have to recurse from another evaluation tree
+where the \enquote{previous step} has already been applied:
+\[
+\texttt{whileTrue} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \bigstep s_2 \quad
+  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3}
+{(\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3}
+\]
+While the evaluation rules for
+expressions could be applied \enquote{automatically}, the evaluation rules for
+commands require a more \enquote{manual} approach, as we have to \enquote{choose}
+the correct constructor to apply in the control flow of the program.
+
+Introducing some notation, as per usual, we can check the evaluation of a
+program like this:
+\begin{example}[Program evaluation]
+  Let's evaluate a simple program containing a branch in the state \(s_0\):
+\begin{verbatim}
+  x := 2;
+  if x <= 1 then
+    y := 3
+  else
+    z := 4
+  end
+\end{verbatim}
+  to simplify the notation we will denote the program as \(P\), and the if construct as \(\text{Ifelse}\), then:
+  \[
+  \texttt{cat}: \frac{
+    \texttt{ass}: (\texttt{x := 2}, s_0) \bigstep s_0[x \leftarrow 2]
+    \quad
+    \texttt{ifFalse}: \displaystyle{\frac{
+      \texttt{ass}: (\texttt{z := 4}, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+    }
+    {
+      (\text{Ifelse}, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+    }}
+  }{
+    (P, s_0) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+  }
+  \]
+\end{example}
+As we can see the \enquote{proof} that the program finishes in the given state
+follows directly from the evaluation tree created by the constructors of the
+big step semantics.
+
+\subsection{Rewriting rules}
+
+Now we can prove some \enquote{rewriting rules} for the constructs of the 
+language, the proof is more or less immediate and can be found in the code,
+so we will only present the theorems.
+
+\begin{theorem}
+  Skipping (doing nothing) in a program doesn't change the state:
+  \[
+  ((\texttt{skip}, s_1) \bigstep s_2) = (s_1 = s_2)
+  \]
+\end{theorem}
+
+\begin{theorem}
+  The concatenation of two programs is equivalent to executing the first
+  program and then the second:
+  \[
+  ((c_1 \texttt{;} c_2, s_1) \bigstep s_3) = 
+  \exists s_2, \left((c_1, s_1) \bigstep s_2 \land (c_2, s_2) \bigstep s_3\right)
+  \]
+\end{theorem}
+
+The rewriting rules for the \texttt{if} construct can be defined in two equivalent ways,
+which rule to apply depends on the context, as either one could be easier to use
+depending on the situation.
+
+\begin{theorem}\label{thm:if_rewrite_1}
+  The \texttt{if} construct can be rewritten as:
+  \[
+  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2) = 
+  \text{if} \ b \ s_1 \ \text{then} \ (c_1, s_1) \bigstep s_2 \ \text{else} \ (c_2, s_1) \bigstep s_2
+  \]
+\end{theorem}
+or, equivalently:
+\begin{theorem}\label{thm:if_rewrite_2}
+  The \texttt{if} construct can be rewritten as:
+  \[
+  ((\texttt{if} \ b \ \texttt{then} \ c_1 \ \texttt{else} \ c_2 \ \texttt{end}, s_1) \bigstep s_2) =
+  ((\text{if} \ b \ s_1 \ \text{then} \ c_1 \ \text{else} \ c_2) \bigstep s_2)
+  \]
+\end{theorem}
+
+In the previous theorems we have to be careful to not confuse the \enquote{if}
+construct of the language \texttt{IMP} and that of the meta-language (in this case Lean).
+To aid in this distinction we will use \texttt{monospace} font for the constructs
+of the language, and normal font for the constructs of the meta-language.
+
+\begin{theorem}\label{thm:while_rewrite}
+  The \texttt{while} construct can be rewritten as:
+  \begin{align*}
+  &((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3) = \\
+  &\quad \text{if} \ b \ s_1 \\
+  &\quad \text{then} \ \exists s_2, ((c, s_1) \bigstep s_2) \land ((\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3) \\
+  &\quad \text{else} \ s_1 = s_3
+  \end{align*}
+\end{theorem}
+
+\subsection{Behavioral equivalence}
+
+The previous rewriting rules are useful in proofs as we can substitute one program
+for another that is \enquote{exactly the same}, but we can also define a more
+lax notion of equality that will let us say that two syntactically different
+programs are \enquote{the same}. This is specially useful when proving
+that certain optimizations don't change the behaviour of a program.
+
+\begin{definition}[Behavioral equivalence]
+  Two programs are behaviourally equivalent if they evaluate to the same state
+  for all initial states:
+  \[
+  c_1 \sim c_2 \coloneqq \forall s_1 \ s_2, (c_1, s_1) \bigstep s_2 \iff (c_2, s_1) \bigstep s_2
+  \]
+\end{definition}
+
+Is easy to show that this is an equivalence relation, that is, it is reflexive,
+symmetric, and transitive. Armed with this we can, for example, show that adding
+an arbitrary number of skips to a program doesn't change its behaviour.
+
+\begin{theorem}
+  Adding \texttt{skip} to the left of a program doesn't change its behaviour:
+  \[
+  \texttt{skip} \texttt{;} c \sim c
+  \]
+\end{theorem}
+
+With this we can \enquote{optimize} the \texttt{skip} away of a program, but only
+on the left, to completely remove them without consequence we need the following.
+
+\begin{theorem}
+  Adding \texttt{skip} to the right of a program doesn't change its behaviour:
+  \[
+  c \texttt{;} \texttt{skip} \sim c
+  \]
+\end{theorem}
+
+A more interesting equivalence that mirrors Theorem~\ref{thm:while_rewrite} is
+loop unfolding, a common optimization in compilers, used when memory is cheaper
+than computation.
+
+\begin{theorem}
+  The \texttt{while} construct can be unfolded:
+  \[
+  \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \sim 
+  \texttt{if} \ b \ \texttt{then} \ c \texttt{;} \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \texttt{else} \ \texttt{skip}
+  \]
+\end{theorem}
+
+\begin{proof}
+  Unfolding the equivalence definition the problem is reduced to proving that
+  \(\forall s_1 \ s_3\):
+  \[
+    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3 \iff
+    (\texttt{if} \ b \ \texttt{then} \ c \texttt{;} \ \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \texttt{else} \ \texttt{skip}, s_1) \bigstep s_3
+  \]
+  Now we can apply Theorem~\ref{thm:if_rewrite_2} to the right side of the equivalence:
+  \[
+    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3 \iff
+    (\text{if} \ b \ s_1 \ \text{then} \ c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end} \ \text{else} \ \texttt{skip}, s_1) \bigstep s_3
+  \]
+  Now it is again a question of proving both implications separately.
+  \begin{itemize}
+    \item[(\(\implies\))] It suffices to check both possible constructors for
+    the \texttt{while} construct in the left of the implication.
+    \begin{itemize}
+      \item[(\(b \ s_1\))]
+      If the condition is true then the problem simplifies to:
+      \[
+        c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1 \bigstep s_3
+      \]
+      and since we know the precondition is true we can apply the \(\texttt{whileTrue}\) constructor
+      to obtain the derivation tree from the left side of the equivalence.
+      \[
+        \texttt{whileTrue}: \frac{
+          b \ s_1 = \texttt{true}
+          \quad
+          (c, s_1) \bigstep s_2 
+          \quad 
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3
+        }{
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3
+        }
+      \]
+      Now it suffices to apply the newfound hypotheses of \(\texttt{whileTrue}\) to 
+      obtain the result:
+      \[
+        \texttt{cat}: \frac{
+          (c, s_1) \bigstep s_2
+          \quad
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_2) \bigstep s_3
+        }{
+          (c; \texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_3
+        }
+      \]
+      \item[(\(\lnot b \ s_1\))] The problem simplifies to:
+      \[
+        \texttt{skip}, s_1 \bigstep s_3
+      \]
+      proceeding in the same manner as before we can apply the \(\texttt{whileFalse}\) constructor:
+      \[
+        \texttt{whileFalse}: \frac{
+          b \ s_1 = \texttt{false}          
+        }{
+          (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_1
+        }
+      \]
+      so \(s_1 = s_3\) and we have the result.
+    \end{itemize}
+
+    \item[(\(\impliedby\))] This direction is also proved by cases on the condition 
+    of the \texttt{if} construct, but is even easier than before, since we
+    can directly simplify the precondition.
+  \end{itemize}
+\end{proof}
+
+\subsection{Non termination}
+
+When we attempted to define a \funfont{eval} function to evaluate commands before
+we said that some programs could not end, what we mean by this is that the
+big step relationship doesn't relate the program in some state to any state.
+
+\begin{definition}[Non termination]
+  We will say that a program doesn't terminate in a given \(s\) state if there 
+  is no state that the program can evaluate to, that is:
+  \[
+   \forall s', (c, s) \centernot \bigstep s'
+  \]
+\end{definition}
+
+We will prove that there are programs in \texttt{IMP} that don't terminate,
+we will show that there is in fact a program that doesn't terminate in any
+state.
+
+\begin{theorem}\label{thm:non_termination}
+  The program \texttt{while b loop c end}, where \(b \sim \texttt{true}\)
+  doesn't terminate in any state.
+  \[
+  \forall s_1 \ s_2, (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \centernot \bigstep s_2
+  \]
+\end{theorem}
+
+\begin{proof}
+  In reality the \(\centernot \bigstep\) is syntactic sugar for
+  the negation of the big step relation, so the theorem is equivalent to:
+  \[
+  (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) \bigstep s_2 \implies \bot
+  \]
+  Now we have to use a little trick, we will first generalize the configuration on the
+  left, calling it 
+  \[\text{hconf} \coloneqq (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1)\] 
+  with this we can rewrite the theorem as:
+  \[
+  \text{hconf} \bigstep s_2 \implies \bot
+  \]
+  now we will use the induction principle on the configuration, that is, we will
+  prove the theorem for all the possible forms of \text{hconf}. Since
+  \(\text{hconf} = (\texttt{skip}, s_1)\) for example is clearly false, we will only
+  prove the case for the two constructors of \texttt{while}.
+
+  In the \(\texttt{whileTrue}\) case we have to prove that:
+  \[
+    (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s_1) = (\texttt{while} \ b' \ \texttt{loop} \ c' \ \texttt{end}, s_1')
+  \]
+  but the induction hypothesis takes the form:
+  \[
+    \forall x, (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, x) = (\texttt{while} \ b' \ \texttt{loop} \ c' \ \texttt{end}, s_2')
+  \]
+  so it suffices to choose \(x = s_2\). For the \(\texttt{whileFalse}\) case we 
+  don't even need to use induction, in fact if \text{hconf} takes this form
+  that means that the condition of the \texttt{while} construct is false but
+  \(b \sim \texttt{true}\) by hypothesis so we have a contradiction.
+\end{proof}
+
+\subsection{Determinism}
+
+Another important property of \texttt{IMP} that we can prove using the big step
+semantics is that the evaluation of a program is deterministic, that is, given
+a program and a state there is only one state that the program can evaluate to.
+
+\begin{theorem}[\texttt{deterministic}]\label{thm:deterministic}
+  The evaluation of a program is deterministic:
+  \[
+  \forall c \ s \ s_1 \ s_2, ((c, s) \bigstep s_1 \land (c, s) \bigstep s_2) \implies s_1 = s_2
+  \]
+\end{theorem}
+
+\begin{proof}
+  We will prove the theorem by induction on \((c, s) \bigstep s_1\).
+  The \texttt{skip} and assignment cases are immediate, for the concatenation
+  we will need the induction hypotheses:
+  \begin{align*}
+    \forall x, (c_1', s_1') &\bigstep x \implies s_3 = x \\
+    \forall y, (c_2', s_2') &\bigstep y \implies s_1 = y
+  \end{align*}
+  the right hand side of the conjunction takes the form 
+  \((c_1';c_2', s_1') \bigstep s_2\) so we must have its preconditions,
+  that is:
+  \[
+    \texttt{ass}: \frac{
+      (c_1', s_1') \bigstep s_2' 
+      \quad 
+      (c_2', s_2') \bigstep s_2
+    }{
+      (c_1';c_2', s_1') \bigstep s_2
+    }
+  \]
+  Now we can apply the first induction hypothesis on the left precondition to
+  obtain \(s_3 = s_2'\), with this the second precondition becomes
+  \((c_2', s_3) \bigstep s_2\) and applying the second 
+  induction hypothesis \(s_1 = s_2\), which is what we wanted to prove.
+
+  The rest of the cases are analogous.
+\end{proof}
+
+\section{Small-Step Semantics}
+
+Another way of defining the semantics of the language are small-step semantics. 
+In this case instead of yielding directly the value of the expression we take one \enquote{single step}
+that relates two configurations, with the state before taking the step and the 
+state after, by doing this we can observe
+the \emph{intermediate states} of the execution of a program, so every single
+step of this semantics is \enquote{atomic}. This is very useful when we want to
+prove properties of parallel or concurrent programs, although we won't go into
+that in this text.
+\begin{definition}[Small-step]
+  We will denote the small-step relation \(\text{SmallStep}: \tyfont{Com} \times \tyfont{State}
+\to \tyfont{Com} \times \tyfont{State} \to \Prop\) as:
+  \[
+    (c_1, s_1) \rightsquigarrow (c_2, s_2) \coloneq \text{SmallStep} \ (c_1, s_1) \ (c_2, s_2)
+  \]
+\end{definition}
+
+The constructors of the relation are then:
+\[
+\begin{gathered}
+  \texttt{ass}: (v \ \texttt{:=} \ a, s) \rightsquigarrow (\texttt{skip}, s[v \leftarrow s]) \quad
+  \texttt{skipCat}: (\texttt{skip}; c, s) \rightsquigarrow (c, s) \quad
+  \texttt{cat}: \frac{(c, s) \rightsquigarrow (c', s')}{(c; c'', s) \rightsquigarrow (c', c'', s')} \\
+  \texttt{ifElse}: (\texttt{if} \ b \ \texttt{then} \ c \ \texttt{else} \ c' \ \texttt{end}, s)
+    \rightsquigarrow (\text{if} \ b \ s \ \text{then} \ c \ \text{else} \ c', s) \\
+  \texttt{whileLoop}: (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}, s)
+    \rightsquigarrow (\text{if} \ b \ s \ \text{then} \ c;\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}  \ \text{else} \ \texttt{skip}, s) 
+\end{gathered}
+\]
+These rules capture the evaluation of commands from left to right in a sequential
+fashion. Of course, we could have defined the \enquote{if} and \enquote{while}
+constructs in other ways depending on the \enquote{granularity} that we want
+in the semantics, evaluating the boolean could be a state and selecting the branch
+another, for example. 
+
+Let's see an example of how the small-step semantics work, for this we evaluate a
+simple program:
+\begin{example}\label{ex:small_step}
+  Consider the program \texttt{x := 1; while x <= 1 loop x := x + 1 end},
+  to ease reading we will denote the \enquote{while} block as \(W\).
+  We have the evaluation tree:
+  \[
+  \texttt{cat}: \frac{
+    \texttt{ass}: (\texttt{x := 1} , s_0) \rightsquigarrow (\texttt{skip}, s_0[x \leftarrow 1])
+  }
+  {(\texttt{x := 1;} W, s_0)
+  \rightsquigarrow
+  (\texttt{skip;} W, s_0[x \leftarrow 1])
+  }
+  \]
+\end{example}
+
+In this case the computation ends when we can't apply any rule to the program, 
+that is when we have a configuration of the form \((\texttt{skip}, \square)\).
+We will define the execution of a program from beginning to end with the small-step
+semantics by using its \emph{reflexive transitive closure}.
+
+\subsection{Reflexive transitive closure}
+
+The reflexive transitive closure takes a binary relation and gives us he 
+\enquote{minimal extension} of this relation that is \emph{reflexive}
+and \emph{transitive}. Formally we can define it as a function that 
+takes a binary relationship and return another.
+
+\begin{definition}[Reflexive transitive closure]
+  The reflexive transitive closure of a binary relation \(\mathcal{R}\) is the smallest 
+  relation that contains \(\mathcal{R}\) and is both reflexive and transitive. 
+  We can construct a relation \(\mathcal{R}^*\) from \(\mathcal{R}\) as an inductive type
+  \(\tyfont{ReflTrans}: (\alpha \to \alpha \to \Prop) \to
+  (\alpha \to \alpha \to \Prop)\) and denote it as 
+  \(\mathcal{R}^* \coloneqq \tyfont{ReflTrans} \ \mathcal{R}\).
+
+  The type \(\tyfont{ReflTrans}\) has two constructors:
+  \[
+    \texttt{refl}: a \mathcal{R}^* a
+    \qquad 
+    \texttt{tail}: \frac{
+      a \mathcal{R}^* b
+      \quad b \mathcal{R} c
+    }{a \mathcal{R}^* c}
+  \]
+\end{definition}
+
+As we can see this relation is not transitive by definition, but it is easy
+to prove by induction.
+
+\begin{theorem}
+  The reflexive transitive closure is transitive, that is given 
+  \(x \mathcal{R}^* y\) and \(y \mathcal{R}^* z\) we have \(x \mathcal{R}^* z\).
+\end{theorem}
+
+Another immediate but important property is that the relation itself contained
+in the reflexive transitive closure.
+
+\begin{theorem}
+  The relation is contained in its reflexive transitive closure, that is
+  \(a \mathcal{R} b \implies x \mathcal{R}^* y\).
+\end{theorem}
+
+Of course, we can not only append to the \enquote{tail} of the relation, but also
+push to the \enquote{head}.
+
+\begin{theorem}
+  We can push a relation to the head of its reflexive transitive closure, that is,
+  if we have \(a \mathcal{R} b\) and \(b mathcal{R}^* c\) then
+  \(a \mathcal{R}^* c\).
+\end{theorem}
+
+This will become important soon, as we can define a principle of induction
+on the \emph{head} of the relation, note that the structural induction
+on the constructors works only on the \emph{tail} of the relation.
+
+\begin{theorem}
+  We can perform induction on the \emph{head} of the relationship, with the base
+  case being the reflexivity, and the inductive step being the transitivity on
+  the \emph{head} of the relation.
+\end{theorem}
+
+Another important theorem that we will use is the \emph{lifting} of a reflexive
+transitive closure via a function, that is, if we have a relation between two
+elements of a set we can lift this relation to the image of a function.
+
+\begin{theorem}\label{thm:rel_lift}
+  We can lift a reflexive transitive \(x \mathcal{R}^* y\) closure through a function
+  \(f: \alpha \to \beta\). 
+  Suppose that one relationship implies the other: 
+  \[h: \forall a \ b, a \mathcal{R} b \to (f \ a) \mathcal{P} (f \ b),\]
+  then we have \((f \ a) \mathcal{P}^* (f \ b)\). We can represent this as the 
+  diagram~\ref{fig:rel_lift}, where
+  the hypothesis \(h\) is expressed by the fact that the diagram commutes.
+\end{theorem}
+
+\begin{figure}[htb]\label{fig:rel_lift}
+  \centering
+  \begin{tikzcd}
+    \alpha \times \alpha \arrow[dd, "f \times f"] \arrow[dr, "\mathcal{R}^*"] & \\
+     & \Prop \\
+    \beta \times \beta \arrow[ur, "\mathcal{P}^*"] &
+  \end{tikzcd}
+  \caption{Lifting of a reflexive transitive closure through a function.
+           In reality, instead of \(\alpha \times \alpha\)
+           and \(\beta \times \beta\) we should use
+           the \emph{exponential objects} \(\alpha^\alpha\) and 
+            \(\beta^\beta\). 
+  }
+\end{figure}
+
+\begin{proof}
+  We proceed by induction on \(a \mathcal{R}^* b\), the base case 
+  \(\texttt{refl}: a \mathcal{R}^* a\) implies that \(a = b\), so
+  \((f \ a) \mathcal{P}^* (f \ a)\)
+  which is immediate by the reflexivity of the relation. For the inductive step:
+  \[
+    \texttt{tail}: \frac{
+      a \mathcal{R}^* b 
+      \quad 
+      b \mathcal{R} c
+    }{a \mathcal{R}^* c}
+  \]
+  we have to prove that \((f \ a) \mathcal{P}^* (f \ c)\), applying the
+  constructor:
+  \[
+    \funfont{tail}: \frac{
+      \text{ih}: (f \ a) \mathcal{P}^* (f \ b)
+      \quad
+      h: \displaystyle{\frac{
+        b \mathcal{R} c
+      }{
+        (f \ b) \mathcal{P} (f \ c)
+      }}
+    }{
+      (f \ a) \mathcal{P}^* (f \ c)
+    }
+  \]
+  where \(\text{ih}\) is the induction hypothesis, we get the result.
+\end{proof}
+
+Now we can define the reflexive transitive closure of the small-step semantics.
+
+\begin{notation}
+  We will denote the reflexive transitive closure of the small-step semantics as
+  \(\rightsquigarrow^*\).
+\end{notation}
+
+Now we can revisit the example~\ref{ex:small_step} with the reflexive transitive
+closure of the small-step semantics.
+
+\begin{example}
+  As before, we consider the program \texttt{x := 1; while x <= 1 loop x := x + 1 end},
+  to ease reading we will denote the \enquote{while} block as \(W\). We have the 
+  partial derivation tree:
+  \[
+    \funfont{head}: \frac{
+      \funfont{cat}: \displaystyle{\frac{
+        \funfont{ass}: (\texttt{x := 1} , s_0) \rightsquigarrow (\texttt{skip}, s_0[x \leftarrow 1])
+      }
+      {(\texttt{x := 1;} W, s_0)
+      \rightsquigarrow
+      (\texttt{skip;} W, s_0[x \leftarrow 1])
+      }}
+      \quad
+      \funfont{head}: \displaystyle{\frac{
+        \funfont{skipcat}: \texttt{skip}
+        \quad
+        \vdots
+      }{
+        (W, s_0[x \leftarrow 1]) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
+      }}
+    }{
+      (\texttt{x := 1;} W, s_0) \rightsquigarrow^* (\texttt{skip;} W, s_0[x \leftarrow 1][x \leftarrow 2])
+    }
+  \]
+  By successive applications of the constructors we get the result.
+\end{example}
+
+We preset now some theorems that will be very useful when proving the equivalence of
+the big and small-step semantics, paying attention to the constructors of the small-step
+relation we can see that the only \enquote{special} one is \texttt{cat}, since
+it is the only one that requires an argument. For this reason all the following
+theorems will give us analogous in \(\rightsquigarrow^*\) to the 
+big-step semantics.
+
+\begin{theorem}
+  If an expression evaluates to a state concatenating that expression with another
+  has that state as an intermediate. That is if \((c, s) \rightsquigarrow^* (\texttt{skip}, s')\)
+  then \((c;c', s) \rightsquigarrow^* (\texttt{skip};c', s')\).
+\end{theorem}
+
+\begin{proof}
+  The proof follows immediately by Theorem~\ref{thm:rel_lift}.
+  The relations \(\mathcal{R}\) and \(\mathcal{P}\) are both the small-step semantics
+  \(\rightsquigarrow\), and the function \(f\) is the concatenation of commands:
+  \(f: \texttt{Com} \times \texttt{State} \to \texttt{Com} \times \texttt{State}\)
+  with \(f \coloneqq \lambda (c, s) \mapsto (c; c', s)\). Our hypothesis \(h\)
+  is the concatenation of the small-step semantics, that is:
+  \[h: \Forall_{(c, s), (d, t)} (c, s) \rightsquigarrow (d, t) \to (c; c', s) \rightsquigarrow (d; c', t)
+     \coloneqq \lambda x \mapsto \funfont{cat} \ x\]
+  and finally \((c, s) \rightsquigarrow^* (\texttt{skip}, s')\) by hypothesis.
+\end{proof}
+
+\begin{theorem}
+  Concatenating an expression that evaluates to an intermediate configuration to
+  another that evaluates in that configuration gives us the configuration of the
+  second expression. That is if \((c, s) \rightsquigarrow^* (\texttt{skip}, s')\)
+  and \((c', s') \rightsquigarrow^* (\texttt{skip}, s'')\) then
+  \((c;c', s) \rightsquigarrow^* (\texttt{skip}, s'')\).
+\end{theorem}
+
+\begin{theorem}
+  Concatenating an evaluation that doesn't change the state with another
+  evaluation is equivalent to evaluating the second expression. That is
+  if \((c, s) \rightsquigarrow^* (\texttt{skip}, s)\) then
+  \((c;c', s) \rightsquigarrow^* (c', s)\).
+\end{theorem}
+
+\section{Relational denotational semantics}
+
+We follow the construction presented  in~\cite[Chapter~11]{semantics_with_isabelle} 
+and define a \emph{relational} denotational semantics for the language \texttt{IMP}.
+
+As we saw before, defining a function that evaluates a program is not trivial,
+in fact this function can never be \emph{total} as there are programs that don't
+terminate (Theorem~\ref{thm:non_termination}). The function then
+has to necessarily be \emph{partial}, that is, it doesn't return a value for
+all inputs. This is a problem as in type theory all our functions are
+total. To circumvent this problem we could use the \texttt{Option} monad,
+and return \texttt{none} when the program doesn't terminate:
+\[
+  \funfont{eval} : \tyfont{Com} \to \tyfont{State} \to \tyfont{Option} \ \tyfont{State}.
+\]
+
+Instead of this, we will use the classic definition of relations as sets
+\(\tyfont{Set} \ (\alpha \times \beta)\), this will allow us to use the 
+partial ordering of subsets to define the semantics of the language via
+the \emph{Knaster-Tarski} fixpoint theorem. Of course, relations are not 
+partial functions, to circumvent this we will introduce the concept
+of \(\omega\)-chains.
+
+\subsection{Knaster-Tarski fixpoint theorem}
+
+The \emph{Knaster-Tarski} fixpoint theorem is a generalization of the
+\emph{Banach} fixpoint theorem, it states that every monotone function
+on a complete lattice has a least fixpoint. This will be essential when defining
+the denotational semantics if the \texttt{while} construct. Before
+we can enunciate the theorem we have to introduce some definitions.
+
+\subsubsection{Order theory}
+
+We begin by defining a \emph{preorder}, which is the \enquote{weakest} form of
+order that we can define.
+
+\begin{definition}[Preorder]
+  A preorder is a binary relation (usually denoted by \(\leq\)) that satisfies
+  the following properties:
+  \begin{itemize}
+    \item Reflexivity: \(a \leq a\).
+    \item Transitivity: \(a \leq b \to b \leq c \to a \leq c\).
+    \item Less-than iff less-than-or-equal: \(a < b \iff a \leq b \land b \not\leq a\).
+  \end{itemize}
+\end{definition}
+
+Adding antisimmetry to the preorder we obtain a \emph{partial order}.
+
+\begin{definition}[Partial order]
+  A partial order is a preorder that is antisymmetric, that is, it satisfies:
+  \(a \leq b \to b \leq a \to a = b\).
+\end{definition}
+
+Now we consider a set of elements with a partial order, if every set has an
+an \emph{infimum} we call it a \emph{complete lattice}. Usually a complete lattice 
+is defined as a partially ordered type in which every set has a \emph{least upper bound}
+and a \emph{greatest lower bound}, but these definitions are interchangeable.
+Although we won't prove it, the existence of one implies the existence of the other.
+
+\begin{definition}
+  A complete lattice is a partially ordered type that has an infimum in every set. 
+  That is, exists a function \(\funfont{Inf}: \tyfont{Set} \ \alpha \to \alpha\)
+  that returns an element of the set satisfying the following properties:
+  \begin{itemize}
+    \item \(\forall S, \forall x \in S, \funfont{Inf} \ S \leq x\).
+    \item \(\forall S, (\forall y \in S, x \leq y) \implies x \leq \funfont{Inf} \ S\).
+  \end{itemize}
+\end{definition}
+
+Additionally, this infimum is \emph{unique}.
+
+\begin{theorem}
+  The infimum of a set in a complete lattice is unique.
+  That is if \(\funfont{Inf} \ s = a\) and \(\funfont{Inf} \ s = b\) then \(a = b\).
+\end{theorem}
+
+Now we need to recall the definition of subsets in~\ref{sec:sets},
+as sets, with the inclusion relation, form a partial order.
+
+\begin{theorem}
+  Sets with the inclusion relation form a partial order. Where
+  \(A \leq B \coloneqq A \subseteq B\), \(A < B \coloneqq A \subset B\).
+  and the infimum of a set is the intersection of all the sets in the set,
+  that is \(\funfont{Inf} \ S = \bigcap_{A \in S} A\).
+\end{theorem}
+
+The intersection of a set of sets is the set of elements that are in all the sets
+of the set, that is:
+\[
+  \bigcap_{A \in S} A = \{x \mid \forall A \in S, x \in A\}
+\]
+Since the proofs are
+straightforward we will not present them, but they can be found in the code.
+
+\subsubsection{Order homomorphims}
+
+Of special interest to us are the functions that preserve the order of the elements
+of a lattice, these are called \emph{order homomorphisms}, and as we will see
+later they admit a \emph{least fixpoint}.
+
+\begin{definition}[Monotonic function]
+  A function \(f: \alpha \to \alpha\) is monotonic if for all \(a, b: \alpha\)
+  we have that \(a \leq b \implies f \ a \leq f \ b\). We call these functions
+  \emph{Order homomorphisms}.
+\end{definition}
+
+\begin{notation}
+  We will denote an order homomorphism as \(f: \alpha \to_o \alpha\).
+\end{notation}
+
+Some order homomorphisms are the identity function and constant functions.
+
+\begin{theorem}
+  The identity function is an order homomorphism.
+\end{theorem}
+
+\begin{theorem}
+  Any constant function is an order homomorphism.
+\end{theorem}
+
+\subsubsection{Fix-points}
+
+As we said before, monotonic functions on a complete lattice have a least fixpoint,
+we will define the concept of fixpoint and least fixpoint, but first we need
+to define the concept of pre-fixpoint.
+
+\begin{definition}[Pre-fixpoint]
+  A pre-fixpoint of a function \(f: \alpha \to_o \alpha\) is a point \(a: \alpha\) 
+  such that \(f \ a \leq a\).
+\end{definition}
+
+Now we can define the \emph{least pre-fixpoint} of an order homomorphism.
+
+\begin{definition}[Least pre-fixpoint]
+  The least pre-fixpoint of a function \(f: \alpha \to_o \alpha\) is the infimum of 
+  the set of all pre-fixpoints of \(f\).
+  \[
+    \funfont{lfp} \ f = \funfont{Inf} \ \{a \mid f \ a \leq a\}
+  \]
+\end{definition}
+
+In the case of sets this turns into 
+\(\funfont{lfp} \ f = \bigcap \{a \mid f \ a \subseteq a\}\), 
+where \(f: \tyfont{Set} \ \alpha \to \tyfont{Set} \ \alpha\).
+
+Now we present two important pre-fixpoint inequalities.
+
+\begin{theorem}
+  The least pre-fixpoint of a function is less than or equal to any
+  pre-fixpoint of that function. That is if \(a\) is a pre-fixpoint
+  of \(f\) then \(\funfont{lfp} \ f \leq a\).
+\end{theorem}
+
+\begin{theorem}\label{thm:lfp_le}
+  If a point is less than or equal to any pre-fixpoint of a function
+  then it is less than or equal to the least pre-fixpoint of that function.
+  If for all pre-fixpoints \(b\) of \(f\) we have \(a \leq b\) then
+  \(a \leq \funfont{lfp} \ f\).
+\end{theorem}
+
+We can now state the \emph{Knaster-Tarski} fixpoint theorem, which states that
+the least fixpoint of a monotonic function on a complete lattice exists, and
+is equal to the least pre-fixpoint of that function.
+
+\begin{theorem}[Knaster-Tarski]\label{thm:lfp_eq}
+  If \(f: \alpha \to \alpha\) is a monotonic function on a complete lattice
+  then the least fixpoint of \(f\) exists and is equal to the least
+  pre-fixpoint of \(f\). In other words:
+  \[
+    \funfont{lfp} \ f = f \ (\funfont{lfp} \ f)
+  \]
+\end{theorem}
+
+\subsection{Set relations}
+
+As we said before we will use the set theoretic view of relations, that is
+a relation is a set of pairs.
+We can, for example, define the \emph{identity relation}, as the the graph of the identity
+function.
+
+\begin{definition}
+  The identity function graph \(\funfont{SRel.id}: \alpha \to_s \alpha\) is the 
+  set of pairs \(\funfont{SRel.id} = \{(x, y) \mid x = y\}\).
+\end{definition}
+
+We can also define the composition of relations if there is a common element
+between the codomain of the first relation and the domain of the second.
+
+\begin{definition}
+  The composition of two relations \(f: \alpha \to_s \beta\) and \(g: \beta \to_s \gamma\)
+  is the set of pairs:
+  \[
+    f \circ g = \{(x, z) \mid \exists y, (x, y) \in f \land (y, z) \in g\}
+  \]
+\end{definition}
+
+Of course we can prove that composing relations with the identity relation
+is the same as the relation itself.
+
+\begin{theorem}
+  The composition of a relation with the identity relation is the relation itself.
+  That is \(f \circ \funfont{id} = f\).
+\end{theorem}
+
+The same holds from the left. More importantly we can prove that the composition
+is monotonic.
+
+\begin{theorem}
+  The composition of two functions is monotonic, that is if \(f \subseteq h\) and
+  \(g \subseteq k\) then \(f \circ g \subseteq h \circ k\).
+\end{theorem}
+
+The last piece before defining the denotational semantics is the definition of
+the \emph{set if then else}.
+
+\begin{definition}
+  The \emph{set if then else} (\(\funfont{Set.ite}\)) is a function that given three sets \(P, A, B\)
+  returns the set:
+  \[
+    \funfont{Set.ite} \ P \ A \ B = A \cap P \cup B \setminus P
+  \]
+  where \(P\) is the \emph{predicate} or \emph{condition} set.
+\end{definition}
+
+\begin{theorem}
+  The \(\funfont{Set.ite}\) function is monotonic in all its arguments.
+  That is if \(a \subseteq b\) and \(a' \subseteq b'\) then
+  \[
+  \funfont{Set.ite} \ p \ a \ b \subseteq \funfont{Set.ite} \ p \ a' \ b'
+  \]
+\end{theorem}
+
+\subsection{Denotational semantics}
+
+We can finally define our function that given a command returns the 
+\enquote{function} from state to state that represents the evaluation of that
+command.
+
+\begin{definition}[Denote]
+We define the \(\funfont{denote}: \tyfont{Com} \to (\tyfont{State} \to_s \tyfont{State})\) 
+function as:
+  \begin{align*}
+    \funfont{denote} \ \texttt{skip} &\coloneqq \funfont{SRel.id} \\
+    \funfont{denote} \ (v \ \texttt{:=} \ a) &\coloneqq \{(s, t) \mid t = s[v \leftarrow a \ s]\} \\
+    \funfont{denote} \ c;c' &\coloneqq \funfont{denote} \ c \circ \funfont{denote} \ c' \\
+    \funfont{denote} \ (\texttt{if} \ b \ \texttt{then} \ c \ \texttt{else} \ c' \ \texttt{end}) &\coloneqq \funfont{Set.ite} \ \{(s, \square) \mid b \ s\} \ (\funfont{denote} \ c) \ (\funfont{denote} \ c') \\
+    \funfont{denote} \ (\texttt{while} \ b \ \texttt{loop} \ c \ \texttt{end}) &\coloneqq \funfont{lfp} \ (W \ b \ (\funfont{denote} \ c))
+  \end{align*}
+  where \(W \ b \ f:\tyfont{Set} \ (\tyfont{State} \times \tyfont{State}) \to_o 
+    \tyfont{Set} \ (\tyfont{State} \times \tyfont{State})\) is:
+  \[
+    W \ b \ f = \lambda g \mapsto \funfont{Set.ite} \ \{(s, \square) \mid b \ s\} \ (f \circ g) \ \funfont{id}
+  \]
+\end{definition}
+
+Of course this is only well defined if the least fixpoint of \(W \ b \ f\) exists,
+for this it suffices to show that \(W \ b \ f\) is an order homomorphism, as we 
+can then apply the \emph{Knaster-Tarski} theorem.
+
+\begin{theorem}
+  The function \(W \ b \ f\) is an order homomorphism.
+\end{theorem}
+
+Then, the fixpoint of \(W \ b \ f\)
+is a \emph{relation} from the first state in which the \enquote{while} is
+evaluated to the last state, that is, if the loop terminates. If the loop
+doesn't terminate the relation is the \emph{empty set}, that is no state
+is related to any other state.
+Let's see a concrete example of what happens to the infinite loop 
+\(L \coloneqq \texttt{while true {skip}}\).
+Applying the definition of the denotational semantics we have:
+\[
+  \funfont{denote} \ L = \funfont{lfp} \ (W \ \texttt{true} \ \funfont{SRel.id})
+\]
+unfolding the definition of \(W\) we have:
+\begin{align*}
+  W &= \lambda g \mapsto \funfont{SRel.id} \circ g \cap \funfont{Univ} \cup \funfont{SRel.id} \setminus \funfont{Univ} \\
+    &= \lambda g \mapsto g = \funfont{id}
+\end{align*}
+Now, the least fixpoint of \(W\) is
+\[
+  \funfont{lfp} \ W = \bigcap \{a \mid \funfont{id} \ a \leq a\} = 
+    \bigcap \funfont{Univ} = \emptyset
+\]
+
+\subsection{Kleene fixpoint theorem}
+
+Defining the semantics with a relation works, but it makes computation difficult,
+as we don't have a general way of computing the least fixpoint. We now 
+introduce a theory, originally developed by \emph{Dana Scott}, that allows us
+use \emph{partial functions} instead of relation. The problem with
+partial functions is that they \emph{don't} form a complete lattice, as they
+don't have an infimum. To solve this problem we will use the \emph{Kleene fixpoint}
+theorem, which operates on \emph{\(\omega\)-continuous} functions.
+
+We start by defining the concept of \(\omega\)-chain, which is a sequence of
+sets where each set is a subset of the next.
+
+\begin{definition}[\(\omega\)-chain]
+  An \(\omega\)-chain is a sequence of sets \(\{S_i\}_{i \in \mathbb{N}}\) such that
+  \(S_i \subseteq S_{i+1}\) for all \(i \in \mathbb{N}\).
+\end{definition}
+
+An \(\omega\)-continuous function is a function that \enquote{preserves the limit} of
+\(\omega\)-chains.
+
+\begin{definition}[\(\omega\)-continuous]
+  A function \(f: \alpha \to \alpha\) is \(\omega\)-continuous if it commutes with the
+  indexed union for every chain, that is for every \(\omega\)-chain 
+  \(\{S_i\}_{i \in \mathbb{N}}\) we have:
+  \[
+    f \left( \bigcup_{i \in \mathbb{N}} S_i \right) = \bigcup_{i \in \mathbb{N}} f \ S_i
+  \]
+\end{definition}
+
+\begin{notation}
+  We will denote an \(\omega\)-continuous function as \(f: \alpha \to_\omega \alpha\).
+\end{notation}
+
+Continuity is a \enquote{stronger} property than monotonicity, as every continuous
+function is monotonic, but not every monotonic function is continuous.
+
+\begin{theorem}
+  Every \(\omega\)-continuous function is monotonic.
+\end{theorem}
+
+As an example of a \(\omega\)-chain we consider the sequence \emph{power function} of
+an order homomorphism from sets to sets.
+
+\begin{theorem}\label{thm:fpow_chain}
+  The sequence of power functions of an order homomorphism \(f: \tyfont{Set} \ \alpha \to_o \tyfont{Set} \ \alpha\)
+   is an \(\omega\)-chain. That is \(\{f^n \ \emptyset\}_{n \in \mathbb{N}}\) is an \(\omega\)-chain.
+\end{theorem}
+
+This will be useful later, as we prove that the least fixpoint of an \(\omega\)-continuous
+function is a \emph{fixed point}.
+
+\begin{definition}[Least fixpoint]
+  The least fixpoint of a function \(f: \alpha \to_\omega \alpha\) is the 
+  \enquote{limit} of the sequence of the power functions of \(f\), that is:
+  \[
+    \funfont{lfp} \ f = \bigcup_{n \in \mathbb{N}} f^n \ \emptyset
+  \]
+\end{definition}
+
+Now we can state the \emph{Kleene fixpoint theorem}.
+
+\begin{theorem}[Kleene fixpoint]
+  If \(f: \alpha \to_\omega \alpha\) is an \(\omega\)-continuous function
+  then the least fixpoint of \(f\) exists and is equal to the least fixpoint
+  of \(f\) as an order homomorphism.
+\end{theorem}
+
+\begin{proof}
+  We have to prove that \(\funfont{OrderHom.lfp f = ContinuousHom.lfp f}\),
+  we do this by proving that both sets contain the other.
+  \begin{itemize}
+    \item[(\(\subseteq\))] Suffices to show that \(\bigcup_{n \in \mathbb{N}} f^n \ \emptyset\)
+      is a pre-fixpoint of \(f\), as we can then apply~\ref{thm:lfp_le} obtaining
+      the result. That the leastt fixpoint is a pre-fixpoint is more or less
+      immediate by using~\ref{thm:fpow_chain}.
+
+    \item[(\(\supseteq\))] For this it suffices: \(\funfont{lfp} \ f \supseteq f^n \ \emptyset\),
+      we proceed by induction on \(n\). The base case is trivially contradictory,
+      the inductive step is immediate by applying Knaster-Tarski~\ref{thm:lfp_eq}
+      as \(f\) is an order homomorphism.
+  \end{itemize}
+\end{proof}
+
+This fixpoint definition has the advantage of giving us an easy approximation
+of the least fixpoint, as we can take the union of the first \(n\) power functions
+of \(f\).
+
+\section{Equivalence of semantics}
+
+% Appendices 
+
+% appendix
+\appendix
+
+\section{Normalization in Lean}
+\subsection{Omega combinator}
+
+\section{Equality: rec, ndrec and subst}
+
+\section{\texttt{IMP} Turing completeness}
+
+\section{Future work}
+
+Things to add:
+
+\begin{itemize}
+  \item Add formalization of \(\lambda\)-calculus and proofs.
+  \item Compiler.
+  \item Typed \texttt{IMP}.
+  \item Hoare Logic.
+  \item Abstract interpretation.
+\end{itemize}
+
+\section{Code listings}
+
+All the code can be found in GitHub at \url{
+  https://github.com/remind-me-later/SemanticsLean}.
+
+\subsection{Maps}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Maps.lean}
+
+\subsection{Sets}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Set.lean}
+
+\subsection{IMP}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Lang.lean}
+
+\subsection{Aexp}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Aexp.lean}
+
+\subsection{Bexp}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Bexp.lean}
+
+\subsection{Big-step}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/BigStep.lean}
+
+\subsection{Reflexive transitive closure}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/ReflTransRel.lean}
+
+\subsection{Small-step}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/SmallStep.lean}
+
+\subsection{Order and Knaster-Tarski}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Lattice.lean}
+
+\subsection{Chains and Kleene}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Chain.lean}
+
+\subsection{Denotational semantics}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Denotational.lean}
+
+\subsection{Equivalence}
+
+\inputminted{lean4}{../SemanticsLean/Semantics/Imp/Equivalence.lean}
+
+% Bibliography
+
+\bibliographystyle{alpha}
+\bibliography{refs}
+
+
+\end{document}
