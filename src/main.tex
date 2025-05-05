@@ -46,7 +46,7 @@
 
 \newtheorem{theorem}{Teorema}[section]
 % \newtheorem{proposition}[theorem]{Proposition}
-% \newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{corollary}[theorem]{Corolario}
 % \newtheorem{lemma}[theorem]{Lemma}
 \addto\captionsspanish{\renewcommand\proofname{Demostración}}
 
@@ -867,7 +867,7 @@ demostración de \(P \times Q\). El juicio \(\bot\) que representa la
 y el juicio \(\top\) que representa una \emph{tautología} se representa como el tipo unitario
 \(\texttt{Unit}\), que tiene solo un constructor sin argumentos.
 
-El principio \emph{exfalso quodlibet} se representa como una función de tipo
+El principio \emph{ex falso quodlibet} se representa como una función de tipo
 \(\texttt{exfalso}: \texttt{Empty} \to \alpha\), que establece que si tenemos una
 demostración de \(\bot\), entonces podemos construir una demostración de cualquier
 proposición \(\alpha\). Claramente, si intentamos definir esta función mediante
@@ -935,7 +935,7 @@ valor está en el conjunto o no.
   Un conjunto es una función que toma un elemento de un tipo y devuelve una
   proposición.
   \[
-  \texttt{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \Prop 
+  \tyfont{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \Prop 
   \]
 \end{definition}
 
@@ -951,7 +951,7 @@ La definición de la relación de pertenencia es inmediata, ya que la
 propia definición del conjunto captura el concepto de pertenencia.
 \begin{definition}[Pertenencia]
   La relación de pertenencia es una función que toma un valor de un tipo y un
-  conjunto y devuelve una proposición, sea \(x: \alpha\) y \(S: \texttt{Set} \ \alpha\):
+  conjunto y devuelve una proposición, sea \(x: \alpha\) y \(S: \tyfont{Set} \ \alpha\):
   \[
   x \in S \coloneqq S \ x 
   \]
@@ -960,7 +960,7 @@ propia definición del conjunto captura el concepto de pertenencia.
 Los subconjuntos se definen como en teoría de conjuntos.
 \begin{definition}[Subconjunto]
   Un subconjunto es una función que toma dos conjuntos y devuelve una
-  proposición, sea \(A \ B: \texttt{Set} \ \alpha\):
+  proposición, sea \(A \ B: \tyfont{Set} \ \alpha\):
   \[
   A \subseteq B \coloneqq \forall x, x \in A \implies x \in B 
   \]
@@ -968,7 +968,7 @@ Los subconjuntos se definen como en teoría de conjuntos.
 
 \begin{definition}[Subconjunto estricto]
   Un subconjunto estricto es un subconjunto diferente del conjunto en sí, sea
-  \(A \ B: \texttt{Set} \ \alpha\), entonces:
+  \(A \ B: \tyfont{Set} \ \alpha\), entonces:
   \[
   A \subset B \coloneqq A \subseteq B \land A \neq B
   \]
@@ -1032,12 +1032,6 @@ Esta es una de las mayores diferencias entre estos demostradores.
 
 \section{Semántica de paso largo}
 
-% Now that we have introduced type theory and proof assistants, we can move on to
-% using them to define the semantics of programming languages. The exposition
-% will follow closely the one in~\cite{winskel_formal_semantics}.
-% Semantics are the
-% study of the \emph{meaning} of programs, and can be defined in different ways, we
-% will focus on operational semantics, and denotational semantics.
 Una vez presentada la teoría de tipos (y los asistentes de demostración) podemos 
 pasar a definir la semántica de lenguajes de programación. Seguiremos un desarrollo
 similar al de~\cite{winskel_formal_semantics}. La semántica es el estudio del
@@ -1968,7 +1962,7 @@ evaluamos un programa sencillo.
   El árbol de evaluación de este programa es:
   \[
   \texttt{cat}: \frac{
-    \texttt{ass}: (\ImpAssign{x}{1} , s_0) \rightsquigarrow (\ImpSkip, s_0[x \leftarrow 1])
+    \texttt{ass}: (\ImpAssign{x}{1}, s_0) \rightsquigarrow (\ImpSkip, s_0[x \leftarrow 1])
   }
   {(\ImpConcat{\ImpAssign{x}{1}}{W}, s_0)
   \rightsquigarrow
@@ -1977,27 +1971,28 @@ evaluamos un programa sencillo.
   \]
 \end{example}
 
-In this case the computation ends when we can't apply any rule to the program, 
-that is when we have a configuration of the form \((\ImpSkip, \placeholder)\).
-We will define the execution of a program from beginning to end with the small-step
-semantics by using its \emph{reflexive transitive closure}.
+En este caso la ejecución termina, ya que no podemos aplicar más reglas al
+programa, esto es, tenemos una configuración de la forma \((\ImpSkip, \placeholder)\).
+Definiremos la ejecución de un programa de principio a fin con la semántica 
+estructural mediante su \emph{clausura reflexiva transitiva}.
 
-\subsection{Reflexive transitive closure}
+\subsection{Clausura reflexiva transitiva}
 
-The reflexive transitive closure takes a binary relation and gives us he 
-\enquote{minimal extension} of this relation that is \emph{reflexive}
-and \emph{transitive}. Formally we can define it as a function that 
-takes a binary relationship and return another.
+La clausura reflexiva transitiva es una relación binaria que se crea a partir de
+otra y nos da la \enquote{extensión mínima} de esta relación que es \emph{reflexiva}
+y \emph{transitiva}. Si la relación original ya es reflexiva y transitiva, la
+clausura es la misma relación. Formalmente la definimos como una función que
+toma una relación binaria y devuelve otra.
 
 \begin{definition}[Reflexive transitive closure]
-  The reflexive transitive closure of a binary relation \(\mathcal{R}\) is the smallest 
-  relation that contains \(\mathcal{R}\) and is both reflexive and transitive. 
-  We can construct a relation \(\mathcal{R}^*\) from \(\mathcal{R}\) as an inductive type
+  La clausura reflexiva transitiva de una relación binaria \(\mathcal{R}\) es la
+  relación más pequeña que contiene \(\mathcal{R}\) y es tanto reflexiva como
+  transitiva. En concreto es un tipo inductivo 
   \(\tyfont{ReflTrans}: (\alpha \to \alpha \to \Prop) \to
-  (\alpha \to \alpha \to \Prop)\) and denote it as 
+  (\alpha \to \alpha \to \Prop)\) y la denotamos como
   \(\mathcal{R}^* \coloneqq \tyfont{ReflTrans} \ \mathcal{R}\).
 
-  The type \(\tyfont{ReflTrans}\) has two constructors:
+  El tipo \(\tyfont{ReflTrans}\) tiene dos constructores:
   \[
     \texttt{refl}: a \mathcal{R}^* a
     \qquad 
@@ -2008,75 +2003,62 @@ takes a binary relationship and return another.
   \]
 \end{definition}
 
-As we can see this relation is not transitive by definition, but it is easy
-to prove by induction.
+Esta relación no es transitiva por definición, pero es fácil de probar por
+inducción que lo es.
 
 \begin{theorem}
-  The reflexive transitive closure is transitive, that is given 
-  \(x \mathcal{R}^* y\) and \(y \mathcal{R}^* z\) we have \(x \mathcal{R}^* z\).
+  La clausura reflexiva transitiva es transitiva, es decir, si tenemos
+  \(x \mathcal{R}^* y\) y \(y \mathcal{R}^* z\) entonces
+  \(x \mathcal{R}^* z\).
 \end{theorem}
 
-Another immediate but important property is that the relation itself contained
-in the reflexive transitive closure.
+Otra propiedad inmediata pero importante es que la relación misma está
+contenida en la clausura.
 
 \begin{theorem}
-  The relation is contained in its reflexive transitive closure, that is
+  La relación \(\mathcal{R}\) está contenida en su clausura reflexiva transitiva,
   \(a \mathcal{R} b \implies x \mathcal{R}^* y\).
 \end{theorem}
 
-Of course, we can not only append to the \enquote{tail} of the relation, but also
-push to the \enquote{head}.
+Además, no solo podemos \enquote{apilar} en la \enquote{cola} de la relación, sino
+que también podemos \enquote{empujar} en la \enquote{cabeza} de la relación.
 
 \begin{theorem}
-  We can push a relation to the head of its reflexive transitive closure, that is,
-  if we have \(a \mathcal{R} b\) and \(b mathcal{R}^* c\) then
+  Podemos \enquote{empujar} una relación a la cabeza de su clausura reflexiva
+  transitiva, es decir, si tenemos \(a \mathcal{R} b\) y \(b \mathcal{R}^* c\) entonces
   \(a \mathcal{R}^* c\).
 \end{theorem}
 
-This will become important soon, as we can define a principle of induction
-on the \emph{head} of the relation, note that the structural induction
-on the constructors works only on the \emph{tail} of the relation.
+Esta propiedad nos será de gran utilidad, ya que nos permite definir un
+principio de inducción sobre la \emph{cabeza} de la relación, en efecto, el constructor
+solo nos permite hacer inducción sobre la \emph{cola}.
 
 \begin{theorem}
-  We can perform induction on the \emph{head} of the relationship, with the base
-  case being the reflexivity, and the inductive step being the transitivity on
-  the \emph{head} of the relation.
+  Podemos utilizar el principio de inducción sobre la \emph{cabeza} de la relación, 
+  siendo el caso base la reflexividad, y el paso inductivo la transitividad sobre la
+  \emph{cabeza} de la relación.\footnote{La definición formal de lo que significa tener un principio de inducción es muy técnica pero puede encontrarse en en el teorema \texttt{head\_induction\_on} de~\ref{sec:code_refltransgen}.}
 \end{theorem}
 
-Another important theorem that we will use is the \emph{lifting} of a reflexive
-transitive closure via a function, that is, if we have a relation between two
-elements of a set we can lift this relation to the image of a function.
+Otro teorema importante que usamos en el código es la \emph{elevación} de una
+clausura reflexiva transitiva a través de una función \enquote{monótona}\footnote{
+  En~\ref{sec:order_homomorphisms} definiremos el concepto de monotonía.}.
 
 \begin{theorem}\label{thm:rel_lift}
-  We can lift a reflexive transitive \(x \mathcal{R}^* y\) closure through a function
-  \(f: \alpha \to \beta\). 
-  Suppose that one relationship implies the other: 
+  Podemos elevar una relación reflexiva transitiva \(x \mathcal{R}^* y\) a través de una función
+  \(f: \alpha \to \beta\), mientras que una relación implique a la otra:
   \[h: \forall a \ b, a \mathcal{R} b \to (f \ a) \mathcal{P} (f \ b),\]
-  then we have \((f \ a) \mathcal{P}^* (f \ b)\). We can represent this as the 
-  diagram~\ref{fig:rel_lift}, where
-  the hypothesis \(h\) is expressed by the fact that the diagram commutes.
+  entonces tenemos \((f \ a) \mathcal{P}^* (f \ b)\).
 \end{theorem}
 
-\begin{figure}[htb]\label{fig:rel_lift}
-  \centering
-  \begin{tikzcd}
-    \alpha \times \alpha \arrow[dd, "f \times f"] \arrow[dr, "\mathcal{R}^*"] & \\
-     & \Prop \\
-    \beta \times \beta \arrow[ur, "\mathcal{P}^*"] &
-  \end{tikzcd}
-  \caption{Lifting of a reflexive transitive closure through a function.
-           In reality, instead of \(\alpha \times \alpha\)
-           and \(\beta \times \beta\) we should use
-           the \emph{exponential objects} \(\alpha^\alpha\) and 
-            \(\beta^\beta\). 
-  }
-\end{figure}
-
 \begin{proof}
-  We proceed by induction on \(a \mathcal{R}^* b\), the base case 
-  \(\texttt{refl}: a \mathcal{R}^* a\) implies that \(a = b\), so
+  % We proceed by induction on \(a \mathcal{R}^* b\), the base case 
+  % \(\texttt{refl}: a \mathcal{R}^* a\) implies that \(a = b\), so
+  % \((f \ a) \mathcal{P}^* (f \ a)\)
+  % which is immediate by the reflexivity of the relation. For the inductive step:
+  Procedemos por inducción sobre la relación \(a \mathcal{R}^* b\), el caso base
+  \(\texttt{refl}: a \mathcal{R}^* a\) implica que \(a = b\), así que
   \((f \ a) \mathcal{P}^* (f \ a)\)
-  which is immediate by the reflexivity of the relation. For the inductive step:
+  lo que es inmediato por la reflexividad de la relación. Para el paso inductivo:
   \[
     \texttt{tail}: \frac{
       a \mathcal{R}^* b 
@@ -2084,7 +2066,7 @@ elements of a set we can lift this relation to the image of a function.
       b \mathcal{R} c
     }{a \mathcal{R}^* c}
   \]
-  we have to prove that \((f \ a) \mathcal{P}^* (f \ c)\), applying the
+  Tenemos que demostrar entonces que \((f \ a) \mathcal{P}^* (f \ c)\), aplicando el
   constructor:
   \[
     \funfont{tail}: \frac{
@@ -2099,27 +2081,31 @@ elements of a set we can lift this relation to the image of a function.
       (f \ a) \mathcal{P}^* (f \ c)
     }
   \]
-  where \(\text{ih}\) is the induction hypothesis, we get the result.
+  donde \(\text{ih}\) es la hipótesis de inducción, obtenemos el resultado.
 \end{proof}
 
-Now we can define the reflexive transitive closure of the small-step semantics.
+\subsection{Semántica estructural natural}
+
+Con esto y la semántica estructural que vimos antes podemos definir una
+relación entre cualquiera dos estados intermedios de la ejecución de un programa,
+esta relación es la clausura reflexiva transitiva de la relación de paso corto.
 
 \begin{notation}
-  We will denote the reflexive transitive closure of the small-step semantics as
+  Denotamos la clausura reflexiva transitiva de la semántica de paso corto como
   \(\rightsquigarrow^*\).
 \end{notation}
 
-Now we can revisit the example~\ref{ex:small_step} with the reflexive transitive
-closure of the small-step semantics.
+Podemos ahora revisar el ejemplo~\ref{ex:small_step} aplicando
+\(\rightsquigarrow^*\), esta vez dando \enquote{varios pasos}.
 
 \begin{example}
-  As before, we consider the program \texttt{x = 1; while x <= 1 \{x = x + 1\}},
-  to ease reading we will denote the \enquote{while} block as \(W\). We have the 
-  partial derivation tree:
+  Como antes, consideramos el programa \texttt{x = 1; while x <= 1 \{x = x + 1\}},
+  para facilitar la lectura denotaremos el bloque \enquote{while} como \(W\).
+  Un árbol de derivación parcial es:
   \[
     \funfont{head}: \frac{
       \funfont{cat}: \displaystyle{\frac{
-        \funfont{ass}: (\texttt{x = 1} , s_0) \rightsquigarrow (\ImpSkip, s_0[x \leftarrow 1])
+        \funfont{ass}: (\ImpAssign{x}{1}, s_0) \rightsquigarrow (\ImpSkip, s_0[x \leftarrow 1])
       }
       {(\ImpConcat{\ImpAssign{x}{1}}{W}, s_0)
       \rightsquigarrow
@@ -2134,18 +2120,19 @@ closure of the small-step semantics.
         (W, s_0[x \leftarrow 1]) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
       }}
     }{
-      (\ImpConcat{\ImpAssign{x}{1}}{W}, s_0) \rightsquigarrow^* (\ImpConcat{\ImpSkip}{W}, s_0[x \leftarrow 1][x \leftarrow 2])
+      (\ImpConcat{\ImpAssign{x}{1}}{W}, s_0) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
     }
   \]
-  By successive applications of the constructors we get the result.
+  Que hemos obtenido aplicando los constructores sucesivamente. Notamos que
+  dando \enquote{un paso más} llegaríamos al estado final del programa.
 \end{example}
 
-We preset now some theorems that will be very useful when proving the equivalence of
-the big and small-step semantics, paying attention to the constructors of the small-step
-relation we can see that the only \enquote{special} one is \texttt{cat}, since
-it is the only one that requires an argument. For this reason all the following
-theorems will give us analogous in \(\rightsquigarrow^*\) to the 
-big-step semantics.
+Presentamos ahora una serie de teoremas que serán muy útiles al probar la
+equivalencia de la semántica de paso largo y la de paso corto, prestando atención
+a los constructores de la relación de paso corto podemos ver que el único
+\enquote{especial} es \texttt{cat}, ya que es el único que requiere un argumento.
+Por esta razón todos los teoremas siguientes nos darán análogos en \(\rightsquigarrow^*\)
+a los de la semántica de paso largo.
 
 \begin{theorem}
   If an expression evaluates to a state concatenating that expression with another
@@ -2154,273 +2141,273 @@ big-step semantics.
 \end{theorem}
 
 \begin{proof}
-  The proof follows immediately by Theorem~\ref{thm:rel_lift}.
-  The relations \(\mathcal{R}\) and \(\mathcal{P}\) are both the small-step semantics
-  \(\rightsquigarrow\), and the function \(f\) is the concatenation of commands:
-  \(f: \texttt{Com} \times \texttt{State} \to \texttt{Com} \times \texttt{State}\)
-  with \(f \coloneqq \lambda (c, s) \mapsto (\ImpConcat{c}{c'}, s)\). Our hypothesis \(h\)
-  is the concatenation of the small-step semantics, that is:
+  La demostración es consecuencia directa del teorema de elevación~\ref{thm:rel_lift}.
+  Las relaciones \(\mathcal{R}\) y \(\mathcal{P}\) son ambas la semántica de paso corto
+  \(\rightsquigarrow\), y la función \(f\) es la concatenación de comandos:
+  \[f: \texttt{Com} \times \texttt{State} \to \texttt{Com} \times \texttt{State} \coloneqq \lambda (c, s) \mapsto (\ImpConcat{c}{c'}, s).\]
+  Nuestra hipótesis \(h\) es la concatenación en la semántica de paso corto, es decir:
   \[h: \Forall_{(c, s), (d, t)} (c, s) \rightsquigarrow (d, t) \to (\ImpConcat{c}{c'}, s) \rightsquigarrow (\ImpConcat{d}{c'}, t)
      \coloneqq \lambda x \mapsto \funfont{cat} \ x\]
-  and finally \((c, s) \rightsquigarrow^* (\ImpSkip, s')\) by hypothesis.
+  y finalmente tenemos que \((c, s) \rightsquigarrow^* (\ImpSkip, s')\) por hipótesis.
 \end{proof}
 
-\begin{theorem}
-  Concatenating an expression that evaluates to an intermediate configuration to
-  another that evaluates in that configuration gives us the configuration of the
-  second expression. That is if \((c, s) \rightsquigarrow^* (\ImpSkip, s')\)
-  and \((c', s') \rightsquigarrow^* (\ImpSkip, s'')\) then
+\begin{corollary}
+  Concatenar una expresión que evalúa a una configuración intermedia con otra
+  que evalúa en esa configuración nos da la configuración de la segunda expresión.
+  Es decir, si \((c, s) \rightsquigarrow^* (\ImpSkip, s')\)
+  y \((c', s') \rightsquigarrow^* (\ImpSkip, s'')\) entonces
   \((\ImpConcat{c}{c'}, s) \rightsquigarrow^* (\ImpSkip, s'')\).
-\end{theorem}
+\end{corollary}
 
-\begin{theorem}
-  Concatenating an evaluation that doesn't change the state with another
-  evaluation is equivalent to evaluating the second expression. That is
-  if \((c, s) \rightsquigarrow^* (\ImpSkip, s)\) then
+\begin{corollary}
+  Concatenar una evaluación que no cambia el estado con otra
+  evaluación es equivalente a evaluar la segunda expresión. Es decir
+  si \((c, s) \rightsquigarrow^* (\ImpSkip, s)\) entonces
   \((\ImpConcat{c}{c'}, s) \rightsquigarrow^* (c', s)\).
-\end{theorem}
+\end{corollary}
 
-\section{Relational denotational semantics}
+\section{Semántica denotacional relacional}
 
-We follow the construction presented  in~\cite[Chapter~11]{semantics_with_isabelle} 
-and define a \emph{relational} denotational semantics for the language \texttt{IMP}.
+Seguimos la construcción presentada en~\cite[Chapter~11]{semantics_with_isabelle}
+y definimos una semántica denotacional \emph{relacional} para el lenguaje \texttt{IMP}.
 
-As we saw before, defining a function that evaluates a program is not trivial,
-in fact this function can never be \emph{total} as there are programs that don't
-terminate (Theorem~\ref{thm:non_termination}). The function then
-has to necessarily be \emph{partial}, that is, it doesn't return a value for
-all inputs. This is a problem as in type theory all our functions are
-total. To circumvent this problem we could use the \texttt{Option} monad,
-and return \texttt{none} when the program doesn't terminate:
+Como vimos antes, definir una función que evalúe un programa no es trivial,
+de hecho esta función nunca puede ser \emph{total} ya que existen programas que no
+terminan~\ref{thm:non_termination}. La \enquote{función} ha de ser entonces
+\emph{parcial}, es decir, no devuelve un valor para todos los argumentos.
+Esto es un problema ya que en teoría de tipos todas nuestras funciones son
+totales, ya que por definición son computables. Para sortear este problema
+podríamos usar la mónada \texttt{Option} y devolver \texttt{none} cuando el
+programa no termina:
 \[
   \funfont{eval} : \tyfont{Com} \to \tyfont{State} \to \tyfont{Option} \ \tyfont{State}.
 \]
 
-Instead of this, we will use the classic definition of relations as sets
-\(\tyfont{Set} \ (\alpha \times \beta)\), this will allow us to use the 
-partial ordering of subsets to define the semantics of the language via
-the \emph{Knaster-Tarski} fixpoint theorem. Of course, relations are not 
-partial functions, to circumvent this we will introduce the concept
-of \(\omega\)-chains.
+Más adelante veremos que esto es lo que hace Lean. En lugar de esto
+usaremos la definición clásica de funciones como relaciones, es decir,
+grafos de \(\tyfont{Set} \ (\alpha \times \beta)\), esto nos permitirá usar el
+orden parcial de subconjuntos para definir la semántica del lenguaje
+mediante el teorema de \emph{Knaster-Tarski}. Por supuesto, no todos los grafos
+son funciones parciales, para evitar manchar la semántica de \texttt{IMP} con
+multifunciones introduciremos el concepto de \(\omega\)-cadenas.
 
-\subsection{Knaster-Tarski fixpoint theorem}
+\subsection{Punto fijo de Knaster-Tarski}
 
-The \emph{Knaster-Tarski} fixpoint theorem is a generalization of the
-\emph{Banach} fixpoint theorem, it states that every monotone function
-on a complete lattice has a least fixpoint. This will be essential when defining
-the denotational semantics if the \texttt{while} construct. Before
-we can enunciate the theorem we have to introduce some definitions.
+El teorema de \emph{Knaster-Tarski} es una generalización del teorema de
+\emph{Banach} del punto fijo, establece que toda función monótona
+en un retículo completo tiene un punto fijo mínimo. Esto será esencial al definir
+la semántica denotacional del comando \texttt{while}. Antes de poder
+enunciar el teorema tenemos que introducir bastantes definiciones.
 
 \subsubsection{Order theory}
 
-We begin by defining a \emph{preorder}, which is the \enquote{weakest} form of
-order that we can define.
+Comenzamos definiendo un \emph{preorden}, que es la forma \enquote{más débil}
+de orden que podemos definir.
 
-\begin{definition}[Preorder]
-  A preorder is a binary relation (usually denoted by \(\leq\)) that satisfies
-  the following properties:
+\begin{definition}[Preorden]
+  Un preorden es una relación binaria (usualmente denotada por \(\leq\)) que
+  satisface las siguientes propiedades:
   \begin{itemize}
-    \item Reflexivity: \(a \leq a\).
-    \item Transitivity: \(a \leq b \to b \leq c \to a \leq c\).
-    \item Less-than iff less-than-or-equal: \(a < b \iff a \leq b \land b \not\leq a\).
+    \item Reflexividad: \(a \leq a\).
+    \item Transitividad: \(a \leq b \to b \leq c \to a \leq c\).
   \end{itemize}
 \end{definition}
 
-Adding antisimmetry to the preorder we obtain a \emph{partial order}.
+Añadiendo la propiedad de \emph{antisimetría} al preorden obtenemos un \emph{orden parcial}.
 
-\begin{definition}[Partial order]
-  A partial order is a preorder that is antisymmetric, that is, it satisfies:
+\begin{definition}[Orden parcial]
+  Un orden parcial es un preorden antisimétrico, es decir, satisface:
   \(a \leq b \to b \leq a \to a = b\).
 \end{definition}
 
-Now we consider a set of elements with a partial order, if every set has an
-an \emph{infimum} we call it a \emph{complete lattice}. Usually a complete lattice 
-is defined as a partially ordered type in which every set has a \emph{least upper bound}
-and a \emph{greatest lower bound}, but these definitions are interchangeable.
-Although we won't prove it, the existence of one implies the existence of the other.
+Consideramos ahora un conjunto de elementos con un orden parcial, si cada subconjunto
+suyo tiene un \emph{ínfimo} lo llamamos un \emph{retículo completo}.
+Normalmente un retículo completo se define como un conjunto parcialmente ordenado
+en el que cada conjunto tiene un \emph{mínimo límite superior} y un \emph{máximo límite inferior},
+esa definición y la que usamos son intercambiables, aunque no nos molestaremos en demostrarlo.
 
 \begin{definition}
-  A complete lattice is a partially ordered type that has an infimum in every set. 
-  That is, exists a function \(\funfont{Inf}: \tyfont{Set} \ \alpha \to \alpha\)
-  that returns an element of the set satisfying the following properties:
+  Un retículo completo es un tipo parcialmente ordenado que tiene un ínfimo en cada conjunto.
+  Es decir, existe una función \(\funfont{Inf}: \tyfont{Set} \ \alpha \to \alpha\)
+  que devuelve un elemento del conjunto que satisface las siguientes propiedades:
   \begin{itemize}
     \item \(\forall S, \forall x \in S, \funfont{Inf} \ S \leq x\).
     \item \(\forall S, (\forall y \in S, x \leq y) \implies x \leq \funfont{Inf} \ S\).
   \end{itemize}
 \end{definition}
 
-Additionally, this infimum is \emph{unique}.
+Además este ínfimo es \emph{único},
 
 \begin{theorem}
-  The infimum of a set in a complete lattice is unique.
-  That is if \(\funfont{Inf} \ s = a\) and \(\funfont{Inf} \ s = b\) then \(a = b\).
+  El ínfimo de un conjunto en un retículo completo es único.
+  Es decir, si \(\funfont{Inf} \ s = a\) y \(\funfont{Inf} \ s = b\) entonces \(a = b\).
 \end{theorem}
 
-Now we need to recall the definition of subsets in~\ref{sec:sets},
-as sets, with the inclusion relation, form a partial order.
+Ahora necesitamos recordar la definición de subconjuntos en~\ref{sec:sets},
+y notar que los conjuntos, con la relación de inclusión, forman un orden parcial.
 
 \begin{theorem}
-  Sets with the inclusion relation form a partial order. Where
-  \(A \leq B \coloneqq A \subseteq B\), \(A < B \coloneqq A \subset B\).
-  and the infimum of a set is the intersection of all the sets in the set,
-  that is \(\funfont{Inf} \ S = \bigcap_{A \in S} A\).
+  Los conjuntos con la relación de inclusión forman un orden parcial. Donde
+  \(A \leq B \coloneqq A \subseteq B\), \(A < B \coloneqq A \subset B\)
+  y el ínfimo de un conjunto es la intersección de todos sus subconjuntos,
+  es decir \(\funfont{Inf} \ S = \bigcap_{A \in S} A\).
 \end{theorem}
 
-The intersection of a set of sets is the set of elements that are in all the sets
-of the set, that is:
+Donde la intersección de un conjunto de conjuntos es el conjunto de elementos que
+están en todos los conjuntos del conjunto, es decir:
 \[
   \bigcap_{A \in S} A = \{x \mid \forall A \in S, x \in A\}
 \]
-Since the proofs are
-straightforward we will not present them, but they can be found in the code.
+Las demostraciones se obtienen sin más que aplicar las definiciones.
 
-\subsubsection{Order homomorphims}
+\subsubsection{Homomorfismos de orden}\label{sec:order_homomorphisms}
 
-Of special interest to us are the functions that preserve the order of the elements
-of a lattice, these are called \emph{order homomorphisms}, and as we will see
-later they admit a \emph{least fixpoint}.
+Nos interesan particularmente las funciones que preservan el orden de los elementos
+de un retículo, estas se llaman \emph{homomorfismos de orden}, y como veremos
+más adelante admiten un \emph{mínimo punto fijo}.
 
-\begin{definition}[Monotonic function]
-  A function \(f: \alpha \to \alpha\) is monotonic if for all \(a, b: \alpha\)
-  we have that \(a \leq b \implies f \ a \leq f \ b\). We call these functions
-  \emph{Order homomorphisms}.
+\begin{definition}[Función monótona]
+  Una función \(f: \alpha \to \alpha\) es monótona si para todos los \(a, b: \alpha\)
+  se cumple que \(a \leq b \implies f \ a \leq f \ b\). Llamamos a estas funciones
+  \emph{homomorfismos de orden}.
 \end{definition}
 
 \begin{notation}
-  We will denote an order homomorphism as \(f: \alpha \to_o \alpha\).
+  Denotaremos un homomorfismo de orden como \(f: \alpha \to_o \alpha\).
 \end{notation}
 
-Some order homomorphisms are the identity function and constant functions.
+Algunos ejemplos básicos de homomorfismos de orden son la función identidad y las funciones
+constantes.
 
 \begin{theorem}
-  The identity function is an order homomorphism.
+  La función identidad es un homomorfismo de orden.
 \end{theorem}
 
 \begin{theorem}
-  Any constant function is an order homomorphism.
+  Cualquier función constante es un homomorfismo de orden.
 \end{theorem}
 
-\subsubsection{Fix-points}
+\subsubsection{Puntos fijos}
 
-As we said before, monotonic functions on a complete lattice have a least fixpoint,
-we will define the concept of fixpoint and least fixpoint, but first we need
-to define the concept of pre-fixpoint.
+Queremos demostrar ahora que los homomorfismos de orden tienen un punto fijo mínimo,
+pero para ello tenemos que introducir aún más definiciones.
 
-\begin{definition}[Pre-fixpoint]
-  A pre-fixpoint of a function \(f: \alpha \to_o \alpha\) is a point \(a: \alpha\) 
-  such that \(f \ a \leq a\).
+\begin{definition}[Pre punto fijo]
+  Un pre punto fijo de una función \(f: \alpha \to_o \alpha\) es un punto \(a: \alpha\)
+  tal que \(f \ a \leq a\).
 \end{definition}
 
-Now we can define the \emph{least pre-fixpoint} of an order homomorphism.
-
-\begin{definition}[Least pre-fixpoint]
-  The least pre-fixpoint of a function \(f: \alpha \to_o \alpha\) is the infimum of 
-  the set of all pre-fixpoints of \(f\).
+\begin{definition}[Punto fijo mínimo]
+  El punto fijo mínimo (\emph{least fixed-point}) de una función \(f: \alpha \to_o \alpha\) es el ínfimo del
+  conjunto de todos los pre-puntos fijos de \(f\).
   \[
     \funfont{lfp} \ f = \funfont{Inf} \ \{a \mid f \ a \leq a\}
   \]
 \end{definition}
 
-In the case of sets this turns into 
-\(\funfont{lfp} \ f = \bigcap \{a \mid f \ a \subseteq a\}\), 
-where \(f: \tyfont{Set} \ \alpha \to \tyfont{Set} \ \alpha\).
-
-Now we present two important pre-fixpoint inequalities.
+En el caso que nos ocupa, que son los conjuntos, esto se convierte en
+\(\funfont{lfp} \ f = \bigcap \{a \mid f \ a \subseteq a\}\),
+donde \(f: \tyfont{Set} \ \alpha \to \tyfont{Set} \ \alpha\).
+Presentamos ahora dos teoremas sencillos pero importantes sobre los pre puntos fijos.
 
 \begin{theorem}
-  The least pre-fixpoint of a function is less than or equal to any
-  pre-fixpoint of that function. That is if \(a\) is a pre-fixpoint
-  of \(f\) then \(\funfont{lfp} \ f \leq a\).
+  El punto fijo mínimo de una función es menor o igual que cualquier
+  pre punto fijo de esa función. Es decir, si \(a\) es un pre punto fijo
+  de \(f\) entonces \(\funfont{lfp} \ f \leq a\).
 \end{theorem}
 
 \begin{theorem}\label{thm:lfp_le}
-  If a point is less than or equal to any pre-fixpoint of a function
-  then it is less than or equal to the least pre-fixpoint of that function.
-  If for all pre-fixpoints \(b\) of \(f\) we have \(a \leq b\) then
-  \(a \leq \funfont{lfp} \ f\).
+  Si un punto es menor o igual que cualquier pre punto fijo de una función
+  entonces es menor o igual que el punto fijo mínimo de esa función.
+  Es decir, si para todos los pre puntos fijos \(b\) de \(f\) tenemos
+  \(a \leq b\) entonces \(a \leq \funfont{lfp} \ f\).
 \end{theorem}
 
-We can now state the \emph{Knaster-Tarski} fixpoint theorem, which states that
-the least fixpoint of a monotonic function on a complete lattice exists, and
-is equal to the least pre-fixpoint of that function.
+Podemos ahora enunciar el teorema de \emph{Knaster-Tarski}, que establece que
+el punto fijo mínimo de una función monótona en un retículo completo 
+\emph{es un punto fijo}, es decir, \(f \ (\funfont{lfp} \ f) = \funfont{lfp} \ f\).
 
 \begin{theorem}[Knaster-Tarski]\label{thm:lfp_eq}
-  If \(f: \alpha \to \alpha\) is a monotonic function on a complete lattice
-  then the least fixpoint of \(f\) exists and is equal to the least
-  pre-fixpoint of \(f\). In other words:
+  Sea \(f: \alpha \to_o \alpha\) una función monótona en un retículo completo,
+  entonces el punto fijo mínimo de \(f\) existe y es igual al punto fijo mínimo
+  de \(f\). En otras palabras:
   \[
     \funfont{lfp} \ f = f \ (\funfont{lfp} \ f)
   \]
 \end{theorem}
 
-\subsection{Set relations}
+\subsection{Relaciones conjuntistas}
 
-As we said before we will use the set theoretic view of relations, that is
-a relation is a set of pairs.
-We can, for example, define the \emph{identity relation}, as the the graph of the identity
-function.
+Todo este desarrollo que hemos hecho es inútil si no podemos definir las 
+funciones (relaciones) que nos interesan, para ello usaremos la
+\emph{teoría de conjuntos} y definiremos las relaciones como conjuntos de pares.
+Podemos \enquote{definir} por ejemplo la \enquote{función identidad} como el grafo
+de la identidad.
 
 \begin{definition}
-  The identity function graph \(\funfont{SRel.id}: \alpha \to_s \alpha\) is the 
-  set of pairs \(\funfont{SRel.id} = \{(x, y) \mid x = y\}\).
+  El grafo de la función identidad \(\funfont{SRel.id}: \tyfont{Set} (\alpha \times \alpha)\) es el
+  conjunto de pares \(\funfont{SRel.id} = \{(x, y) \mid x = y\}\).
 \end{definition}
 
-We can also define the composition of relations if there is a common element
-between the codomain of the first relation and the domain of the second.
+Podemos también definir la composición de relaciones si existe un elemento
+común entre el codominio de la primera relación y el dominio de la segunda.
 
 \begin{definition}
-  The composition of two relations \(f: \alpha \to_s \beta\) and \(g: \beta \to_s \gamma\)
-  is the set of pairs:
+  La composición de dos relaciones \(f: \tyfont{Set} (\alpha \times \beta)\) y \(g: \tyfont{Set} (\beta \times \gamma)\)
+  es el conjunto de pares:
   \[
-    f \circ g = \{(x, z) \mid \exists y, (x, y) \in f \land (y, z) \in g\}
+    f \circ g \coloneqq \{(x, z) \mid \exists y, (x, y) \in f \land (y, z) \in g\}
   \]
 \end{definition}
 
-Of course we can prove that composing relations with the identity relation
-is the same as the relation itself.
+Para ver que lo que estamos definiendo tiene sentido podemos comprobar que
+la composición de una relación con la identidad es la relación misma.
 
 \begin{theorem}
-  The composition of a relation with the identity relation is the relation itself.
-  That is \(f \circ \funfont{id} = f\).
+  La composición de una relación con la identidad por la derecha es la relación misma.
+  Es decir \(f \circ \funfont{SRel.id} = f\).
 \end{theorem}
 
-The same holds from the left. More importantly we can prove that the composition
-is monotonic.
+Se da lo mismo por la izquierda. Más importante aún, podemos probar que la composición
+de relaciones es monótona.
 
 \begin{theorem}
-  The composition of two functions is monotonic, that is if \(f \subseteq h\) and
-  \(g \subseteq k\) then \(f \circ g \subseteq h \circ k\).
+  La composición de dos \enquote{funciones} es monótona, es decir, si \(f \subseteq h\) y
+  \(g \subseteq k\) entonces \(f \circ g \subseteq h \circ k\).
 \end{theorem}
 
-The last piece before defining the denotational semantics is the definition of
-the \emph{set if then else}.
+La última pieza antes de definir la semántica denotacional es la definición
+del \emph{conjunto if-then-else}
 
-\begin{definition}
-  The \emph{set if then else} (\(\funfont{Set.ite}\)) is a function that given three sets \(P, A, B\)
-  returns the set:
+\begin{definition}[Conjunto if-then-else]
+  El \emph{conjunto if-then-else} (\(\funfont{Set.ite}\)) es una función que dados tres conjuntos \(P, A, B\)
+  devuelve el conjunto:
   \[
     \funfont{Set.ite} \ P \ A \ B = A \cap P \cup B \setminus P
   \]
-  where \(P\) is the \emph{predicate} or \emph{condition} set.
+  donde \(P\) es el \enquote{predicado} o \emph{conjunto de condiciones}.
 \end{definition}
 
 \begin{theorem}
-  The \(\funfont{Set.ite}\) function is monotonic in all its arguments.
-  That is if \(a \subseteq b\) and \(a' \subseteq b'\) then
+  La función \(\funfont{Set.ite}\) es monótona en sus argumentos.
+  Es decir, si \(a \subseteq a'\) y \(b \subseteq b'\) entonces
   \[
   \funfont{Set.ite} \ p \ a \ b \subseteq \funfont{Set.ite} \ p \ a' \ b'
   \]
 \end{theorem}
 
-\subsection{Denotational semantics}
+\subsection{Semántica denotacional}
 
-We can finally define our function that given a command returns the 
-\enquote{function} from state to state that represents the evaluation of that
-command.
+% We can finally define our function that given a command returns the 
+% \enquote{function} from state to state that represents the evaluation of that
+% command.
+Podemos por fin definir nuestra función que dado un comando devuelve la
+\enquote{función} de estado a estado que representa la evaluación de ese
+comando.
 
 \begin{definition}[Denote]
-We define the \(\funfont{denote}: \tyfont{Com} \to (\tyfont{State} \to_s \tyfont{State})\) 
-function as:
+Definimos la función \(\funfont{denote}: \tyfont{Com} \to \tyfont{Set} (\tyfont{Set} \times \tyfont{Set})\)
+como:
   \begin{align*}
     \funfont{denote} \ \ImpSkip &\coloneqq \funfont{SRel.id} \\
     \funfont{denote} \ (v = a) &\coloneqq \{(s, t) \mid t = s[v \leftarrow a \ s]\} \\
@@ -2428,19 +2415,22 @@ function as:
     \funfont{denote} \ (\ImpIfElse{b}{c}{c'}) &\coloneqq \funfont{Set.ite} \ \{(s, \placeholder) \mid b \ s\} \ (\funfont{denote} \ c) \ (\funfont{denote} \ c') \\
     \funfont{denote} \ (\ImpWhile{b}{c}) &\coloneqq \funfont{lfp} \ (W \ b \ (\funfont{denote} \ c))
   \end{align*}
-  where \(W \ b \ f:\tyfont{Set} \ (\tyfont{State} \times \tyfont{State}) \to_o 
-    \tyfont{Set} \ (\tyfont{State} \times \tyfont{State})\) is:
+  donde \(W \ b \ f:\tyfont{Set} \ (\tyfont{State} \times \tyfont{State}) \to_o 
+    \tyfont{Set} \ (\tyfont{State} \times \tyfont{State})\) es:
   \[
     W \ b \ f = \lambda g \mapsto \funfont{Set.ite} \ \{(s, \placeholder) \mid b \ s\} \ (f \circ g) \ \funfont{id}
   \]
 \end{definition}
 
-Of course this is only well defined if the least fixpoint of \(W \ b \ f\) exists,
-for this it suffices to show that \(W \ b \ f\) is an order homomorphism, as we 
-can then apply the \emph{Knaster-Tarski} theorem.
+% Of course this is only well defined if the least fixpoint of \(W \ b \ f\) exists,
+% for this it suffices to show that \(W \ b \ f\) is an order homomorphism, as we 
+% can then apply the \emph{Knaster-Tarski} theorem.
+Por supuesto, esto solo tiene sentido si el punto fijo mínimo de \(W \ b \ f\) existe,
+para ver esto basta demostrar que \(W \ b \ f\) es un homomorfismo de orden, ya que
+entonces podemos aplicar el teorema de \emph{Knaster-Tarski}.
 
 \begin{theorem}
-  The function \(W \ b \ f\) is an order homomorphism.
+  La función \(W \ b \ f\) es un homomorfismo de orden.
 \end{theorem}
 
 Then, the fixpoint of \(W \ b \ f\)
@@ -2610,13 +2600,16 @@ archivo.
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/BigStep.lean}
 
-\subsection{Clausura reflexiva transitiva}
+\subsection{Clausura reflexiva transitiva}\label{sec:code_refltransgen}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/ReflTransRel.lean}
 
-\subsection{Semántica operacional}
+\subsection{Semántica estructural}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/SmallStep.lean}
+
+\subsection{Relaciones conjuntistas}
+\inputminted{lean4}{../SemanticsLean/Semantics/SetRelation.lean}
 
 \subsection{Orden y punto fijo de Knaster-Tarski}
 
