@@ -2,11 +2,12 @@
   a4paper, 
   10pt, 
   parskip=half, 
-  DIV=12,
+  % DIV=10,
   toc=bibliography,
-]{scrartcl}
+  draft,
+]{scrbook}
 
-% \usepackage{showframe}
+\usepackage{showframe}
 
 \usepackage{polyglossia}
 \setdefaultlanguage{spanish}
@@ -23,6 +24,9 @@
 % \usepackage[shortlabels]{enumitem}
 % \usepackage{epigraph}
 
+\usepackage{graphicx}
+\graphicspath{ {../resources/} }
+
 \usepackage{fontspec}
 % switch to a monospace font supporting more Unicode characters
 \setmonofont{JetBrains Mono}[
@@ -34,36 +38,35 @@
 \usepackage{minted}
 \usemintedstyle{pastie}
 
-% Use KOMA-Script's nice headers instead of fancyhdr
 % \usepackage[Conny]{fncychap}
 
 % === Math facilities ===
 
 % Theorem environments
+\usepackage{amsmath}
 \usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{centernot}
+\usepackage{mathtools}
 
 \theoremstyle{definition}
 
 \newtheorem{theorem}{Teorema}[section]
 % \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{corollary}[theorem]{Corolario}
-% \newtheorem{lemma}[theorem]{Lemma}
-\addto\captionsspanish{\renewcommand\proofname{Demostración}}
+\newtheorem{lemma}[theorem]{Lemma}
 
 \newtheorem{definition}[theorem]{Definición}
-\newtheorem{example}[theorem]{Ejemplo}
-\newtheorem{problem}[theorem]{Ejercicio}
-
 % \newtheorem{remark}[theorem]{Remark}
 \newtheorem{notation}[theorem]{Notación}
 
-\usepackage{centernot}
-\usepackage{amssymb}
-\usepackage{mathtools}
-\usepackage{tikz-cd}
+\newtheorem{example}[theorem]{Ejemplo}
 
-\newcommand{\funfont}[1]{\text{#1}}
-\newcommand{\tyfont}[1]{\texttt{#1}}
+
+\addto\captionsspanish{\renewcommand\proofname{Demostración}}
+
+\newcommand{\funfont}[1]{\texttt{#1}}
+\newcommand{\tyfont}[1]{\texttt{\textbf{#1}}}
 \renewcommand{\implies}{\rightarrow}
 \renewcommand{\impliedby}{\leftarrow}
 \renewcommand{\iff}{\leftrightarrow}
@@ -78,6 +81,8 @@
 \newcommand{\ImpAssign}[2]{{#1} = {#2}}
 
 \newcommand{\LeanIfElse}[3]{\text{if} \ {#1} \ \text{then} \ {#2} \ \text{else} \ {#3}}
+\newcommand{\LeanTrue}{\text{true}}
+\newcommand{\LeanFalse}{\text{false}}
 
 \newcommand{\ImpPlus}{\mathbin{\texttt{+}}}
 \newcommand{\ImpMinus}{\mathbin{\texttt{-}}}
@@ -89,12 +94,14 @@
 \newcommand{\ImpEq}{\mathbin{\texttt{==}}}
 \newcommand{\ImpLe}{\mathbin{\texttt{<=}}}
 
+\newcommand{\ImpTrue}{\texttt{true}}
+\newcommand{\ImpFalse}{\texttt{false}}
 
-\usepackage{scalerel}
+\newcommand{\ImpName}{\texttt{IMP}}
 
-\DeclareMathOperator*{\Forall}{\scalerel*{\forall}{\sum}}
-\DeclareMathOperator*{\BigPi}{\scalerel*{\prod}{\sum}}
-\DeclareMathOperator*{\BigSigma}{\scalerel*{\sum}{\sum}}
+\usepackage[only,llbracket,rrbracket]{stmaryrd}
+
+\newcommand{\Denote}[1]{\llbracket {#1} \rrbracket}
 
 % === End math facilities ===
 
@@ -107,70 +114,117 @@
     % filecolor=magenta,      
     % urlcolor=cyan,
     % pdftitle={Overleaf Example},
-    % pdfpagemode=FullScreen,
     }
 
-% Los apéndices se llaman apéndices
-% \renewcommand\appendixpagename{Apéndices}
-% \renewcommand{\appendixtocname}{Apéndices}
+% main matter no reinicia el contador de páginas
+\makeatletter
+\renewcommand\mainmatter{
+    \@mainmattertrue\cleardoublepage\renewcommand\thepage{\arabic{page}}}
+\makeatother
 
-% mainmatter no reinicia el contador de páginas
-% \makeatletter
-% \renewcommand\mainmatter{
-%     \@mainmattertrue\cleardoublepage\renewcommand\thepage{\arabic{page}}}
-% \makeatother
+\renewcommand{\thesubsection}{\thesection.\alph{subsection}}
 
-% \renewcommand{\thesubsection}{\thesection.\alph{subsection}}
-
-% \providecommand{\keywords}[1]
-% {
-%   \small	
-%   \textbf{\textit{Palabras clave---}} #1
-% }
+\providecommand{\keywords}[1]
+{
+  \small	
+  \textbf{\textit{Palabras clave---}} #1
+}
 
 % define math symbol for big step arrow
 \newcommand{\bigstep}{\Longrightarrow}
 
-\title{Presentación con Lean 4 de algunos Resultados clásicos sobre
-Semántica de Lenguajes de Programación}
-\author{Ricardo Maurizio Paul}
-% \date{2020--2024}
+\renewenvironment{dedication}
+  {\clearpage           % we want a new page
+   \thispagestyle{empty}% no header and footer
+   \vspace*{\stretch{1}}% some space at the top 
+  % \section*{Dedication} % <==========================================
+   \itshape             % the text is in italics
+   \raggedleft          % flush to the right margin
+  }
+  {\par % end the paragraph
+   \vspace{\stretch{3}} % space at bottom is three times that at the top
+   \clearpage           % finish off the page
+  }
 
 \begin{document}
 
-\maketitle
+\frontmatter
 
-\begin{abstract}
-  La utilización de Asistentes para la Demostración de resultados matemáticos parece que terminará por
-  constituirse en una absoluta necesidad a fin de poder ratificar la corrección de pruebas previamente
-  realizadas “manualmente”. Además, la incorporación de esas pruebas formales a los bancos de la
-  aplicación con la que se hayan realizado permitirá tanto la utilización de los resultados probados con total
-  garantía de calidad, como el cotejo de los procedimientos utilizados en su obtención, que darán lugar a
-  metodologías para el futuro desarrollo de nuevas pruebas a través de patrones o “tácticas”, como se les
-  suele llamar en el argot.
-  La formalización de las Semánticas de los Lenguajes de Programación constituye un interesante campo de
-  aplicación de estos desarrollos por varias razones. En una primera aproximación parece un campo
-  particularmente adecuado, pues las citadas semánticas se definen con elementos lógicos y algebraicos
-  básicos que auguran una relativamente fácil formalización total. Sin embargo, cuando se entra en el detalle
-  aparecen dificultades inesperadas cuya resolución sacará a la luz las técnicas necesarias para tratar con
-  éxito casos como estos. Al tiempo, pese a que las componentes matemáticas son evidentes, de nuevo la
-  forma concreta en que aparecen y se combinan se separa un tanto de la habitual en campos puramente
-  algebraicos, por lo que se han de crear nuevas técnicas para lidiar con ellas.
-  Como novedad utilizaremos en este caso la nueva versión 4 del lenguaje Lean, y una parte del trabajo se
-  dedicará a presentar las novedades con respecto a la versión 3, con la que se han hecho ya algunos trabajos
-  previos en la Facultad. Utilizándola se tratará de llegar lo más lejos posible en la formalización de los
-  resultados que se han estudiado en nuestro curso de Teoría de Programación, aunque buscando más la
-  explicación detallada de las técnicas utilizadas en las distintas pruebas, que la mera acumulación de
-  pruebas. Todas las demostraciones que se hagan se recopilarán en una entrada bien organizada que
-  eventualmente se tratará de aportar al repositorio abierto que la organización que soporta Lean facilita
-  totalmente en abierto a los usuarios del lenguaje.
-\end{abstract}
-\pagebreak
+\begin{titlepage}
+  \vspace*{\stretch{1}}
+  \begin{center}
+      {\LARGE \textsc{Presentación con Lean 4 de algunos Resultados clásicos sobre
+      Semántica de Lenguajes de Programación} \bigbreak}
+      \includegraphics[
+        width=0.5\textwidth,
+        keepaspectratio,
+      ]{ucmlogo.png}
+      \bigbreak{}
+      {\Large \textsc{Ricardo Maurizio Paul} \bigbreak}
+      {
+        \large
+        \textsc{Facultad de Ciencias Matemáticas}
+        \bigbreak}
+      {\large Trabajo de Fin de Grado presentado para optar al \emph{Grado en Matemáticas}
+      \bigbreak}
+      {\large \textsc{Tutor: David de Frutos Escrig} \bigbreak}
+      {\large \textsc{Junio de 2025}}
+      \vspace*{\stretch{2}}
+  \end{center}
+\end{titlepage}
+
+\makeatletter\@openrightfalse
+\chapter*{Resumen}
+
+La utilización de Asistentes para la Demostración de resultados matemáticos parece que terminará por
+constituirse en una absoluta necesidad a fin de poder ratificar la corrección de pruebas previamente
+realizadas “manualmente”. Además, la incorporación de esas pruebas formales a los bancos de la
+aplicación con la que se hayan realizado permitirá tanto la utilización de los resultados probados con total
+garantía de calidad, como el cotejo de los procedimientos utilizados en su obtención, que darán lugar a
+metodologías para el futuro desarrollo de nuevas pruebas a través de patrones o “tácticas”, como se les
+suele llamar en el argot.
+
+La formalización de las Semánticas de los Lenguajes de Programación constituye un interesante campo de
+aplicación de estos desarrollos por varias razones. En una primera aproximación parece un campo
+particularmente adecuado, pues las citadas semánticas se definen con elementos lógicos y algebraicos
+básicos que auguran una relativamente fácil formalización total. Sin embargo, cuando se entra en el detalle
+aparecen dificultades inesperadas cuya resolución sacará a la luz las técnicas necesarias para tratar con
+éxito casos como estos. Al tiempo, pese a que las componentes matemáticas son evidentes, de nuevo la
+forma concreta en que aparecen y se combinan se separa un tanto de la habitual en campos puramente
+algebraicos, por lo que se han de crear nuevas técnicas para lidiar con ellas.
+
+En este trabajo nos proponemos formalizar las semánticas operacional y denotacional de un
+lenguaje de programación imperativo sencillo, estudiar algunos de sus resultados y
+finalmente demostrar la equivalencia de las diferentes semánticas.
+
+\chapter*{Abstract}
+
+The use of Proof Assistants for mathematical proofs seems destined to become an absolute necessity in order to 
+ratify the correctness of proofs previously carried out \``manually''. Furthermore, the incorporation of these formal 
+proofs into the databases of the application with which they were made will allow both the use of the proven results 
+with a total guarantee of quality, as well as the comparison of the procedures used to obtain them, 
+which will give rise to methodologies for the future development of new proofs through patterns or ``tactics'', 
+as they are usually called in the jargon.
+
+The formalization of the Semantics of Programming Languages constitutes an interesting field of application for these 
+developments for several reasons. It seems a particularly suitable field, since the 
+aforementioned semantics are defined with basic logical and algebraic elements that suggest a relatively easy 
+total formalization. However, when one goes into detail, unexpected difficulties arise whose resolution will bring to 
+light the necessary techniques to successfully deal with cases like these. At the same time, although the mathematical 
+components are evident, again the concrete way in which they appear and combine differs somewhat from the usual in 
+purely algebraic fields, so new techniques must be created to deal with them.
+
+In this work, we propose to formalize the operational and denotational semantics of a simple imperative programming 
+language, study some of its results, and finally demonstrate the equivalence of the different semantics.
+\@openrighttrue\makeatother 
+
+\begin{dedication}
+  Para todos los que han hecho posible este trabajo y en especial para Claudia.
+\end{dedication}
 
 \tableofcontents
-\pagebreak
 
-\section{Introducción}
+\chapter{Antecedentes históricos}
 
 Los asistentes de pruebas (o \emph{proof assistants}) son sistemas de software que ayudan en la
 construcción y verificación de demostraciones matemáticas mediante el uso de
@@ -245,7 +299,9 @@ isomorfismo de Curry-Howard, un concepto fundamental que relaciona demostracione
 y programas. Para entenderlo primero debemos introducir los conceptos básicos de
 la teoría de tipos.
 
-\section{Teoría de tipos}
+\mainmatter
+
+\chapter{Teoría de tipos de Lean}
 
 La teoría de tipos es una rama de la lógica matemática que se ocupa del estudio
 de los tipos, una abstracción similar en algunos aspectos a los conjuntos, que 
@@ -286,7 +342,7 @@ muestran la verdad de una proposición. En la lógica intuicionista, el principi
 tercio excluido no es válido, como tampoco lo es la \emph{reducción al absurdo} (con
 algunas salvedades).
 
-\subsection{Lambda cálculo}
+\section{Lambda cálculo}
 
 Un desarrollo detallado del \(\lambda\)-cálculo se puede encontrar en~\cite{barendregt1984lambda},
 pero por completitud haremos una breve introducción.
@@ -305,9 +361,9 @@ con la teoría de conjuntos, donde las funciones son vistas como \emph{gráficas
 La sintaxis del \(\lambda\)-cálculo es simple, consiste en variables (\(x, y, z\)),
 abstracción (\(\lambda x \mapsto M\)), y aplicación (\(M \ M\)), en 
 \emph{forma de Backus-Naur} (\emph{BNF}):
-\begin{align*}
-  M \Coloneqq x & \mid \lambda x \mapsto M \mid M \ M
-\end{align*}
+\[
+  M \Coloneqq x \mid \lambda x \mapsto M \mid M \ M
+\]
 La notación (\(\mapsto\)), en vez del tradicional (.) no es accidental, y revela una conexión
 profunda entre la abstracción de funciones y la implicación lógica, una conexión que exploraremos más adelante.
 
@@ -401,8 +457,8 @@ devuelven uno de ellos. Por ejemplo, podemos definir los literales booleanos com
 \begin{definition}[Booleanos de Church]
   Definimos los literales booleanos como:
   \[
-    \texttt{true} \coloneqq \lambda x \mapsto \lambda y \mapsto x \qquad
-    \texttt{false} \coloneqq \lambda x \mapsto \lambda y \mapsto y 
+    \LeanTrue \coloneqq \lambda x \mapsto \lambda y \mapsto x \qquad
+    \LeanFalse \coloneqq \lambda x \mapsto \lambda y \mapsto y 
   \]
 \end{definition}
 
@@ -412,18 +468,18 @@ Ahora podemos definir los operadores lógicos \(\texttt{and}\), \(\texttt{or}\),
 \begin{definition}[Operadores lógicos]
   Definimos los operadores lógicos como:
   \[
-    \texttt{and} \coloneqq \lambda x \mapsto \lambda y \mapsto x \ y \ x \quad
-    \texttt{or} \coloneqq \lambda x \mapsto \lambda y \mapsto x \ x \ y \quad
-    \texttt{not} \coloneqq \lambda x \mapsto x \ \texttt{false} \ \texttt{true} 
+    \funfont{and} \coloneqq \lambda x \mapsto \lambda y \mapsto x \ y \ x \quad
+    \funfont{or} \coloneqq \lambda x \mapsto \lambda y \mapsto x \ x \ y \quad
+    \funfont{not} \coloneqq \lambda x \mapsto x \ \LeanFalse \ \LeanTrue
   \]
 \end{definition}
 
-Podemos incluso definir la estructura de control \emph{if-then-else}.
+Podemos incluso definir la estructura de control \emph{if-else}.
 
-\begin{definition}[If-then-else]
-  Definimos la estructura de control \emph{if-then-else} como:
+\begin{definition}[If-else]
+  Definimos la estructura de control \funfont{if-else} como:
   \[
-  \texttt{if-then-else} \coloneqq \lambda b \mapsto \lambda x \mapsto \lambda y \mapsto b \ x \ y 
+  \funfont{if-else} \coloneqq \lambda b \mapsto \lambda x \mapsto \lambda y \mapsto b \ x \ y 
   \]
 \end{definition}
 
@@ -435,7 +491,7 @@ que se puede usar para razonar sobre la computación, de hecho es \emph{Turing
 completo}, lo que significa que puede expresar cualquier función computable. Sin embargo, como hemos
 visto con el \(\Omega\)-combinador, no es muy \enquote{seguro} de usar.
 
-\subsection{Lambda cálculo tipado}
+\section{Lambda cálculo tipado}
 
 Para evitar el problema introducido por las computaciones no terminates como el
 combinador \(\Omega\) podemos introducir \emph{tipos} al cálculo lambda\footnote{
@@ -451,7 +507,7 @@ Añadir tipos también asegura que expresiones sin sentido, como aplicar un bool
 un entero no son posibles, y que las expresiones no pueden quedar \enquote{atascadas} en una
 computación no terminante.
 
-\subsubsection{Lambda cálculo simplemente tipado}
+\subsection{Lambda cálculo simplemente tipado}
 
 El \emph{cálculo lambda tipado} más simple es el \emph{cálculo lambda simplemente tipado} o
 \emph{STLC}. En el STLC cada variable y cada función tiene un tipo, la
@@ -464,7 +520,7 @@ el tipo base \(\texttt{Bool}\), que representa los booleanos.
 La sintaxis del STLC es la siguiente:
 \begin{align*}
   M \Coloneqq x & \mid \lambda x: \alpha \mapsto M \mid M \ M \\
-    & \mid \texttt{true} \mid \texttt{false} \\
+    & \mid \LeanTrue \mid \LeanFalse \\
     & \LeanIfElse{M}{M}{M}
 \end{align*}
 
@@ -472,10 +528,10 @@ Además de las reglas de reducción que vimos antes, debemos añadir las
 \emph{reglas de tipado}, que son reglas que definen las expresiones bien
 tipadas del cálculo. Estas reglas requieren un \emph{contexto de tipado} que
 normalmente se denota como \(\Gamma\), este es un mapa que asocia variables con
-tipos. Estas reglas, por ejemplo, aseguran que la estructura \emph{if-then-else} se aplica
+tipos. Estas reglas, por ejemplo, aseguran que la estructura \emph{if-else} se aplica
 a booleanos, y que las dos ramas tienen el mismo tipo.
 
-\subsubsection{Generalización}
+\subsection{Generalización}
 
 El STLC es la base de la mayoría de los \(\lambda\)-cálculos tipados, y se puede
 extender permitiendo \emph{términos que dependen de tipos}, esto se conoce como
@@ -491,7 +547,7 @@ el CoC, que es la base de Coq y Lean. En lo que queda del texto exploraremos
 distintas características del CoC. Para un tratamiento completo del
 \(\lambda\)-cubo referimos al lector a~\cite{lambda_with_types}.
 
-\subsection{Teoría de tipos y teoría de conjuntos}
+\section{Teoría de tipos y teoría de conjuntos}
 
 En esta sección seguiremos la presentación de la teoría de tipos
 desarrollada en~\cite{hottbook}, aunque los conceptos presentados son
@@ -535,7 +591,7 @@ para codificar demostraciones. El juicio de tipo \(x: \alpha\) también puede se
 corresponde a la \emph{eliminación de implicaciones}. Veremos más sobre esto en la
 Sección~\ref{sec:curry_howard}.
 
-\subsection{Igualdad}
+\section{Igualdad}
 
 La igualdad en teoría de tipos es ligeramente más compleja que en las matemáticas
 clásicas. La igualdad que tenemos \enquote{gratis} es la \emph{igualdad
@@ -581,7 +637,7 @@ si la relación se cumple, y falsa en caso contrario.
   Una relación binaria es una función que toma dos elementos y devuelve una
   proposición.
   \[
-  \texttt{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
+  \funfont{Rel} \ (\alpha : \texttt{Type}) \ (\beta : \texttt{Type}) 
     \coloneqq \alpha \to \beta \to \Prop 
   \]
 \end{definition}
@@ -592,7 +648,7 @@ Podemos entonces definir la relación de igualdad como:
   La relación de igualdad es una relación binaria que toma dos elementos de un
   mismo tipo y devuelve una proposición.
   \[
-  \texttt{Eq} \ (\alpha: \texttt{Type}) \coloneqq \texttt{Rel} \ \alpha \ \alpha  
+  \funfont{Eq} \ (\alpha: \texttt{Type}) \coloneqq \texttt{Rel} \ \alpha \ \alpha  
   \]
 \end{definition}
 
@@ -600,7 +656,7 @@ La igualdad es, sin embargo, mucho más que una relación de equivalencia. Tiene
 importante propiedad de que cada afirmación respeta la equivalencia, en el sentido
 de que podemos sustituir expresiones iguales sin cambiar el valor de verdad.
 
-\subsubsection{Equivalencia}
+\subsection{Equivalencia}
 
 La noción de equivalencia es más general que la igualdad, y se refiere a una relación
 entre dos tipos que es reflexiva, simétrica y transitiva. Esta relación junto
@@ -608,13 +664,13 @@ con el tipo en el que se define conforma un \emph{setoid}, que es análogo
 a los \emph{conjuntos cociente} en teoría de conjuntos. Es decir nos define
 \emph{isomorfismos} entre tipos.
 
-\subsection{Universos}
+\section{Universos}
 
 Al principio de la sección hemos introducido el juicio \(x: \alpha\), en el que
 \(x\) es un \enquote{valor} y \(\alpha\) es un \enquote{tipo}, pero ahora nos preguntamos
 ¿cuál es el tipo de \(\alpha\)? La respuesta es que \(\alpha\) es de tipo
-\(\texttt{Type}\), pero ¿cuál es el tipo de \(\texttt{Type}\)? Por supuesto también es
-un tipo, así que \(\texttt{Type}: \texttt{Type}\). 
+\(\tyfont{Type}\), pero ¿cuál es el tipo de \(\tyfont{Type}\)? Por supuesto también es
+un tipo, así que \(\tyfont{Type}: \tyfont{Type}\). 
 Esto lleva a un problema conocido como \emph{impredicatividad}.
 
 La impredicatividad surge cuando una definición de un objeto o tipo depende de un
@@ -636,31 +692,31 @@ esto, introducimos una jerarquía de \emph{universos de tipos}.
 Cada universo es una \emph{colección de tipos}\footnote{Si estos son tipos o no depende de la
   teoría de tipos en particular, en Lean y Coq no lo son}, cada universo contiene los
 tipos del universo anterior, y está contenido en el siguiente universo. Por
-ejemplo: \(\texttt{Type}: \texttt{Type} \ 1\),
-\(\texttt{Type} \ 1: \texttt{Type} \ 2\), y así sucesivamente. El tipo función
+ejemplo: \(\tyfont{Type}: \tyfont{Type} \ 1\),
+\(\tyfont{Type} \ 1: \tyfont{Type} \ 2\), y así sucesivamente. El tipo función
 habita el universo más pequeño que contiene los tipos de su dominio y codominio.
-Por ejemplo, \(\mathbb{N} \to \mathbb{N}: \texttt{Type} \ 1\), y
-\(\texttt{Type} \ 1 \to \texttt{Type} \ 2: \texttt{Type} \ 3\).
+Por ejemplo, \(\mathbb{N} \to \mathbb{N}: \tyfont{Type} \ 1\), y
+\(\tyfont{Type} \ 1 \to \tyfont{Type} \ 2: \tyfont{Type} \ 3\).
 
-La base de la jerarquía, el universo \(\texttt{Type} \ 0\), contiene los tipos del
-lenguaje de programación en sí, como \(\mathbb{N}\), \(\texttt{Bool}\), y
-\(\texttt{List}\). El segundo universo, \(\texttt{Type} \ 1\), contiene los tipos
+La base de la jerarquía, el universo \(\tyfont{Type} \ 0\), contiene los tipos del
+lenguaje de programación en sí, como \(\mathbb{N}\), \(\tyfont{Bool}\), y
+\(\tyfont{List}\). El segundo universo, \(\tyfont{Type} \ 1\), contiene los tipos
 del primer universo, y así sucesivamente. Esta jerarquía de universos evita la
 impredicatividad, ya que cada universo es un tipo distinto y no puede contenerse
 a sí mismo.
 
-\subsection{Constructores}
+\section{Constructores}
 
 Hemos visto varias propiedades de los tipos, pero no hemos visto cómo crear
-valores de estos tipos. Por ejemplo, para el tipo \(\texttt{Bool}\), ¿cómo
-podemos crear el valor \(\texttt{true}\)? Para esto necesitamos \emph{constructores de
+valores de estos tipos. Por ejemplo, para el tipo \(\tyfont{Bool}\), ¿cómo
+podemos crear el valor \(\LeanTrue\)? Para esto necesitamos \emph{constructores de
 tipos}, que son funciones que crean elementos de un tipo y definen las
-posibles formas que un elemento de un tipo puede tomar. Para \(\texttt{Bool}\) tenemos dos
-constructores, \(\texttt{true}\) y \(\texttt{false}\), que crean los elementos del
-tipo. Esto asegura que los elementos del tipo son \emph{solo} \(\texttt{true}\) o
-\(\texttt{false}\), y no otro valor.
+posibles formas que un elemento de un tipo puede tomar. Para \(\tyfont{Bool}\) tenemos dos
+constructores, \(\LeanTrue\) y \(\LeanFalse\), que crean los elementos del
+tipo. Esto asegura que los elementos del tipo son \emph{solo} \(\LeanTrue\) o
+\(\LeanFalse\), y no otro valor.
 
-\subsection{Encaje de patrones}
+\section{Encaje de patrones}
 
 Para definir funciones que operan sobre tipos necesitamos una forma de distinguir
 entre las distintas formas que un elemento de un tipo puede tomar, esto se
@@ -669,11 +725,11 @@ definir funciones definiendo un caso distinto para cada constructor del tipo. Po
 ejemplo, podemos definir una función \(\texttt{not}\) que toma un booleano y
 devuelve su negación como:
 \[
-  \texttt{not} \ \texttt{true} = \texttt{false} \qquad
-  \texttt{not} \ \texttt{false} = \texttt{true}
+  \funfont{not} \ \LeanTrue = \LeanFalse \qquad
+  \funfont{not} \ \LeanFalse = \LeanTrue
 \]
 
-\subsection{Tipos suma y producto}
+\section{Tipos suma y producto}
 
 Hemos visto que podemos construir tipos a partir de otros mediante funciones,
 otro mecanismo que tenemos para construir tipos son los \emph{tipos suma} y
@@ -682,27 +738,27 @@ teoría de tipos, y son usados para construir tipos complejos a partir de tipos
 más simples. Los tipos suma son equivalentes a la \emph{unión disjunta} en teoría de
 conjuntos, y son usados para representar tipos que pueden tomar uno de varios
 valores. Denotamos un tipo suma como \(\alpha + \beta\), donde \(\alpha\) y \(\beta\) son
-tipos, los dos constructores de este tipo son \(\texttt{inl}\) y
-\(\texttt{inr}\) (abreviaciones de \emph{inyección izquierda} e
+tipos, los dos constructores de este tipo son \(\funfont{inl}\) y
+\(\funfont{inr}\) (abreviaciones de \emph{inyección izquierda} e
   \emph{inyección derecha}), que crean un valor del tipo suma. 
 Mediante encaje de patrones podemos definir funciones que operan sobre tipos suma,
 distinguiendo entre los dos constructores. 
 
-Cuando hemos definido antes el tipo \(\texttt{Bool}\) como
-el tipo que puede tomar un valor de \(\texttt{true}\) o \(\texttt{false}\), hemos
-utilizado implícitamente un tipo suma. En efecto, sea \(\texttt{Unit}\) el tipo
+Cuando hemos definido antes el tipo \(\tyfont{Bool}\) como
+el tipo que puede tomar un valor de \(\LeanTrue\) o \(\LeanFalse\), hemos
+utilizado implícitamente un tipo suma. En efecto, sea \(\tyfont{Unit}\) el tipo
 \emph{unitario} (que tiene un único constructor \texttt{()}), podemos definir 
-\(\texttt{Bool}\) como el \emph{tipo binario} que es la suma de \(\texttt{Unit}\) y
-\(\texttt{Unit}\):
+\(\tyfont{Bool}\) como el \emph{tipo binario} que es la suma de \(\tyfont{Unit}\) y
+\(\tyfont{Unit}\):
 \[
-  \texttt{Bool} \coloneqq \texttt{Unit} + \texttt{Unit}
+  \tyfont{Bool} \coloneqq \tyfont{Unit} + \tyfont{Unit}
 \]
-Donde la inyección izquierda \(\texttt{inl}\) representa \(\texttt{true}\) y la
-inyección derecha \(\texttt{inr}\) representa \(\texttt{false}\).
+Donde la inyección izquierda \(\funfont{inl}\) representa \(\LeanTrue\) y la
+inyección derecha \(\funfont{inr}\) representa \(\LeanFalse\).
 Mediante encaje de patrones podríamos definir la función \texttt{not} como:
 \begin{align*}
-  \texttt{not} \ (\texttt{inl} \ \placeholder) &= \texttt{inr} \ \texttt{()} \\
-  \texttt{not} \ (\texttt{inr} \ \placeholder) &= \texttt{inl} \ \texttt{()}
+  \funfont{not} \ (\funfont{inl} \ \placeholder) &= \funfont{inr} \ \texttt{()} \\
+  \funfont{not} \ (\funfont{inr} \ \placeholder) &= \funfont{inl} \ \texttt{()}
 \end{align*}
 
 \begin{notation}
@@ -713,8 +769,8 @@ Mediante encaje de patrones podríamos definir la función \texttt{not} como:
 
 Y la función \texttt{and} como:
 \begin{align*}
-  \texttt{and} \ (\texttt{inr} \ \placeholder) \ \placeholder &= \texttt{inr} \ \texttt{()} \\
-  \texttt{and} \ (\texttt{inl} \ \placeholder) \ y &= y
+  \funfont{and} \ (\funfont{inr} \ \placeholder) \ \placeholder &= \funfont{inr} \ \texttt{()} \\
+  \funfont{and} \ (\funfont{inl} \ \placeholder) \ y &= y
 \end{align*}
 Esto, aunque interesante en teoría, no es muy practico, enseguida veremos una
 generalización de los tipos suma, los \emph{tipos inductivos}.
@@ -723,40 +779,40 @@ Los tipos producto son equivalentes al \emph{producto cartesiano} en teoría de
 conjuntos, y son usados para representar tipos que pueden tomar varios valores
 al mismo tiempo, visto de otra forma \enquote{parejas} de valores. Denotamos un tipo
 producto como \(\alpha \times \beta\), donde \(\alpha\) y \(\beta\) son tipos, su
-único constructor es \(\texttt{intro}: \alpha \to \beta \to \alpha \times \beta\), 
+único constructor es \(\funfont{intro}: \alpha \to \beta \to \alpha \times \beta\), 
 que crea un valor del tipo producto.
-Definimos también las \emph{proyecciones} \(\texttt{fst}\) y
-\(\texttt{snd}\), que devuelven el primer y segundo elemento de la pareja
+Definimos también las \emph{proyecciones} \(\funfont{fst}\) y
+\(\funfont{snd}\), que devuelven el primer y segundo elemento de la pareja
 respectivamente.
 
-Podemos definir por ejemplo el tipo \(\texttt{And}\) (que no se debe confundir
-con la función \texttt{and} de \texttt{Bool}) como el tipo producto de dos 
+Podemos definir por ejemplo el tipo \(\tyfont{And}\) (que no se debe confundir
+con la función \(\funfont{and}\) de \(\tyfont{Bool}\)) como el tipo producto de dos 
 proposiciones\footnote{Veremos el sentido de esto en la sección~\ref{sec:curry_howard}}:
 \[
-  \texttt{And} \coloneqq \Prop \times \Prop
+  \tyfont{And} \coloneqq \Prop \times \Prop
 \]
 De esta forma la demostración izquierda de la conjunción 
-\(x : \texttt{And} \coloneqq (p, q)\) es \(\texttt{fst} \ x = p\)
-y la derecha \(\texttt{snd} \ x = q\). La generalización a n-tuplas de
+\(x : \tyfont{And} \coloneqq (p, q)\) es \(\funfont{fst} \ x = p\)
+y la derecha \(\funfont{snd} \ x = q\). La generalización a n-tuplas de
 valores es inmediata.
 
-\subsection{Tipos inductivos}
+\section{Tipos inductivos}
 
-Definir tipos finitos como \(\texttt{Bool}\) es interesante, pero no nos
+Definir tipos finitos como \(\tyfont{Bool}\) es interesante, pero no nos
 llevará muy lejos, necesitamos una forma de definir tipos infinitos, como los
 números naturales. Esto se hace usando \emph{tipos inductivos}, que son tipos
 definidos por un conjunto de constructores que definen las posibles formas que
 un elemento del tipo puede tomar. Por ejemplo, podemos definir los números
 naturales como un tipo inductivo con dos constructores, \(0\) y
-\(\texttt{succ}\), que crean los elementos del tipo, de una forma análoga a los
+\(\funfont{succ}\), que crean los elementos del tipo, de una forma análoga a los
 \emph{axiomas de Peano}. En este caso los números naturales tienen los
 constructores:
 \[
-  0 : \mathbb{N} \qquad \texttt{succ}: \mathbb{N} \to \mathbb{N}
+  0 : \mathbb{N} \qquad \funfont{succ}: \mathbb{N} \to \mathbb{N}
 \]
 
 De forma similar al principio clásico de inducción, hemos definido un caso base
-\(0\) y un caso inductivo \(\texttt{succ}\), que crea el sucesor de un número
+\(0\) y un caso inductivo \(\funfont{succ}\), que crea el sucesor de un número
 natural. De esta forma podemos crear los números naturales como un tipo
 inductivo, y definir funciones que operan sobre ellos, como la suma,
 multiplicación y exponenciación. Esta es la esencia de los tipos inductivos, la
@@ -772,7 +828,7 @@ proveer un caso base \(c_0 : C\) y una función de \enquote{siguiente paso}
 patrones como:
 \begin{align*}
   f \ 0 & = c_0 \\
-  f \ (\texttt{succ} \ n) & = c_s \ n \ (f \ n)
+  f \ (\funfont{succ} \ n) & = c_s \ n \ (f \ n)
 \end{align*}
 Para usar esta técnica debemos asegurar que el tipo inductivo es \emph{bien fundado},
 es decir, que los constructores del tipo son aplicados un número finito de veces
@@ -781,12 +837,12 @@ para crear un elemento del tipo.
 \begin{example}[Suma de naturales]
   Definimos la suma de dos números naturales como:
   \begin{align*}
-    \texttt{add} \ n \ 0 &= n \\
-    \texttt{add} \ n \ (\texttt{succ} \ m) &= \texttt{succ} \ (\texttt{add} \ n \ m)
+    \funfont{add} \ n \ 0 &= n \\
+    \funfont{add} \ n \ (\funfont{succ} \ m) &= \funfont{succ} \ (\funfont{add} \ n \ m)
   \end{align*}
 \end{example}
 
-\subsection{Tipo función dependiente}
+\section{Tipo función dependiente}
 
 Como dijimos antes, las funciones son ciudadanos de primera clase en la teoría de tipos,
 y pueden ser pasadas como argumentos, devueltas como resultados, y almacenadas en
@@ -794,11 +850,11 @@ variables. Nos proponemos generalizar el tipo función de forma que el tipo de
 retorno dependa del valor de los argumentos, llamaremos a esta generalización \emph{\(\Pi\)-tipos}
 (o \emph{tipos dependientes}).
 
-La notación para un \(\Pi\)-tipo es \(\Pi_{x: \alpha} B \ x\), donde \(x\) es el argumento
+La notación para un \(\Pi\)-tipo es \(\prod_{x: \alpha} B \ x\), donde \(x\) es el argumento
 del cual depende el tipo, \(\alpha\) es el tipo del argumento, y \(B\) es una familia
-de tipos indexados por \(x\) (\(B: \alpha \to \texttt{Type}\)). Por ejemplo, podemos
+de tipos indexados por \(x\) (\(B: \alpha \to \tyfont{Type}\)). Por ejemplo, podemos
 definir una función que toma un número natural \(n\) y devuelve un tipo
-\(\texttt{Vec} \ \alpha \ n\), que es un tipo de vector de longitud \(n\) de
+\(\tyfont{Vec} \ \alpha \ n\), que es un tipo de vector de longitud \(n\) de
 elementos de tipo \(\alpha\).
 \begin{example}[Vector]
   % We can define a vector of a given length as an inductive type that depends on
@@ -806,14 +862,14 @@ elementos de tipo \(\alpha\).
   Definimos un vector de longitud \(n\) como un tipo inductivo que depende de la
   longitud del vector
   \[
-  \BigPi_{n: \mathbb{N}} \texttt{Vec} \ \alpha \ n
+  \prod_{n: \mathbb{N}} \tyfont{Vec} \ \alpha \ n
   \]
   Con constructores:
   \begin{align*}
-    \texttt{nil} & : \texttt{Vec} \ \alpha \ 0 \\
-    \texttt{cons} & : \BigPi_{n: \mathbb{N}}
-    (\alpha \to \texttt{Vec} \ \alpha \ n
-      \to \texttt{Vec} \ \alpha \ (\texttt{succ} \ n)) 
+    \funfont{nil} & : \tyfont{Vec} \ \alpha \ 0 \\
+    \funfont{cons} & : \prod_{n: \mathbb{N}}
+    (\alpha \to \tyfont{Vec} \ \alpha \ n
+      \to \tyfont{Vec} \ \alpha \ (\funfont{succ} \ n)) 
   \end{align*}
 \end{example}
 
@@ -821,29 +877,29 @@ De esta forma los \(\Pi\)-tipos nos proporcionan una forma de tipar estructuras 
 datos complejas, como listas, árboles y grafos cuyo tipo depende del valor
 de sus elementos. 
 
-\subsection{Tipo par dependiente}
+\section{Tipo par dependiente}
 
 Ahora nos proponemos generalizar los tipos producto de forma que el tipo de
 la segunda componente dependa del valor de la primera, llamaremos a esta
 generalización \emph{\(\Sigma\)-tipos} (o \emph{tipos pares dependientes}). La
-notación para un \(\Sigma\)-tipo es \(\Sigma_{x: \alpha} B \ x\), donde \(x\) es 
+notación para un \(\Sigma\)-tipo es \(\sum_{x: \alpha} B \ x\), donde \(x\) es 
 la primera componente del par, \(\alpha\) su tipo, y \(B\) es una familia de
-tipos indexados por \(x\) (\(B: \alpha \to \texttt{Type}\)).
+tipos indexados por \(x\) (\(B: \alpha \to \tyfont{Type}\)).
 
 En caso de que \(B\) sea una función constante el \(\Sigma\)-tipo es
 igual al tipo producto, es decir, si \(B \ x = \beta\) para todo \(x\), entonces:
 \[
-  \BigSigma_{x: \alpha} B = \alpha \times \beta.
+  \sum_{x: \alpha} B = \alpha \times \beta.
 \]
 
-Su constructor es \(\texttt{intro}: \alpha \to B \ x \to \Sigma_{x: \alpha} B \ x\), que toma un
+Su constructor es \(\funfont{intro}: \alpha \to B \ x \to \sum_{x: \alpha} B \ x\), que toma un
 valor de tipo \(\alpha\) y un valor de tipo \(B \ x\) y devuelve un valor del
-tipo \(\Sigma_{x: \alpha} B \ x\).
+tipo \(\sum_{x: \alpha} B \ x\).
 
 Aunque la utilidad de estos tipos no es tan evidente como la de los \(\Pi\)-tipos, 
 veremos en la siguiente sección que son fundamentales.
 
-\subsection{La correspondencia de Curry-Howard}\label{sec:curry_howard}
+\section{La correspondencia de Curry-Howard}\label{sec:curry_howard}
 
 El isomorfismo de Curry-Howard establece una correspondencia entre \emph{proposiciones}
 y \emph{tipos} y entre \emph{términos} y \emph{demostraciones}. Este es conocido como el
@@ -860,20 +916,20 @@ Las demostraciones pueden ser manipuladas como en la lógica clásica, por ejemp
 podemos obtener una demostración de que dos proposiciones son ciertas usando el
 operador \(\land\), que establece que si \(P\) y \(Q\) son verdaderas, entonces
 \(P \land Q\) es verdadero. Como hemos visto antes esto corresponde al \emph{tipo
-producto} \(\texttt{And} \coloneqq P \times Q\), que establece que si tenemos una 
+producto} \(\tyfont{And} \coloneqq P \times Q\), que establece que si tenemos una 
 demostración de \(P\) y una demostración de \(Q\), entonces podemos construir una
 demostración de \(P \times Q\). El juicio \(\bot\) que representa la
-\emph{inconsistencia} se representa como un tipo sin constructores \(\texttt{Empty}\), 
+\emph{inconsistencia} se representa como un tipo sin constructores \(\tyfont{Empty}\), 
 y el juicio \(\top\) que representa una \emph{tautología} se representa como el tipo unitario
-\(\texttt{Unit}\), que tiene solo un constructor sin argumentos.
+\(\tyfont{Unit}\), que tiene solo un constructor sin argumentos.
 
 El principio \emph{ex falso quodlibet} se representa como una función de tipo
-\(\texttt{exfalso}: \texttt{Empty} \to \alpha\), que establece que si tenemos una
+\(\funfont{exfalso}: \tyfont{Empty} \to \alpha\), que establece que si tenemos una
 demostración de \(\bot\), entonces podemos construir una demostración de cualquier
 proposición \(\alpha\). Claramente, si intentamos definir esta función mediante
 encaje de patrones tenemos que no podemos discriminar el valor de retorno
 dependiendo del valor de entrada, ya que no hay ningún constructor de
-\(\texttt{Empty}\).
+\(\tyfont{Empty}\).
 
 Consideramos ahora la implicación (\(\implies\)) en lógica proposicional, la
 proposición \(P \implies Q\) establece que si \(P\) es verdadero, entonces \(Q\)
@@ -888,8 +944,8 @@ La correspondencia no se limita a la lógica proposicional, sino que se
 extiende a la lógica de predicados y a lógicas de orden superior. Por ejemplo, el
 cuantificador universal \(\forall\) corresponde al tipo función dependiente
 \(\Pi\), en efecto, la proposición \(\forall x: \alpha, P \ x\) corresponde al tipo
-\(\Pi_{x: \alpha} P \ x\), y el cuantificador existencial \(\exists x : \alpha, P \ x\)
-corresponde al tipo par dependiente \(\Sigma_{x: \alpha} P \ x\). Donde las 
+\(\prod_{x: \alpha} P \ x\), y el cuantificador existencial \(\exists x : \alpha, P \ x\)
+corresponde al tipo par dependiente \(\sum_{x: \alpha} P \ x\). Donde las 
 \emph{familias indexadas} \(P: \alpha \to \Prop\) son las proposiciones 
 que dependen de un valor. De esta forma podemos razonar sobre programas usando las
 herramientas de la lógica, y viceversa.
@@ -897,20 +953,20 @@ herramientas de la lógica, y viceversa.
 Clarificamos esto con un ejemplo, la desigualdad entre naturales \(n \leq m\) se
 puede expresar como la proposición \(n \leq m \coloneqq \exists k: \mathbb{N}, n + k = m\).
 Para demostrar entonces que \(3 \leq 5\) debemos construir un término del tipo
-\(\Sigma_{k: \mathbb{N}}, \texttt{add} \ 3 \ k = 5\). Para ello usamos el constructor
+\(\sum_{k: \mathbb{N}} \funfont{add} \ 3 \ k = 5\). Para ello usamos el constructor
 de \(\Sigma\)-tipos:
 \[
-  \texttt{intro} \ 2 \ (\texttt{add} \ 3 \ 2 = 5)
+  \funfont{intro} \ 2 \ (\funfont{add} \ 3 \ 2 = 5)
 \]
-Ahora podemos \enquote{evaluar} la función \(\texttt{add}\) obteniendo:
+Ahora podemos \enquote{evaluar} la función \(\funfont{add}\) obteniendo:
 \[
-  \texttt{intro} \ 2 \ (5 = 5)
+  \funfont{intro} \ 2 \ (5 = 5)
 \]
-y aplicando el constructor de igualdad \(\texttt{refl}\):
+y aplicando el constructor de igualdad \(\funfont{refl}\):
 \[
-  \texttt{intro} \ 2 \ (\texttt{refl} \ 5)
+  \funfont{intro} \ 2 \ (\funfont{refl} \ 5)
 \]
-conseguimos un término del tipo \(\Sigma_{k: \mathbb{N}} \texttt{add} \ 3 \ k = 5\), que
+conseguimos un término del tipo \(\sum_{k: \mathbb{N}} \funfont{add} \ 3 \ k = 5\), que
 es una demostración de \(3 \leq 5\). Este ejemplo muestra como realizaremos 
 todas las demostraciones en Lean a partir de ahora.
 
@@ -925,7 +981,7 @@ tipos, y viceversa. Esto va más allá de los objetivos de este trabajo, pero
 en la siguiente sección veremos como podemos recrear conjuntos dentro
 de la teoría de tipos, ya que más adelante los necesitaremos.
 
-\subsection{Conjuntos}\label{sec:sets}
+\section{Conjuntos}\label{sec:sets}
 
 Podemos codificar un conjunto en teoría de tipos como una función que toma un
 valor de un tipo y devuelve una proposición, esta proposición nos dice si el
@@ -935,7 +991,7 @@ valor está en el conjunto o no.
   Un conjunto es una función que toma un elemento de un tipo y devuelve una
   proposición.
   \[
-  \tyfont{Set} \ (\alpha: \texttt{Type}) \coloneqq \alpha \to \Prop 
+  \tyfont{Set} \ (\alpha: \tyfont{Type}) \coloneqq \alpha \to \Prop 
   \]
 \end{definition}
 
@@ -990,7 +1046,7 @@ tipos.
 Necesitaremos usar conjuntos cuando hagamos nuestra introducción a la
 \emph{teoría de dominios}.
 
-\subsection{Irrelevancia de demostraciones}
+\section{Irrelevancia de demostraciones}
 
 Una diferencia fundamental entre las diferentes teorías de tipos es cómo
 tratan la igualdad entre demostraciones. El sistema de tipos de Lean, como hemos
@@ -1021,7 +1077,7 @@ como \emph{unicidad de las demostraciones de identidad} o \emph{UIP}.
 \begin{definition}[UIP]
   Sean \(x \ y : \alpha\) y \(p \ q : x = y\), entonces \(p = q\).
 \end{definition}
-Esto se debe a que en Lean \(\texttt{Eq} \ \alpha \ x \ y\) tiene tipo \(\Prop\), y
+Esto se debe a que en Lean \(\tyfont{Eq} \ \alpha \ x \ y\) tiene tipo \(\Prop\), y
 por lo tanto, todas las demostraciones de igualdad son iguales.
 
 Como curiosidad, o potencial desventaja, de este enfoque notamos que UIP no es
@@ -1030,7 +1086,7 @@ compatible con el \emph{axioma de univalencia} de la teoría de tipos homotópic
 En Coq y Agda, por el contrario, no tenemos irrelevancia de demostraciones.
 Esta es una de las mayores diferencias entre estos demostradores.
 
-\section{Semántica de paso largo}
+\chapter{Semántica}
 
 Una vez presentada la teoría de tipos (y los asistentes de demostración) podemos 
 pasar a definir la semántica de lenguajes de programación. Seguiremos un desarrollo
@@ -1040,53 +1096,53 @@ en este trabajo nos centraremos en la semántica operacional y la semántica
 denotacional.
 
 Para nuestro estudio primero definiremos un pequeño lenguaje imperativo
-\(\texttt{IMP}\) que usaremos para ilustrar los conceptos. \(\texttt{IMP}\) es un
+\(\ImpName\) que usaremos para ilustrar los conceptos. \(\ImpName\) es un
 que consiste en un conjunto de comandos (como asignaciones, secuencias,
 condicionales y bucles) y expresiones (aritméticas y booleanas). El lenguaje es
 sencillo por diseño, para que podamos centrarnos en introducir las técnicas de
 la semántica formal, pero estas mismas técnicas pueden ser extendidas a lenguajes
 de programación ampliamente usados, como C, Java y Python.
 
-\subsection{Sintaxis}
+\section{Sintaxis}
 
-Como introducción informal a la sintaxis de \(\texttt{IMP}\) podemos definir los
+Como introducción informal a la sintaxis de \(\ImpName\) podemos definir los
 \enquote{conjuntos sintácticos} del lenguaje como:
 \begin{itemize}
   \item Enteros \(n \in \mathbb{Z}\).
-  \item Booleanos \(b \in \texttt{Bool} = \{\texttt{true}, \texttt{false}\}\).
-  \item Variables \(x \in \texttt{Var}\), that store integers.
-  \item Expresiones aritméticas \(a \in \texttt{Aexp}\), que pueden ser constantes,
+  \item Booleanos \(b \in \tyfont{Bool} = \{\ImpTrue, \ImpFalse\}\).
+  \item Variables \(x \in \tyfont{String}\), that store integers.
+  \item Expresiones aritméticas \(a \in \tyfont{Aexp}\), que pueden ser constantes,
     variables u operaciones aritméticas.
-  \item Expresiones booleanas \(b \in \texttt{Bexp}\), que pueden ser constantes,
+  \item Expresiones booleanas \(b \in \tyfont{Bexp}\), que pueden ser constantes,
     variables u operaciones booleanas.
-  \item Comandos \(c \in \texttt{Com}\), que pueden ser asignaciones, condicionales,
+  \item Comandos \(c \in \tyfont{Com}\), que pueden ser asignaciones, condicionales,
     bucles o secuencias de comandos.
 \end{itemize}
 
-Definimos la sintaxis de \(\texttt{Aexp}\), en forma de Backus-Naur:
+Definimos la sintaxis de \(\tyfont{Aexp}\), en forma de Backus-Naur:
 \[
 a \Coloneqq n \ | \ x \ | \ a_1 \ImpPlus a_2 \ | \ a_1 \ImpMinus a_2 \ | \ a_1 \ImpTimes a_2
 \]
-la sintaxis de \(\texttt{Bexp}\) como:
+la sintaxis de \(\tyfont{Bexp}\) como:
 \[
-b \Coloneqq \texttt{true} \ | \ \texttt{false} \ | \ 
+b \Coloneqq \ImpTrue \ | \ \ImpFalse \ | \ 
   \ImpNot b \ | \ b_1 \ \ImpAnd \ b_2 \ | \ b_1 \ \ImpOr \ b_2 \ | \ a_1 \ \ImpEq \ a_2 \ | \ a_1 \ \ImpLe \ a_2
 \]
-y la sintaxis de \(\texttt{Com}\) como:
+y la sintaxis de \(\tyfont{Com}\) como:
 \[
 c \Coloneqq \ImpSkip \ | \ \ImpAssign{x}{a} \ | \ \ImpConcat{c_1}{c_2} \ | \ \ImpIfElse{b}{c_1}{c_2} \ | \ \ImpWhile{b}{c}
 \]
 
 Armados con nuestra teoría de tipos podemos definir estos \enquote{conjuntos sintácticos}
 como tipos inductivos, el tipo de expresiones aritméticas puede ser definido como un
-tipo inductivo \(\texttt{Aexp}\) con constructores para cada \enquote{constructo
+tipo inductivo \(\tyfont{Aexp}\) con constructores para cada \enquote{constructo
 sintáctico}:
 \begin{align*}
-  \texttt{val} &\coloneqq \mathbb{Z} \to \texttt{Aexp} &
-  \texttt{var} &\coloneqq \texttt{String} \to \texttt{Aexp} \\
-  \texttt{add} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} &
-  \texttt{sub} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp} &
-  \texttt{mul} &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Aexp}
+  \funfont{val} &\coloneqq \mathbb{Z} \to \tyfont{Aexp} &
+  \funfont{var} &\coloneqq \tyfont{String} \to \tyfont{Aexp} \\
+  \funfont{add} &\coloneqq \tyfont{Aexp} \to \tyfont{Aexp} \to \tyfont{Aexp} &
+  \funfont{sub} &\coloneqq \tyfont{Aexp} \to \tyfont{Aexp} \to \tyfont{Aexp} \\
+  \funfont{mul} &\coloneqq \tyfont{Aexp} \to \tyfont{Aexp} \to \tyfont{Aexp}
 \end{align*}
 
 Mientras que los primeros dos simplemente \enquote{coaccionan} un valor o una
@@ -1094,54 +1150,54 @@ variable en una expresión, los otros \enquote{construyen} una expresión a part
 dos expresiones. Los constructores para expresiones booleanas son definidos de
 forma similar:
 \begin{align*}
-  \texttt{true}  &\coloneqq \texttt{Bexp} &
-  \texttt{false} &\coloneqq \texttt{Bexp} \\
-  \texttt{not}   &\coloneqq \texttt{Bexp} \to \texttt{Bexp} &
-  \texttt{and}   &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} &
-  \texttt{or}    &\coloneqq \texttt{Bexp} \to \texttt{Bexp} \to \texttt{Bexp} \\
-  \texttt{eq}    &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp} &
-  \texttt{le}    &\coloneqq \texttt{Aexp} \to \texttt{Aexp} \to \texttt{Bexp}
+  \funfont{true}  &\coloneqq \tyfont{Bexp} &
+  \funfont{false} &\coloneqq \tyfont{Bexp} \\
+  \funfont{not}   &\coloneqq \tyfont{Bexp} \to \tyfont{Bexp} &
+  \funfont{and}   &\coloneqq \tyfont{Bexp} \to \tyfont{Bexp} \to \tyfont{Bexp} \\
+  \funfont{or}    &\coloneqq \tyfont{Bexp} \to \tyfont{Bexp} \to \tyfont{Bexp} &
+  \funfont{eq}    &\coloneqq \tyfont{Aexp} \to \tyfont{Aexp} \to \tyfont{Bexp} \\
+  \funfont{le}    &\coloneqq \tyfont{Aexp} \to \tyfont{Aexp} \to \tyfont{Bexp}
 \end{align*}
 
 Y los comandos son definidos como:
 \begin{align*}
-  \ImpSkip &\coloneqq \texttt{Com} &
-  \texttt{assign} &\coloneqq \texttt{String} \to \texttt{Aexp} \to \texttt{Com} &
-  \texttt{seq} &\coloneqq \texttt{Com} \to \texttt{Com} \to \texttt{Com} \\
-  \texttt{ifElse} &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com} \to \texttt{Com} &
-  \texttt{whileLoop} &\coloneqq \texttt{Bexp} \to \texttt{Com} \to \texttt{Com}
+  \ImpSkip &\coloneqq \tyfont{Com} &
+  \funfont{assign} &\coloneqq \tyfont{String} \to \tyfont{Aexp} \to \tyfont{Com} \\
+  \funfont{seq} &\coloneqq \tyfont{Com} \to \tyfont{Com} \to \tyfont{Com} &
+  \funfont{ifElse} &\coloneqq \tyfont{Bexp} \to \tyfont{Com} \to \tyfont{Com} \to \tyfont{Com} \\
+  \funfont{whileLoop} &\coloneqq \tyfont{Bexp} \to \tyfont{Com} \to \tyfont{Com}
 \end{align*}
 
 Una expresión simple en nuestro lenguaje podría ser:
 \[
-  \texttt{add} \ (\texttt{var} \ \textit{``x''}) \ (\texttt{val} \ 3)
+  \funfont{add} \ (\funfont{var} \ \textit{``x''}) \ (\funfont{val} \ 3)
 \]
 que corresponde al \enquote{árbol sintáctico abstracto} de la expresión, para
 no tener que lidiar constantemente con ASTs utilizaremos algunos \enquote{abusos de
 notación}, que corresponden al parseo, y diremos que \(x + 3\), por ejemplo, 
-es una expresión aritmética de \texttt{IMP}.
+es una expresión aritmética de \ImpName.
 Cuando definamos nuestro lenguaje en Lean debemos tener más cuidado al mezclar
 nuestro lenguaje y el meta-lenguaje, usando algunas facilidades que nos
-proporciona podemos hacer un pequeño parser para \texttt{IMP}, y usando
+proporciona podemos hacer un pequeño parser para \ImpName, y usando
 clases y coacciones podemos incluso usar nuestros abusos de notación en el
 lenguaje huésped, todos los detalles están en \url{
 github.com/remind-me-later/SemanticsLean/blob/main/Semantics/Imp/Lang.lean}.
 
-Con nuestros abusos un poco más claros, podemos escribir en \(\texttt{IMP}\)
+Con nuestros abusos un poco más claros, podemos escribir en \(\ImpName\)
 un programa que calcule el factorial de un número \(n\).
-\begin{example}[Factorial en \texttt{IMP}]
+\begin{example}[Factorial en \ImpName]
   El factorial de un número \(n\) puede ser calculado usando un simple bucle:
-  \begin{minted}{rust}
-  n = 5; i = 2; res = 1;
+\begin{minted}{rust}
+n = 5; i = 2; res = 1;
 
-  while i <= n {
-      res = res * i;
-      i = i + 1
-  }
-  \end{minted}
+while i <= n {
+    res = res * i;
+    i = i + 1
+}
+\end{minted}
 \end{example}
 
-\subsection{Estado}
+\section{Estado}
 
 Como hemos visto en la sintaxis, nuestro lenguaje imperativo soporta una
 característica que caracteriza a todos los lenguajes imperativos, valga la redundancia, 
@@ -1162,7 +1218,7 @@ Pero vamos a definirlo de forma más general, como un \emph{mapa}.
 \end{definition}
 
 Aunque la definición del tipo mapa no es particularmente útil si no tenemos una forma de
-relacionar claves y valores, esto se hace usando la función \funfont{update}:
+relacionar claves y valores, esto se hace usando la función \funfont{update}.
 \begin{definition}[Actualizar]
   La función \funfont{update} toma un mapa, una clave y un valor, y devuelve un
   un nuevo mapa que mapea la clave al valor, y todas las otras claves al mismo
@@ -1176,16 +1232,16 @@ relacionar claves y valores, esto se hace usando la función \funfont{update}:
 La función \funfont{cond} no es más que azúcar sintáctico para el encaje de
 patrones, se define como:
 \begin{align*}
-  \funfont{cond} \ \texttt{true} \ v \ w &\coloneqq v \\
-  \funfont{cond} \ \texttt{false} \ v \ w &\coloneqq w
+  \funfont{cond} \ \LeanTrue \ v \ w &\coloneqq v \\
+  \funfont{cond} \ \LeanFalse \ v \ w &\coloneqq w
 \end{align*}
 
-Podemos usar incluso más azúcar y denotar la función \funfont{cond} como un \emph{if then else}:
+Podemos usar incluso más azúcar y denotar la función \funfont{cond} como un \emph{if else}:
 \begin{align*}
   \funfont{update} \ & (m: \tyfont{Map} \ \alpha) \ (k: \tyfont{String}) \ (v: \alpha): \tyfont{Map} \ \alpha \coloneqq \\
                       &\lambda k' \mapsto \LeanIfElse{k = k'}{v}{m \ k'}
 \end{align*}
-Que no debe ser confundido con el \texttt{if then else} del lenguaje \texttt{IMP}.
+Que no debe ser confundido con el \texttt{if else} del lenguaje \ImpName.
 Podemos introducir también una notación para denotar la \enquote{asignación} de un mapa de
 forma más familiar:
 \begin{notation}[Actualización de mapa]
@@ -1292,7 +1348,7 @@ mapa que asigna todas las variables a cero. Por supuesto, asignarles cero es
 solo una convención, podríamos asignarles cualquier valor.
 
 \begin{definition}[Estado inicial]
-  El estado inicial de un programa \(\texttt{IMP}\) es la función constante que
+  El estado inicial de un programa \(\ImpName\) es la función constante que
   mapea todas las variables a cero:
   \[
   s_0 \coloneqq \lambda x \mapsto 0
@@ -1305,11 +1361,16 @@ sencillo como aplicar el estado a una cadena:
 (s_0[k \leftarrow 3][k \leftarrow 4][k \leftarrow 7]) \ k = 7
 \]
 
-\subsection{Evaluación de expresiones}
+\section{Semántica de paso largo}
 
 Una vez descrita la \emph{sintaxis} del lenguaje, podemos pasar a definir la
-\emph{evaluación} de expresiones. Como nuestras expresiones contienen
-variables, no podemos darles significado sin un estado asociado, en efecto,
+\emph{evaluación} de los diferentes constructos sintácticos, empezando por las
+expresiones, que son las estructuras más sencillas.
+
+\subsection{Evaluación de expresiones}
+
+Las expresiones de \(\ImpName\) contienen
+variables, por lo que no podemos darles significado sin un estado asociado, en efecto,
 consideramos la expresión \(2 + 2\), claramente su valor es \(4\), pero si
 tenemos la expresión \(x + 2\) no podemos saber su valor sin conocer el
 valor de \(x\). Por ello, la evaluación de expresiones se define sobre una
@@ -1342,12 +1403,12 @@ Introducimos una notación más usada en textos clásicos de semántica formal.
 Los constructores de la relación son las \emph{reglas de evaluación}, por ejemplo el
 constructor para una expresión constante es:
 \[
-  \texttt{val} : (n, \placeholder) \bigstep n
+  \funfont{val} : (n, \placeholder) \bigstep n
 \]
 
 Este constructor relaciona la configuración \((n, \placeholder)\) con el valor entero \(n\), 
 donde el \(n\) de la izquierda es una expresión 
-constante\footnote{En realidad deberíamos escribir \(\texttt{val} \ n\)
+constante\footnote{En realidad deberíamos escribir \(\funfont{val} \ n\)
   para denotar que es el primer constructor del tipo \(\tyfont{Aexp}\), pero
   haremos un pequeño abuso de notación y lo omitiremos por brevedad.} y el 
 \(\placeholder\) denota cualquier estado. Es importante no confundir el constructor
@@ -1357,7 +1418,7 @@ que aunque tienen el mismo nombre la distinción es clara por el contexto.
 El constructor para una expresión variable es similar, pero esta vez necesitamos
 \enquote{extraer} el valor de la variable del estado:
 \[
-  \texttt{var} : (x, s) \bigstep s \ x
+  \funfont{var} : (x, s) \bigstep s \ x
 \]
 
 Nos planteamos ahora definir los constructores para las operaciones
@@ -1368,7 +1429,7 @@ las premisas de la regla, o lo que es lo mismo nuestro constructor
 tomará otros dos constructores del mismo tipo. Por ejemplo el
 constructor para la operación suma es:
 \[
-  \texttt{add} : \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+  \funfont{add} : \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
    {(a_1 \ImpPlus a_2, s) \bigstep n_1 + n_2}
 \]
 Esta regla dice que si la configuración \((a_1, s)\) evalúa a \(n_1\) y la
@@ -1377,9 +1438,9 @@ configuración \((a_2, s)\) evalúa a \(n_2\), entonces la configuración
 
 Los constructores para la resta y la multiplicación son análogos:
 \begin{align*}
-  \texttt{sub} &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+  \funfont{sub} &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
    {(a_1 \ImpMinus a_2, s) \bigstep n_1 - n_2} \\
-  \texttt{mul} &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
+  \funfont{mul} &: \frac{(a_1, s) \bigstep n_1 \quad (a_2, s) \bigstep n_2}
    {(a_1 \ImpTimes a_2, s) \bigstep n_1 * n_2}
 \end{align*}
 
@@ -1390,20 +1451,26 @@ Veamos un ejemplo de un \emph{árbol de evaluación} válido.
 
 \begin{example}[Árbol de evaluación]\label{ex:arithmetic_evaluation}
   Evaluamos el valor de la expresión \((x + 5) + (9 - 7)\) en el estado \(s_0\)
-  aplicando las \enquote{reglas} (constructores) de la relación de paso largo:
-\[
-  \texttt{add}: \frac{
-    \texttt{add}: \displaystyle{\frac{
-      \texttt{var}: (x, s_0) \bigstep 0
+  aplicando las \enquote{reglas} (constructores) de la relación de paso largo,
+  los subárboles izquierdo y derecho son:
+  \begin{align*}
+    L &\coloneqq \funfont{add}: \displaystyle{\frac{
+      \funfont{var}: (x, s_0) \bigstep 0
       \quad
-      \texttt{val}: (5, s_0) \bigstep 5
-    }{(x \ImpPlus 5, s_0) \bigstep 5}}
-    \quad 
-    \texttt{sub}: \displaystyle{\frac{
-      \texttt{val}: (9, s_0) \bigstep 9
+      \funfont{val}: (5, s_0) \bigstep 5
+    }{(x \ImpPlus 5, s_0) \bigstep 5}} \\
+    R &\coloneqq \funfont{sub}: \displaystyle{\frac{
+      \funfont{val}: (9, s_0) \bigstep 9
       \quad
-      \texttt{val}: (7, s_0) \bigstep 7
+      \funfont{val}: (7, s_0) \bigstep 7
     }{(9 \ImpMinus 7, s_0) \bigstep 2}}
+  \end{align*}
+  Con lo que podemos escribir el árbol de evaluación completo como:
+\[
+  \funfont{add}: \frac{
+    L
+    \qquad
+    R    
   }
   {((x \ImpPlus 5) \ImpPlus (9 \ImpMinus 7), s_0) \bigstep 7}
 \]
@@ -1430,11 +1497,11 @@ evaluación. Esto es posible porque la función de evaluación es \emph{total},
 es decir, está definida para todas las expresiones y estados, mediante las 
 siguientes reglas:
 \begin{align*}
-  \funfont{eval} \ (\texttt{val} \ v) \ \placeholder &\coloneqq v \\
-  \funfont{eval} \ (\texttt{var} \ x) \ s &\coloneqq s \ x \\
-  \funfont{eval} \ (\texttt{add} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s + \funfont{eval} \ a_2 \ s \\
-  \funfont{eval} \ (\texttt{sub} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s - \funfont{eval} \ a_2 \ s \\
-  \funfont{eval} \ (\texttt{mul} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s * \funfont{eval} \ a_2 \ s
+  \funfont{eval} \ (\funfont{val} \ v) \ \placeholder &\coloneqq v \\
+  \funfont{eval} \ (\funfont{var} \ x) \ s &\coloneqq s \ x \\
+  \funfont{eval} \ (\funfont{add} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s + \funfont{eval} \ a_2 \ s \\
+  \funfont{eval} \ (\funfont{sub} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s - \funfont{eval} \ a_2 \ s \\
+  \funfont{eval} \ (\funfont{mul} \ a_1 \ a_2) \ s &\coloneqq \funfont{eval} \ a_1 \ s * \funfont{eval} \ a_2 \ s
 \end{align*}
 
 Introducimos notación para denotar la evaluación de una expresión en un
@@ -1470,8 +1537,8 @@ igualdad en una doble implicación, y luego probamos cada implicación por separ
 
 Comenzamos probando la implicación de izquierda a derecha
 \((a, s) \bigstep n \implies a \ s = n\). Procedemos por inducción
-sobre la relación de evaluación, los casos para los constructores \(\texttt{val}\)
-y \(\texttt{var}\) son inmediatos. En el caso de \(\texttt{add}\) la
+sobre la relación de evaluación, los casos para los constructores \(\funfont{val}\)
+y \(\funfont{var}\) son inmediatos. En el caso de \(\funfont{add}\) la
 expresión tiene la forma \(a_1 + a_2\), con lo que tenemos que probar que
 \[
 ((a_1 \ImpPlus a_2) \ s) = n_1 + n_2
@@ -1483,8 +1550,8 @@ Los casos para la resta y la multiplicación son análogos.
 
 La implicación de derecha a izquierda \((a \ s = n) \implies (a, s) \bigstep n\)
 se demuestra por inducción sobre la expresión aritmética, los casos para
-\(\texttt{val}\) y \(\texttt{var}\) son inmediatos, así que nos enfocamos en
-\(\texttt{add}\). Como antes tenemos que probar que
+\(\funfont{val}\) y \(\funfont{var}\) son inmediatos, así que nos enfocamos en
+\(\funfont{add}\). Como antes tenemos que probar que
 \((a_1 \ImpPlus a_2, s) \bigstep n\), con las hipótesis de inducción:
 \[
 \begin{gathered}
@@ -1495,7 +1562,7 @@ se demuestra por inducción sobre la expresión aritmética, los casos para
 si elegimos que \(n\) es \(a_1 \ s\) y \(a_2 \ s\) respectivamente podemos construir
 el árbol de evaluación:
 \[
-  \texttt{add}: \frac{
+  \funfont{add}: \frac{
     (a_1, s) \bigstep a_1 \ s
     \quad
     (a_2, s) \bigstep a_2 \ s
@@ -1511,18 +1578,18 @@ la resta y la multiplicación son análogos.
 Presentamos las reglas de evaluación de expresiones booleanas sin mucho detalle,
 ya que son análogas a las expresiones aritméticas, las cuales hemos presentado
 primero ya que algunas de las reglas para expresiones booleanas dependen de la
-evaluación de expresiones aritméticas, (\texttt{<=}) y (\texttt{==}).
+evaluación de expresiones aritméticas, (\(\ImpLe\)) y (\(\ImpEq\)).
 \[
 \begin{gathered}
-  \texttt{true}: (\texttt{true}, \placeholder) \bigstep \texttt{true} \quad
-  \texttt{false}: (\texttt{false}, \placeholder) \bigstep \texttt{false} \\
-  \texttt{not}: \frac{(b, s) \bigstep b'}{(\ImpNot b, s) \bigstep \lnot b'} \quad
-  \texttt{and}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
-    {(b_1 \ \ImpAnd \ b_2, s) \bigstep b_1' \land b_2'} \quad
-  \texttt{or}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+  \funfont{true}: (\ImpTrue, \placeholder) \bigstep \LeanTrue \qquad
+  \funfont{false}: (\ImpFalse, \placeholder) \bigstep \LeanFalse \\
+  \funfont{not}: \frac{(b, s) \bigstep b'}{(\ImpNot b, s) \bigstep \lnot b'} \\
+  \funfont{and}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
+    {(b_1 \ \ImpAnd \ b_2, s) \bigstep b_1' \land b_2'} \qquad
+  \funfont{or}: \frac{(b_1, s) \bigstep b_1' \quad (b_2, s) \bigstep b_2'}
     {(b_1 \ \ImpOr \ b_2, s) \bigstep b_1' \lor b_2'} \\
-  \texttt{eq}: (a_1 \ \ImpEq \ a_2, s) \bigstep a_1 \ s = a_2 \ s \quad
-  \texttt{le}: (a_1 \ \ImpLe \ a_2, s) \bigstep a_1 \ s \leq a_2 \ s
+  \funfont{eq}: (a_1 \ \ImpEq \ a_2, s) \bigstep a_1 \ s = a_2 \ s \qquad
+  \funfont{le}: (a_1 \ \ImpLe \ a_2, s) \bigstep a_1 \ s \leq a_2 \ s
 \end{gathered}
 \]
 
@@ -1549,7 +1616,7 @@ de nuestra función de evaluación serían algo como:
     \LeanIfElse{b \ s}{\funfont{eval} \ (\ImpWhile{b}{c}) \ (\funfont{eval} \ c \ s)}{s}
 \end{align*}
 El problema de esta función es que no es en realidad una función, en el 
-sentido de que no es \emph{bien fundada}. Consideramos el bucle \(\ImpWhile{\texttt{true}}{\ImpSkip}\),
+sentido de que no es \emph{bien fundada}. Consideramos el bucle \(\ImpWhile{\ImpTrue}{\ImpSkip}\),
 claramente aplicando la última regla de la función de evaluación nunca
 obtenemos un resultado, ya que la condición es siempre verdadera\footnote{
   Demostramos esto rigurosamente en~\ref{sec:non_termination}.}.
@@ -1562,8 +1629,8 @@ antes, esta vez asociando configuraciones a estados. Damos primero
 la definición de los constructores más sencillos.
 \begin{align*}
   \ImpSkip &: (\ImpSkip, s) \bigstep s \\
-  \texttt{ass} &: (v = a, s) \bigstep s[v \leftarrow a \ s] \\
-  \texttt{cat} &: \frac{
+  \funfont{ass} &: (v = a, s) \bigstep s[v \leftarrow a \ s] \\
+  \funfont{cat} &: \frac{
     (c_1, s_1) \bigstep s_2 \quad (c_2, s_2) \bigstep s_3
   }{
     (\ImpConcat{c_1}{c_2}, s_1) \bigstep s_3
@@ -1576,24 +1643,24 @@ aparece en el resultado final, de esta forma tenemos en cuenta los
 Las reglas para la estructura \texttt{if} requieren dos constructores,
 uno para el caso en que la condición es falsa:
 \[
-\texttt{ifFalse} : \frac{b \ s_1 = \texttt{false}  \quad (c_2, s_1) \bigstep s_2}
+\funfont{ifFalse} : \frac{b \ s_1 = \LeanFalse \quad (c_2, s_1) \bigstep s_2}
 {(\ImpIfElse{b}{c_1}{c_2}, s_1) \bigstep s_2}
 \]
 y otro cuando la condición es cierta:
 \[
-\texttt{ifTrue} : \frac{b \ s_1 = \texttt{true}  \quad (c_1, s_1) \bigstep s_2}
+\funfont{ifTrue} : \frac{b \ s_1 = \LeanTrue \quad (c_1, s_1) \bigstep s_2}
 {(\ImpIfElse{b}{c_1}{c_2}, s_1) \bigstep s_2}
 \]
 La regla de evaluación para \texttt{while} sigue el mismo principio pero con un enfoque más
 recursivo, comenzamos con el caso en que la condición es falsa, que es el más sencillo:
 \[
-\texttt{whileFalse} : \frac{b \ s = \texttt{false}}
+\funfont{whileFalse} : \frac{b \ s = \LeanFalse}
   {(\ImpWhile{b}{c}, s) \bigstep s}
 \]
 pero cuando la condición es cierta, tenemos que hacer una recursión desde otro árbol de evaluación
 donde el \enquote{paso anterior} ya ha sido aplicado:
 \[
-\texttt{whileTrue} : \frac{b \ s_1 = \texttt{true} \quad (c, s_1) \bigstep s_2 \quad
+\funfont{whileTrue} : \frac{b \ s_1 = \LeanTrue \quad (c, s_1) \bigstep s_2 \quad
   (\ImpWhile{b}{c}, s_2) \bigstep s_3}
 {(\ImpWhile{b}{c}, s_1) \bigstep s_3}
 \]
@@ -1607,25 +1674,29 @@ programa como este:
 \begin{example}[Árbol de evaluación de un programa]
   Evaluamos un programa sencillo que contiene una bifurcación en el estado \(s_0\):
 \begin{minted}{rust}
-  x = 2;
-  if x <= 1 {
-    y = 3
-  } else {
-    z = 4
-  }
+x = 2;
+if x <= 1 {
+  y = 3
+} else {
+  z = 4
+}
 \end{minted}
   Para aligerar la notación denotaremos el programa como \(P\), y la estructura 
   \texttt{if} como \(\text{Ifelse}\), entonces:
   \[
-  \texttt{cat}: \frac{
-    \texttt{ass}: (\ImpAssign{x}{2}, s_0) \bigstep s_0[x \leftarrow 2]
-    \quad
-    \texttt{ifFalse}: \displaystyle{\frac{
-      \texttt{ass}: (\ImpAssign{z}{4} , s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
-    }
+    F \coloneqq \funfont{ifFalse}: \displaystyle{\frac{
+      \funfont{ass}: (\ImpAssign{z}{4} , s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+      }
     {
       (\text{Ifelse}, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
     }}
+  \]
+  y el árbol completo es:
+  \[
+  \funfont{cat}: \frac{
+    \funfont{ass}: (\ImpAssign{x}{2}, s_0) \bigstep s_0[x \leftarrow 2]
+    \qquad
+    F
   }{
     (P, s_0) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
   }
@@ -1676,7 +1747,7 @@ O lo que es lo mismo:
 \end{theorem}
 
 En los teoremas anteriores tenemos que tener cuidado de no confundir el
-\enquote{if} del lenguaje \texttt{IMP} y el del meta-lenguaje (en este caso Lean).
+\enquote{if} del lenguaje \ImpName{} y el del meta-lenguaje (en este caso Lean).
 Para ayudar en esta distinción usaremos una fuente \texttt{mono espaciada} para los
 constructos del lenguaje, y una fuente normal para los constructos del
 meta-lenguaje.
@@ -1762,10 +1833,10 @@ cuando la memoria es más barata que la computación.
         \ImpConcat{c}{\ImpWhile{b}{c}}, s_1 \bigstep s_3
       \]
       y como sabemos que la precondición es cierta podemos aplicar el constructor
-      \(\texttt{whileTrue}\) para obtener el árbol de derivación del lado izquierdo de la equivalencia:
+      \(\funfont{whileTrue}\) para obtener el árbol de derivación del lado izquierdo de la equivalencia:
       \[
-        \texttt{whileTrue}: \frac{
-          b \ s_1 = \texttt{true}
+        \funfont{whileTrue}: \frac{
+          b \ s_1 = \LeanTrue
           \quad
           (c, s_1) \bigstep s_2 
           \quad 
@@ -1774,10 +1845,10 @@ cuando la memoria es más barata que la computación.
           (\ImpWhile{b}{c}, s_1) \bigstep s_3
         }
       \]
-      Basta con aplicar la nueva hipótesis de \(\texttt{whileTrue}\) para
+      Basta con aplicar la nueva hipótesis de \(\funfont{whileTrue}\) para
       obtener el resultado:
       \[
-        \texttt{cat}: \frac{
+        \funfont{cat}: \frac{
           (c, s_1) \bigstep s_2
           \quad
           (\ImpWhile{b}{c}, s_2) \bigstep s_3
@@ -1790,10 +1861,10 @@ cuando la memoria es más barata que la computación.
       \[
         (\ImpSkip, s_1) \bigstep s_3
       \]
-      procedemos como antes y aplicamos el constructor \(\texttt{whileFalse}\):
+      procedemos como antes y aplicamos el constructor \(\funfont{whileFalse}\):
       \[
-        \texttt{whileFalse}: \frac{
-          b \ s_1 = \texttt{false}          
+        \funfont{whileFalse}: \frac{
+          b \ s_1 = \LeanFalse         
         }{
           (\ImpWhile{b}{c}, s_1) \bigstep s_1
         }
@@ -1811,7 +1882,7 @@ cuando la memoria es más barata que la computación.
 \subsection{No terminación}\label{sec:non_termination}
 
 Como dijimos antes cuando intentamos definir una función \funfont{eval} para
-evaluar comandos, existen programas de \texttt{IMP} que no terminan, o lo que
+evaluar comandos, existen programas de \ImpName que no terminan, o lo que
 es lo mismo en términos de la relación de paso largo, no existe ninguna 
 relación entre el programa en el estado dado y otro estado.
 
@@ -1823,12 +1894,12 @@ relación entre el programa en el estado dado y otro estado.
   \]
 \end{definition}
 
-Ahora demostramos que existen programas en \texttt{IMP} que no terminan, para
+Ahora demostramos que existen programas en \ImpName{} que no terminan, para
 ello elegimos de hecho un programa que no termina sin importar el estado
 en el que se ejecute.
 
 \begin{theorem}\label{thm:non_termination}
-  El programa \(\ImpWhile{b}{c}\), donde \(b \sim \texttt{true}\) no termina,
+  El programa \(\ImpWhile{b}{c}\), donde \(b \sim \ImpTrue\) no termina,
   independientemente del estado inicial:
   \[
   \forall s_1 \ s_2, (\ImpWhile{b}{c}, s_1) \centernot \bigstep s_2
@@ -1849,12 +1920,12 @@ en el que se ejecute.
   \text{hconf} \bigstep s_2 \implies \bot
   \]
   Ahora aplicamos el principio de inducción sobre la configuración, es decir,
-  demostramos el teorema para todas las formas posibles de \text{hconf}.
-  Los únicos casos que nos interesan son los de \texttt{whileTrue} y
-  \texttt{whileFalse}, ya que para el resto de los constructores la
+  demostramos el teorema para todas las formas posibles de \(\text{hconf}\).
+  Los únicos casos que nos interesan son los de \(\funfont{whileTrue}\) y
+  \(\funfont{whileFalse}\), ya que para el resto de los constructores la
   igualdad es falsa por definición, véase \(\text{hconf} = (\ImpSkip, s_1)\).
 
-  Para el caso \texttt{whileTrue} tenemos que probar que:
+  Para el caso \(\funfont{whileTrue}\) tenemos que probar que:
   \[
     (\ImpWhile{b}{c}, s_1) = (\ImpWhile{b}{c}, s_1')
   \]
@@ -1864,15 +1935,15 @@ en el que se ejecute.
   \]
   así que basta elegir \(x = s_2\) para obtener el resultado. 
   
-  Para el caso \texttt{whileFalse} no necesitamos usar inducción, de hecho si
-  \text{hconf} toma esta forma significa que la condición del \texttt{while} es
-  falsa pero \(b \sim \texttt{true}\) por hipótesis así que tenemos una
+  Para el caso \(\funfont{whileFalse}\) no necesitamos usar inducción, de hecho si
+  \(\text{hconf}\) toma esta forma significa que la condición del \texttt{while} es
+  falsa pero \(b \sim \ImpTrue\) por hipótesis así que tenemos una
   contradicción.
 \end{proof}
 
 \subsection{Determinismo}
 
-Otra propiedad importante de \texttt{IMP} que podemos probar usando el paso largo
+Otra propiedad importante de \ImpName{} que podemos probar usando el paso largo
 es que la evaluación de un programa es determinista, es decir, dado un
 programa y un estado solo hay un estado al que el programa puede evaluarse.
 
@@ -1884,7 +1955,7 @@ programa y un estado solo hay un estado al que el programa puede evaluarse.
 \end{definition}
 
 \begin{theorem}
-  El lenguaje \texttt{IMP} es determinista.
+  El lenguaje \ImpName{} es determinista.
 \end{theorem}
 
 \begin{proof}
@@ -1900,7 +1971,7 @@ programa y un estado solo hay un estado al que el programa puede evaluarse.
   \((\ImpConcat{c_1'}{c_2'}, s_1') \bigstep s_2\) así que tenemos que tener
   sus precondiciones, es decir:
   \[
-    \texttt{ass}: \frac{
+    \funfont{ass}: \frac{
       (c_1', s_1') \bigstep s_2' 
       \quad 
       (c_2', s_2') \bigstep s_2
@@ -1925,7 +1996,7 @@ a la izquierda tenemos el estado antes de tomar el paso y a la derecha el
 estado después de tomarlo, al hacer esto podemos observar los \emph{estados inter
 medios} de la ejecución de un programa, así que cada paso de esta semántica es
 \enquote{atómico}. Esto es muy útil cuando queremos probar propiedades de
-programas paralelos o concurrentes, aunque \texttt{IMP} no lo sea.
+programas paralelos o concurrentes, aunque \ImpName no lo sea.
 \begin{definition}[Semantica estructural]
   La semántica estructural de un programa es una relación binaria 
   \(\text{SmallStep} : \tyfont{Com} \times \tyfont{State} \to \tyfont{Com} \times \tyfont{State} \to \Prop\),
@@ -1935,18 +2006,19 @@ programas paralelos o concurrentes, aunque \texttt{IMP} no lo sea.
   \]
 \end{definition}
 
-En el caso de \texttt{IMP} los constructores de la relación son:
+En el caso de \ImpName{} los constructores de la relación son:
 \[
 \begin{gathered}
-  \texttt{ass}: (\ImpAssign{v}{a}, s) \rightsquigarrow (\ImpSkip, s[v \leftarrow s]) \quad
-  \texttt{skipCat}: (\ImpConcat{\ImpSkip}{c}, s) \rightsquigarrow (c, s) \quad
-  \texttt{cat}: \frac{(c, s) \rightsquigarrow (c', s')}{(\ImpConcat{c}{c''}, s) \rightsquigarrow (c', c'', s')} \\
-  \texttt{ifElse}: (\ImpIfElse{b}{c}{c'}, s)
+  \funfont{ass}: (\ImpAssign{v}{a}, s) \rightsquigarrow (\ImpSkip, s[v \leftarrow s]) \\
+  \funfont{skipCat}: (\ImpConcat{\ImpSkip}{c}, s) \rightsquigarrow (c, s) \qquad
+  \funfont{cat}: \frac{(c, s) \rightsquigarrow (c', s')}{(\ImpConcat{c}{c''}, s) \rightsquigarrow (c', c'', s')} \\
+  \funfont{ifElse}: (\ImpIfElse{b}{c}{c'}, s)
     \rightsquigarrow (\LeanIfElse{b \ s}{c}{c'}, s) \\
-  \texttt{whileLoop}: (\ImpWhile{b}{c}, s)
+  \funfont{whileLoop}: (\ImpWhile{b}{c}, s)
     \rightsquigarrow (\LeanIfElse{b \ s}{\ImpConcat{c}{\ImpWhile{b}{c}}}{\ImpSkip}, s) 
 \end{gathered}
 \]
+
 Estas reglas capturan la \enquote{ejecución} de los comandos de izquierda a derecha
 en una forma secuencial, lo que simula más de cerca la ejecución de un programa
 en un computador. Por supuesto, podríamos haber definido las reglas del 
@@ -1961,8 +2033,8 @@ evaluamos un programa sencillo.
   para aligerar la notación denotaremos el bloque \enquote{while} como \(W\).
   El árbol de evaluación de este programa es:
   \[
-  \texttt{cat}: \frac{
-    \texttt{ass}: (\ImpAssign{x}{1}, s_0) \rightsquigarrow (\ImpSkip, s_0[x \leftarrow 1])
+  \funfont{cat}: \frac{
+    \funfont{ass}: (\ImpAssign{x}{1}, s_0) \rightsquigarrow (\ImpSkip, s_0[x \leftarrow 1])
   }
   {(\ImpConcat{\ImpAssign{x}{1}}{W}, s_0)
   \rightsquigarrow
@@ -1984,7 +2056,7 @@ y \emph{transitiva}. Si la relación original ya es reflexiva y transitiva, la
 clausura es la misma relación. Formalmente la definimos como una función que
 toma una relación binaria y devuelve otra.
 
-\begin{definition}[Reflexive transitive closure]
+\begin{definition}[Clausura reflexiva transitiva]
   La clausura reflexiva transitiva de una relación binaria \(\mathcal{R}\) es la
   relación más pequeña que contiene \(\mathcal{R}\) y es tanto reflexiva como
   transitiva. En concreto es un tipo inductivo 
@@ -1994,9 +2066,9 @@ toma una relación binaria y devuelve otra.
 
   El tipo \(\tyfont{ReflTrans}\) tiene dos constructores:
   \[
-    \texttt{refl}: a \mathcal{R}^* a
+    \funfont{refl}: a \mathcal{R}^* a
     \qquad 
-    \texttt{tail}: \frac{
+    \funfont{tail}: \frac{
       a \mathcal{R}^* b
       \quad b \mathcal{R} c
     }{a \mathcal{R}^* c}
@@ -2051,16 +2123,12 @@ clausura reflexiva transitiva a través de una función \enquote{monótona}\foot
 \end{theorem}
 
 \begin{proof}
-  % We proceed by induction on \(a \mathcal{R}^* b\), the base case 
-  % \(\texttt{refl}: a \mathcal{R}^* a\) implies that \(a = b\), so
-  % \((f \ a) \mathcal{P}^* (f \ a)\)
-  % which is immediate by the reflexivity of the relation. For the inductive step:
   Procedemos por inducción sobre la relación \(a \mathcal{R}^* b\), el caso base
-  \(\texttt{refl}: a \mathcal{R}^* a\) implica que \(a = b\), así que
+  \(\funfont{refl}: a \mathcal{R}^* a\) implica que \(a = b\), así que
   \((f \ a) \mathcal{P}^* (f \ a)\)
   lo que es inmediato por la reflexividad de la relación. Para el paso inductivo:
   \[
-    \texttt{tail}: \frac{
+    \funfont{tail}: \frac{
       a \mathcal{R}^* b 
       \quad 
       b \mathcal{R} c
@@ -2103,6 +2171,17 @@ Podemos ahora revisar el ejemplo~\ref{ex:small_step} aplicando
   para facilitar la lectura denotaremos el bloque \enquote{while} como \(W\).
   Un árbol de derivación parcial es:
   \[
+    H \coloneqq
+    \funfont{head}: \displaystyle{\frac{
+        \funfont{skipcat}: (\ImpConcat{\ImpSkip}{W}, s_0[x \leftarrow 1]) \rightsquigarrow^* (W, s_0[x \leftarrow 1])
+        \qquad
+        \cdots
+      }{
+        (\ImpConcat{\ImpSkip}{W}, s_0[x \leftarrow 1]) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
+      }}
+  \]
+  y por lo tanto:    
+  \[
     \funfont{head}: \frac{
       \funfont{cat}: \displaystyle{\frac{
         \funfont{ass}: (\ImpAssign{x}{1}, s_0) \rightsquigarrow (\ImpSkip, s_0[x \leftarrow 1])
@@ -2111,14 +2190,8 @@ Podemos ahora revisar el ejemplo~\ref{ex:small_step} aplicando
       \rightsquigarrow
       (\ImpConcat{\ImpSkip}{W}, s_0[x \leftarrow 1])
       }}
-      \quad
-      \funfont{head}: \displaystyle{\frac{
-        \funfont{skipcat}: \ImpSkip
-        \quad
-        \vdots
-      }{
-        (W, s_0[x \leftarrow 1]) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
-      }}
+      \qquad
+      H
     }{
       (\ImpConcat{\ImpAssign{x}{1}}{W}, s_0) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
     }
@@ -2130,23 +2203,23 @@ Podemos ahora revisar el ejemplo~\ref{ex:small_step} aplicando
 Presentamos ahora una serie de teoremas que serán muy útiles al probar la
 equivalencia de la semántica de paso largo y la de paso corto, prestando atención
 a los constructores de la relación de paso corto podemos ver que el único
-\enquote{especial} es \texttt{cat}, ya que es el único que requiere un argumento.
+\enquote{especial} es \(\funfont{cat}\), ya que es el único que requiere un argumento.
 Por esta razón todos los teoremas siguientes nos darán análogos en \(\rightsquigarrow^*\)
 a los de la semántica de paso largo.
 
 \begin{theorem}
-  If an expression evaluates to a state concatenating that expression with another
-  has that state as an intermediate. That is if \((c, s) \rightsquigarrow^* (\ImpSkip, s')\)
-  then \((\ImpConcat{c}{c'}, s) \rightsquigarrow^* (\ImpConcat{\ImpSkip}{c'}, s')\).
+  Si una expresión evalúa a un estado, concatenar esa expresión con otra
+  expresión tiene ese estado como intermedio. Es decir, si \((c, s) \rightsquigarrow^* (\ImpSkip, s')\)
+  entonces \((\ImpConcat{c}{c'}, s) \rightsquigarrow^* (\ImpConcat{\ImpSkip}{c'}, s')\).
 \end{theorem}
 
 \begin{proof}
   La demostración es consecuencia directa del teorema de elevación~\ref{thm:rel_lift}.
   Las relaciones \(\mathcal{R}\) y \(\mathcal{P}\) son ambas la semántica de paso corto
   \(\rightsquigarrow\), y la función \(f\) es la concatenación de comandos:
-  \[f: \texttt{Com} \times \texttt{State} \to \texttt{Com} \times \texttt{State} \coloneqq \lambda (c, s) \mapsto (\ImpConcat{c}{c'}, s).\]
+  \[f: \tyfont{Com} \times \tyfont{State} \to \tyfont{Com} \times \tyfont{State} \coloneqq \lambda (c, s) \mapsto (\ImpConcat{c}{c'}, s).\]
   Nuestra hipótesis \(h\) es la concatenación en la semántica de paso corto, es decir:
-  \[h: \Forall_{(c, s), (d, t)} (c, s) \rightsquigarrow (d, t) \to (\ImpConcat{c}{c'}, s) \rightsquigarrow (\ImpConcat{d}{c'}, t)
+  \[h: \forall (c, s), (d, t), (c, s) \rightsquigarrow (d, t) \to (\ImpConcat{c}{c'}, s) \rightsquigarrow (\ImpConcat{d}{c'}, t)
      \coloneqq \lambda x \mapsto \funfont{cat} \ x\]
   y finalmente tenemos que \((c, s) \rightsquigarrow^* (\ImpSkip, s')\) por hipótesis.
 \end{proof}
@@ -2169,7 +2242,7 @@ a los de la semántica de paso largo.
 \section{Semántica denotacional relacional}
 
 Seguimos la construcción presentada en~\cite[Chapter~11]{semantics_with_isabelle}
-y definimos una semántica denotacional \emph{relacional} para el lenguaje \texttt{IMP}.
+y definimos una semántica denotacional \emph{relacional} para el lenguaje \ImpName.
 
 Como vimos antes, definir una función que evalúe un programa no es trivial,
 de hecho esta función nunca puede ser \emph{total} ya que existen programas que no
@@ -2177,7 +2250,7 @@ terminan~\ref{thm:non_termination}. La \enquote{función} ha de ser entonces
 \emph{parcial}, es decir, no devuelve un valor para todos los argumentos.
 Esto es un problema ya que en teoría de tipos todas nuestras funciones son
 totales, ya que por definición son computables. Para sortear este problema
-podríamos usar la mónada \texttt{Option} y devolver \texttt{none} cuando el
+podríamos usar la mónada \(\tyfont{Option}\) y devolver \(\funfont{none}\) cuando el
 programa no termina:
 \[
   \funfont{eval} : \tyfont{Com} \to \tyfont{State} \to \tyfont{Option} \ \tyfont{State}.
@@ -2188,7 +2261,7 @@ usaremos la definición clásica de funciones como relaciones, es decir,
 grafos de \(\tyfont{Set} \ (\alpha \times \beta)\), esto nos permitirá usar el
 orden parcial de subconjuntos para definir la semántica del lenguaje
 mediante el teorema de \emph{Knaster-Tarski}. Por supuesto, no todos los grafos
-son funciones parciales, para evitar manchar la semántica de \texttt{IMP} con
+son funciones parciales, para evitar manchar la semántica de \ImpName con
 multifunciones introduciremos el concepto de \(\omega\)-cadenas.
 
 \subsection{Punto fijo de Knaster-Tarski}
@@ -2297,7 +2370,7 @@ pero para ello tenemos que introducir aún más definiciones.
   tal que \(f \ a \leq a\).
 \end{definition}
 
-\begin{definition}[Punto fijo mínimo]
+\begin{definition}[Punto fijo mínimo de Knaster-Tarski]
   El punto fijo mínimo (\emph{least fixed-point}) de una función \(f: \alpha \to_o \alpha\) es el ínfimo del
   conjunto de todos los pre-puntos fijos de \(f\).
   \[
@@ -2371,16 +2444,16 @@ la composición de una relación con la identidad es la relación misma.
 Se da lo mismo por la izquierda. Más importante aún, podemos probar que la composición
 de relaciones es monótona.
 
-\begin{theorem}
+\begin{theorem}\label{thm:rel_comp_monotone}
   La composición de dos \enquote{funciones} es monótona, es decir, si \(f \subseteq h\) y
   \(g \subseteq k\) entonces \(f \circ g \subseteq h \circ k\).
 \end{theorem}
 
 La última pieza antes de definir la semántica denotacional es la definición
-del \emph{conjunto if-then-else}
+del \emph{conjunto if-else}
 
-\begin{definition}[Conjunto if-then-else]
-  El \emph{conjunto if-then-else} (\(\funfont{Set.ite}\)) es una función que dados tres conjuntos \(P, A, B\)
+\begin{definition}[Conjunto if-else]
+  El \emph{conjunto if-else} (\(\funfont{Set.ite}\)) es una función que dados tres conjuntos \(P, A, B\)
   devuelve el conjunto:
   \[
     \funfont{Set.ite} \ P \ A \ B = A \cap P \cup B \setminus P
@@ -2388,7 +2461,7 @@ del \emph{conjunto if-then-else}
   donde \(P\) es el \enquote{predicado} o \emph{conjunto de condiciones}.
 \end{definition}
 
-\begin{theorem}
+\begin{theorem}\label{thm:ite_monotone}
   La función \(\funfont{Set.ite}\) es monótona en sus argumentos.
   Es decir, si \(a \subseteq a'\) y \(b \subseteq b'\) entonces
   \[
@@ -2405,12 +2478,12 @@ Podemos por fin definir nuestra función que dado un comando devuelve la
 \enquote{función} de estado a estado que representa la evaluación de ese
 comando.
 
-\begin{definition}[Denote]
+\begin{definition}[Denotación]
 Definimos la función \(\funfont{denote}: \tyfont{Com} \to \tyfont{Set} (\tyfont{Set} \times \tyfont{Set})\)
 como:
   \begin{align*}
     \funfont{denote} \ \ImpSkip &\coloneqq \funfont{SRel.id} \\
-    \funfont{denote} \ (v = a) &\coloneqq \{(s, t) \mid t = s[v \leftarrow a \ s]\} \\
+    \funfont{denote} \ \ImpAssign{v}{a} &\coloneqq \{(s, t) \mid t = s[v \leftarrow a \ s]\} \\
     \funfont{denote} \ \ImpConcat{c}{c'} &\coloneqq \funfont{denote} \ c \circ \funfont{denote} \ c' \\
     \funfont{denote} \ (\ImpIfElse{b}{c}{c'}) &\coloneqq \funfont{Set.ite} \ \{(s, \placeholder) \mid b \ s\} \ (\funfont{denote} \ c) \ (\funfont{denote} \ c') \\
     \funfont{denote} \ (\ImpWhile{b}{c}) &\coloneqq \funfont{lfp} \ (W \ b \ (\funfont{denote} \ c))
@@ -2422,212 +2495,342 @@ como:
   \]
 \end{definition}
 
-% Of course this is only well defined if the least fixpoint of \(W \ b \ f\) exists,
-% for this it suffices to show that \(W \ b \ f\) is an order homomorphism, as we 
-% can then apply the \emph{Knaster-Tarski} theorem.
 Por supuesto, esto solo tiene sentido si el punto fijo mínimo de \(W \ b \ f\) existe,
-para ver esto basta demostrar que \(W \ b \ f\) es un homomorfismo de orden, ya que
-entonces podemos aplicar el teorema de \emph{Knaster-Tarski}.
+para ver esto basta demostrar que \(W \ b \ f\) es un homomorfismo de orden, 
+ya que entonces podemos aplicar el teorema de \emph{Knaster-Tarski}. 
+Esto se demuestra fácilmente como corolario de los teoremas~\ref{thm:rel_comp_monotone} y~\ref{thm:ite_monotone}.
 
 \begin{theorem}
   La función \(W \ b \ f\) es un homomorfismo de orden.
 \end{theorem}
 
-Then, the fixpoint of \(W \ b \ f\)
-is a \emph{relation} from the first state in which the \enquote{while} is
-evaluated to the last state, that is, if the loop terminates. If the loop
-doesn't terminate the relation is the \emph{empty set}, that is no state
-is related to any other state.
-Let's see a concrete example of what happens to the infinite loop 
-\(L \coloneqq \ImpWhile{\texttt{true}}{\ImpSkip}\).
-Applying the definition of the denotational semantics we have:
+En realidad el punto fijo de \(W \ b \ f\) es una \emph{relación} entre el primer
+estado en el que se evalúa el \enquote{while} y el último estado, en caso de
+que el bucle termine. Si el bucle no termina la relación es el \emph{conjunto vacío},
+es decir, no hay estado relacionado con ningún otro estado.
+Vemos un ejemplo concreto de lo que pasa con un bucle infinito.
+
+\begin{example}
+Sea \(L \coloneqq \ImpWhile{\ImpTrue}{\ImpSkip}\),
+aplicando la definición de la semántica denotacional tenemos:
 \[
-  \funfont{denote} \ L = \funfont{lfp} \ (W \ \texttt{true} \ \funfont{SRel.id})
+  \funfont{denote} \ L = \funfont{lfp} \ (W \ \ImpTrue \ \funfont{SRel.id})
 \]
-unfolding the definition of \(W\) we have:
+ahora desplegamos la definición de \(W\):
 \begin{align*}
-  W &= \lambda g \mapsto \funfont{SRel.id} \circ g \cap \funfont{Univ} \cup \funfont{SRel.id} \setminus \funfont{Univ} \\
+  W \ \ImpTrue \ \funfont{SRel.id} &= \lambda g \mapsto \funfont{SRel.id} \circ g \cap \funfont{Univ} \cup \funfont{SRel.id} \setminus \funfont{Univ} \\
     &= \lambda g \mapsto g = \funfont{id}
 \end{align*}
-Now, the least fixpoint of \(W\) is
+Y el punto fijo mínimo de \(W\) es:
 \[
   \funfont{lfp} \ W = \bigcap \{a \mid \funfont{id} \ a \leq a\} = 
     \bigcap \funfont{Univ} = \emptyset
 \]
+Con lo que hemos demostrado que el bucle no termina.
+\end{example}
 
-\subsection{Kleene fixpoint theorem}
+\begin{notation}
+  Denotamos la semántica denotacional de un comando \(c\) como
+  \(\Denote{c}\). Entonces si al evaluar un comando \(c\) en un estado \(s\)
+  obtenemos un estado \(s'\) escribimos: 
+  \[
+    (s, s') \in \Denote{c}
+  \]
+\end{notation}
 
-Defining the semantics with a relation works, but it makes computation difficult,
-as we don't have a general way of computing the least fixpoint. We now 
-introduce a theory, originally developed by \emph{Dana Scott}, that allows us
-use \emph{partial functions} instead of relation. The problem with
-partial functions is that they \emph{don't} form a complete lattice, as they
-don't have an infimum. To solve this problem we will use the \emph{Kleene fixpoint}
-theorem, which operates on \emph{\(\omega\)-continuous} functions.
+Con lo que antes hemos demostrado que \(\forall s \ s', (s, s') \notin \Denote{\ImpWhile{\ImpTrue}{\ImpSkip}}\).
+La equivalencia de comportamiento en esta semántica es fácil de ver.
 
-We start by defining the concept of \(\omega\)-chain, which is a sequence of
-sets where each set is a subset of the next.
-
-\begin{definition}[\(\omega\)-chain]
-  An \(\omega\)-chain is a sequence of sets \(\{S_i\}_{i \in \mathbb{N}}\) such that
-  \(S_i \subseteq S_{i+1}\) for all \(i \in \mathbb{N}\).
+\begin{definition}
+  Dos comandos \(c\) y \(c'\) son equivalentes en la semántica denotacional
+  si \(\Denote{c} = \Denote{c'}\).
+  Entonces diremos que \(c \sim c'\).
 \end{definition}
 
-An \(\omega\)-continuous function is a function that \enquote{preserves the limit} of
-\(\omega\)-chains.
+Con esto podemos obtener resultados como el siguiente de forma inmediata.
 
-\begin{definition}[\(\omega\)-continuous]
-  A function \(f: \alpha \to \alpha\) is \(\omega\)-continuous if it commutes with the
-  indexed union for every chain, that is for every \(\omega\)-chain 
-  \(\{S_i\}_{i \in \mathbb{N}}\) we have:
+\begin{theorem}\label{thm:while_unroll_denote}
+  Podemos desenrollar un bucle \texttt{while}, esto es:
+  \[\Denote{\ImpWhile{b}{c}} = \Denote{\ImpIfElse{b}{\ImpConcat{c}{\ImpWhile{b}{c}}}{\ImpSkip}}\].
+\end{theorem}
+
+\subsection{Punto fijo de Kleene}
+
+Esta definición de la semántica denotacional funciona, y como hemos visto
+nos permite hacer algunas demostraciones interesantes, como ver que un programa
+no termina\footnote{Supuesto que la semántica denotacional es equivalente a la
+  de paso largo, lo cual veremos en~\ref{sec:equivalence}.}.
+Sin embargo, la definición de la semántica denotacional es 
+\enquote{computacionalmente incómoda}, ya que no podemos ir \enquote{dando pasos}
+para calcular el punto fijo mínimo de una función. Para ello necesitamos
+introducir una teoría, originalmente desarrollada por \emph{Dana Scott}, que
+nos permite usar \emph{funciones parciales} en lugar de relaciones, 
+demostraremos entonces que el teorema de \emph{Kleene} nos permite
+aproximarnos al punto fijo mínimo de una función \emph{\(\omega\)-continua}.
+
+Comenzamos definiendo el concepto de \(\omega\)-cadena, que es una secuencia de
+conjuntos donde cada conjunto es un subconjunto del siguiente.
+
+\begin{definition}[\(\omega\)-cadena]
+  Una \(\omega\)-cadena es una secuencia de conjuntos \({\{S_i\}}_{i \in \mathbb{N}}\) tal que
+  \(S_i \subseteq S_{i+1}\) para todo \(i \in \mathbb{N}\).
+\end{definition}
+
+Una función \(\omega\)-continua es una función que \enquote{preserva el límite} de
+\(\omega\)-cadenas.
+
+\begin{definition}[\(\omega\)-continuidad]
+  Una función \(f: \alpha \to \alpha\) es \(\omega\)-continua si conmuta con la unión
+  indexada para cada cadena, es decir, para cada \(\omega\)-cadena \({\{S_i\}}_{i \in \mathbb{N}}\) se cumple:
   \[
     f \left( \bigcup_{i \in \mathbb{N}} S_i \right) = \bigcup_{i \in \mathbb{N}} f \ S_i
   \]
 \end{definition}
 
 \begin{notation}
-  We will denote an \(\omega\)-continuous function as \(f: \alpha \to_\omega \alpha\).
+  Denotamos una función \(\omega\)-continua como \(f: \alpha \to_\omega \alpha\).
 \end{notation}
 
-Continuity is a \enquote{stronger} property than monotonicity, as every continuous
-function is monotonic, but not every monotonic function is continuous.
+La continuidad es una propiedad \enquote{más fuerte} que la monotonía, ya que
+cada función continua es monótona, pero no cada función monótona es continua.
 
 \begin{theorem}
-  Every \(\omega\)-continuous function is monotonic.
+  Toda función \(\omega\)-continua es monótona.
 \end{theorem}
 
-As an example of a \(\omega\)-chain we consider the sequence \emph{power function} of
-an order homomorphism from sets to sets.
+Consideramos como ejemplo de \(\omega\)-cadena la secuencia de \emph{funciones potencia} 
+de un homomorfismo de orden de conjuntos a conjuntos.
 
 \begin{theorem}\label{thm:fpow_chain}
-  The sequence of power functions of an order homomorphism \(f: \tyfont{Set} \ \alpha \to_o \tyfont{Set} \ \alpha\)
-   is an \(\omega\)-chain. That is \(\{f^n \ \emptyset\}_{n \in \mathbb{N}}\) is an \(\omega\)-chain.
+  La secuencia de funciones potencia de un homomorfismo de orden \(f: \tyfont{Set} \ \alpha \to_o \tyfont{Set} \ \alpha\)
+  es una \(\omega\)-cadena. Es decir, \({\{f^n \ \emptyset\}}_{n \in \mathbb{N}}\) es una \(\omega\)-cadena.
 \end{theorem}
 
-This will be useful later, as we prove that the least fixpoint of an \(\omega\)-continuous
-function is a \emph{fixed point}.
+Esto será útil más adelante, ya que demostraremos que el punto fijo mínimo de una función
+\(\omega\)-continua es un \emph{punto fijo}.
 
-\begin{definition}[Least fixpoint]
-  The least fixpoint of a function \(f: \alpha \to_\omega \alpha\) is the 
-  \enquote{limit} of the sequence of the power functions of \(f\), that is:
+\begin{definition}[Punto fijo mínimo de Kleene]
+  El punto fijo mínimo de una función \(f: \alpha \to_\omega \alpha\) es el
+  \enquote{límite} de la secuencia de las funciones potencia de \(f\), es decir:
   \[
     \funfont{lfp} \ f = \bigcup_{n \in \mathbb{N}} f^n \ \emptyset
   \]
 \end{definition}
 
-Now we can state the \emph{Kleene fixpoint theorem}.
+Podemos ahora enunciar el teorema de \emph{Kleene}.
 
-\begin{theorem}[Kleene fixpoint]
-  If \(f: \alpha \to_\omega \alpha\) is an \(\omega\)-continuous function
-  then the least fixpoint of \(f\) exists and is equal to the least fixpoint
-  of \(f\) as an order homomorphism.
+\begin{theorem}[Kleene]
+  Si \(f: \alpha \to_\omega \alpha\) es una función \(\omega\)-continua
+  entonces el punto fijo mínimo de \(f\) existe y es igual al punto fijo mínimo
+  de Knaster-Tarski.
 \end{theorem}
 
 \begin{proof}
-  We have to prove that \(\funfont{OrderHom.lfp f = ContinuousHom.lfp f}\),
-  we do this by proving that both sets contain the other.
+  Queremos demostrar que \(\funfont{OrderHom.lfp} \ f = \funfont{ContinuousHom.lfp} \ f\),
+  para ello demostramos que los conjuntos se contienen mutuamente.
   \begin{itemize}
-    \item[(\(\subseteq\))] Suffices to show that \(\bigcup_{n \in \mathbb{N}} f^n \ \emptyset\)
-      is a pre-fixpoint of \(f\), as we can then apply~\ref{thm:lfp_le} obtaining
-      the result. That the leastt fixpoint is a pre-fixpoint is more or less
-      immediate by using~\ref{thm:fpow_chain}.
+    \item[(\(\subseteq\))] 
+      Basta demostrar que \(\bigcup_{n \in \mathbb{N}} f^n \ \emptyset\)
+      es un pre punto fijo de \(f\), ya que entonces podemos aplicar~\ref{thm:lfp_le}
+      obteniendo el resultado. Que el punto fijo mínimo es un pre punto fijo es más o menos
+      inmediato usando~\ref{thm:fpow_chain}.
 
-    \item[(\(\supseteq\))] For this it suffices: \(\funfont{lfp} \ f \supseteq f^n \ \emptyset\),
-      we proceed by induction on \(n\). The base case is trivially contradictory,
-      the inductive step is immediate by applying Knaster-Tarski~\ref{thm:lfp_eq}
-      as \(f\) is an order homomorphism.
+    \item[(\(\supseteq\))] 
+      En este caso basta demostrar que \(\funfont{lfp} \ f \supseteq f^n \ \emptyset\),
+      procedemos por inducción sobre \(n\). El caso base es trivialmente contradictorio,
+      el paso inductivo es inmediato aplicando Knaster-Tarski~\ref{thm:lfp_eq}
+      ya que \(f\) es un homomorfismo de orden.
   \end{itemize}
 \end{proof}
 
-This fixpoint definition has the advantage of giving us an easy approximation
-of the least fixpoint, as we can take the union of the first \(n\) power functions
-of \(f\).
+Esta definición de punto fijo tiene la ventaja de darnos una aproximación
+computacional del punto fijo mínimo, ya que podemos tomar la unión de las primeras \(n\)
+potencias de \(f\), y si en alguna iteración la unión no cambia, podemos
+detenernos y devolver el resultado. De hecho Lean usa internamente esta 
+teoría para permitirnos definir funciones parciales, cuyo codominio es 
+\(\tyfont{Option} \ A\), mediante la táctica \texttt{partial\_fixpoint},
+véase la función \texttt{eval} en~\ref{sec:code_denotational}.
+Igualmente nuestra definición basada en conjuntos nos permite demostrar algunos
+resultados, como el de no terminación, más fácilmente.
 
-\section{Equivalence of semantics}
+\section{Equivalencia de semánticas}\label{sec:equivalence}
+
+Pasamos al resultado más importante del texto, las semánticas que hemos
+definido son equivalentes, por lo que dependiendo de lo que estemos estudiando
+elegiremos la que más nos convenga. La demostración de esto es larga y
+tortuosa, por lo que la dividimos en varios teoremas. Comenzamos demostrando
+que la semántica estructural es equivalente a la semántica de paso largo.
+
+\begin{theorem}
+  La semántica natural implica la estructural. Es decir, si
+  \(x\) es una configuración inicial y \(s'\) un estado tal que
+  \(x \bigstep s'\) entonces \(x \rightsquigarrow^* (\ImpSkip, s')\).
+\end{theorem}
+
+Para la implicación inversa introducimos primero un lema.
+
+\begin{lemma}
+  Sean \(x\) y \(x'\) configuraciones y \(s'\) un estado tal que
+  \(x \rightsquigarrow x'\) y \(x' \bigstep s'\), entonces
+  \(x \bigstep s'\).
+\end{lemma}
+
+Con esto obtenemos el resultado sin más que aplicar inducción en la cabeza de la
+relación reflexiva transitiva.
+
+\begin{theorem}
+  La semántica estructural implica la semántica natural. Es decir, si
+  \(x\) es una configuración inicial y \(s'\) un estado tal que
+  \(x \rightsquigarrow^* (\ImpSkip, s')\) entonces \(x \bigstep s'\).
+\end{theorem}
+
+Ahora demostraremos que la semántica de paso largo es equivalente a la
+denotacional y habremos terminado. Empezamos por la dirección fácil,
+que es natural implica denotacional. El resultado se obtiene mediante inducción
+en los constructores del paso largo y desenrollando el \texttt{while} en la
+semántica denotacional~\ref{thm:while_unroll_denote}.
+
+\begin{theorem}
+  La semántica natural implica la semántica denotacional. Es decir, sean
+  \(s \ s': \funfont{State}\) y \(c: \tyfont{Com}\) tal que
+  \((c, s) \bigstep s'\) entonces \((s, s') \in \Denote{c}\).
+\end{theorem}
+
+Tenemos también la dirección inversa.
+
+\begin{theorem}
+  La semántica denotacional implica la semántica natural. Es decir, sean
+  \(s \ s': \funfont{State}\) y \(c: \tyfont{Com}\) tal que
+  \((s, s') \in \Denote{c}\) entonces \((c, s) \bigstep s'\).
+\end{theorem}
+
+En este caso hacemos la inducción sobre la forma de \(c\), el único caso
+problemático es el del \texttt{while}, que se resuelve aplicando el
+siguiente lema.
+
+\begin{lemma}
+  Se cumple que \(\Denote{\ImpWhile{b}{c}} \subseteq \{(s, s'') \mid (\ImpWhile{b}{c}, s) \bigstep s'' \}\).
+\end{lemma}
+
+Esto se cumple gracias a la monotonía de la semántica denotacional.
+
+Como las dos semánticas son equivalentes a la natural tenemos que también son
+equivalentes entre sí. En resumen, tenemos que:
+\begin{theorem}
+  La semántica de paso largo, la semántica estructural y la semántica denotacional
+  son equivalentes. Es decir, se cumple que:
+  \[
+    (c, s) \bigstep s' \iff (c, s) \rightsquigarrow^* (\ImpSkip, s') \iff (s, s') \in \Denote{c}
+  \]
+\end{theorem}
+
+% Things to add:
+
+% \begin{itemize}
+%   \item Add formalization of \(\lambda\)-calculus and proofs.
+%   \item Compiler.
+%   \item Typed \ImpName.
+%   \item Hoare Logic.
+%   \item Abstract interpretation.
+% \end{itemize}
 
 % Appendices 
 
-% appendix
 \appendix
 
-\section{Normalization in Lean}
-\subsection{Omega combinator}
+\addcontentsline{toc}{part}{Apéndices}
 
-\section{Equality: rec, ndrec and subst}
+% \chapter{\ImpName{} es Turing completo}
 
-\section{\texttt{IMP} Turing completeness}
-
-\section{Future work}
-
-Things to add:
-
-\begin{itemize}
-  \item Add formalization of \(\lambda\)-calculus and proofs.
-  \item Compiler.
-  \item Typed \texttt{IMP}.
-  \item Hoare Logic.
-  \item Abstract interpretation.
-\end{itemize}
-
-\section{Código}
+\chapter{Código}
 
 El código del texto se encuentra en el repositorio de GitHub
 \url{https://github.com/remind-me-later/SemanticsLean}. 
-Lo reproducimos aquí por completitud, con una subsección para cada
+Lo reproducimos aquí por completitud, con una sección para cada
 archivo.
 
-\subsection{Mapas}
+\section{Mapas}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Maps.lean}
 
-\subsection{Conjuntos}
+\section{Conjuntos}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Set.lean}
 
-\subsection{Sintaxis de IMP}
+\section{Sintaxis de IMP}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/Lang.lean}
 
-\subsection{Expresiones aritméticas}
+\section{Expresiones aritméticas}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/Aexp.lean}
 
-\subsection{Expresiones booleanas}
+\section{Expresiones booleanas}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/Bexp.lean}
 
-\subsection{Semántica de paso largo}
+\section{Semántica de paso largo}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/BigStep.lean}
 
-\subsection{Clausura reflexiva transitiva}\label{sec:code_refltransgen}
+\section{Clausura reflexiva transitiva}\label{sec:code_refltransgen}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/ReflTransRel.lean}
 
-\subsection{Semántica estructural}
+\section{Semántica estructural}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/SmallStep.lean}
 
-\subsection{Relaciones conjuntistas}
+\section{Relaciones conjuntistas}
 \inputminted{lean4}{../SemanticsLean/Semantics/SetRelation.lean}
 
-\subsection{Orden y punto fijo de Knaster-Tarski}
+\section{Orden y punto fijo de Knaster-Tarski}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Lattice.lean}
 
-\subsection{Cadenas y punto fijo de Kleene}
+\section{Cadenas y punto fijo de Kleene}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Chain.lean}
 
-\subsection{Semántica denotacional}
+\section{Semántica denotacional}\label{sec:code_denotational}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/Denotational.lean}
 
-\subsection{Equivalencia de semánticas}
+\section{Equivalencia de semánticas}
 
 \inputminted{lean4}{../SemanticsLean/Semantics/Imp/Equivalence.lean}
 
 % Bibliography
+
+\backmatter
+
+\chapter{Conclusiones}
+
+Durante el desarrollo de este texto hemos visto como las herramientas de 
+la teoría de tipos y los demostradores automáticos nos permiten formalizar
+resultados vistos a lo largo de la carrera más allá de cualquier atisbo de duda.
+Los resultados de semántica del texto son una parte de lo que se cubre en
+el curso de \emph{Teoría de la programación}, pero las demostraciones son
+completamente distintas. En efecto adaptar esas demostraciones a un
+marco formal como el de Lean es un trabajo arduo y tedioso, que además
+requiere conocimientos sobre programación funcional que no se 
+cubren a lo largo de la carrera.
+
+La ventaja didáctica del esfuerzo realizado en este texto es clara,
+allá donde el corpus visto en clase contenía \enquote{agujeros} hemos
+tenido que detenernos a definir cuidadosamente todos los puntos
+que normalmente se dan por supuestos. Además esto nos ha permitido
+convencernos de que esta teoría es válida a nivel formal, y no
+solo a nivel \enquote{intuitivo}.
+
+El resultado más importante que hemos obtenido es la equivalencia
+entre las semánticas de paso largo, estructural y denotacional. Que como
+hemos apreciado, no es especialmente larga una vez hemos definido la
+maquinaria necesaria.
+
+Con este pequeño ejemplo de formalización hemos visto por qué la teoría de
+tipos y los asistentes de demostración están ganando tanta popularidad
+y sus ventajas para asegurar la validez de los resultados obtenidos.
 
 \bibliographystyle{alpha}
 \bibliography{refs}
