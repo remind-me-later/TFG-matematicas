@@ -1,6 +1,6 @@
 .POSIX:
 
-NAME=main
+NAME=slides
 OUTDIR=build
 
 all: $(OUTDIR)/$(NAME).pdf

@@ -1,0 +1,535 @@
+\documentclass[9pt]{beamer}
+\usetheme{Madrid}
+
+\usepackage{polyglossia}
+\setdefaultlanguage{spanish}
+
+\usepackage{fontspec}
+% switch to a monospace font supporting more Unicode characters
+\setmonofont{JetBrains Mono}[
+    Contextuals=Alternate,
+    Ligatures=TeX,
+    Scale=MatchLowercase,
+]
+
+\usepackage{minted}
+\usemintedstyle{pastie}
+
+% === Math facilities ===
+
+% Theorem environments
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{centernot}
+\usepackage{mathtools}
+
+\newcommand{\funfont}[1]{\texttt{#1}}
+\newcommand{\tyfont}[1]{\texttt{\textbf{#1}}}
+\renewcommand{\implies}{\rightarrow}
+\renewcommand{\impliedby}{\leftarrow}
+\renewcommand{\iff}{\leftrightarrow}
+\renewcommand{\mapsto}{\Rightarrow}
+\newcommand{\Prop}{\mathbf{Prop}}
+\newcommand{\placeholder}{\square}
+
+\newcommand{\ImpIfElse}[3]{\texttt{if} \ {#1} \ \{{#2}\} \ \texttt{else} \ \{{#3}\}}
+\newcommand{\ImpWhile}[2]{\texttt{while} \ {#1} \ \{{#2}\}}
+\newcommand{\ImpConcat}[2]{{#1} \texttt{;} \ {#2}}
+\newcommand{\ImpSkip}{\texttt{skip}}
+\newcommand{\ImpAssign}[2]{{#1} = {#2}}
+
+\newcommand{\LeanIfElse}[3]{\text{if} \ {#1} \ \text{then} \ {#2} \ \text{else} \ {#3}}
+\newcommand{\LeanTrue}{\text{true}}
+\newcommand{\LeanFalse}{\text{false}}
+
+\newcommand{\ImpPlus}{\mathbin{\texttt{+}}}
+\newcommand{\ImpMinus}{\mathbin{\texttt{-}}}
+\newcommand{\ImpTimes}{\mathbin{\texttt{*}}}
+
+\newcommand{\ImpNot}{\texttt{!}}
+\newcommand{\ImpAnd}{\mathbin{\texttt{\&\&}}}
+\newcommand{\ImpOr}{\mathbin{\texttt{||}}}
+\newcommand{\ImpEq}{\mathbin{\texttt{==}}}
+\newcommand{\ImpLe}{\mathbin{\texttt{<=}}}
+
+\newcommand{\ImpTrue}{\texttt{true}}
+\newcommand{\ImpFalse}{\texttt{false}}
+
+\newcommand{\ImpName}{\texttt{IMP}}
+
+\usepackage[only,llbracket,rrbracket]{stmaryrd}
+
+% define math symbol for big step arrow
+\newcommand{\bigstep}{\Longrightarrow}
+\newcommand{\Denote}[1]{\llbracket{} {#1} \rrbracket{}}
+
+% === End math facilities ===
+
+\usepackage{csquotes}
+
+%Information to be included in the title page:
+\title{Presentación con Lean 4 de algunos Resultados clásicos sobre
+      Semántica de Lenguajes de Programación}
+\author{Ricardo Maurizio Paul}
+% \date{2021}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}
+\frametitle{Índice}
+\tableofcontents
+\end{frame}
+
+\section{Introducción}
+\begin{frame}
+\frametitle{Motivación}
+\begin{itemize}
+  \item Los asistentes de demostración combinan las matemáticas clásicas con la programación.
+  \item La semántica de lenguajes de programación es un campo particularmente adecuado
+    para explorar las complicaciones que entraña el uso de asistentes de demostración.
+  \item Lean 4 es, además, un lenguaje de programación funcional. Tener demostraciones formales
+    sobre la semántica de un lenguaje nos facilitaría, por ejemplo, crear
+    un compilador verificado para dicho lenguaje. En particular estas semánticas son
+    especialmente útiles para demostrar la corrección de las diferentes transformaciones
+    que se pueden aplicar a un programa.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Objetivos}
+\begin{itemize}
+  \item Formalizar en Lean 4 algunos de los resultados vistos en la asignatura de Teoría de la Programación,
+    en particular definir la semántica natural, estructural y denotacional.
+  \item Demostrar la equivalencia entre las semánticas, lo que nos permite
+    utilizar la semántica que más nos convenga en cada caso.
+  \item Intentar que el código sea lo más legible posible, evitando generalizaciones
+    innecesarias y el \emph{simplificador}, todas las demostraciones son \enquote{elementales}. 
+  \item Que el código sea completo, por lo que hemos evitado \emph{Mathlib}.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{el lenguaje \ImpName{}}
+Definimos la sintaxis abstracta de \(\tyfont{Aexp}\), en forma de Backus-Naur:
+\[
+a \Coloneqq n \ | \ x \ | \ a_1 \ImpPlus a_2 \ | \ a_1 \ImpMinus a_2 \ | \ a_1 \ImpTimes a_2
+\]
+la sintaxis de \(\tyfont{Bexp}\) como:
+\[
+b \Coloneqq \ImpTrue \ | \ \ImpFalse \ | \ 
+  \ImpNot b \ | \ b_1 \ \ImpAnd \ b_2 \ | \ b_1 \ \ImpOr \ b_2 \ | \ a_1 \ \ImpEq \ a_2 \ | \ a_1 \ \ImpLe \ a_2
+\]
+y la sintaxis de \(\tyfont{Com}\) como:
+\[
+c \Coloneqq \ImpSkip \ | \ \ImpAssign{x}{a} \ | \ \ImpConcat{c_1}{c_2} \ | \ \ImpIfElse{b}{c_1}{c_2} \ | \ \ImpWhile{b}{c}
+\]
+\end{frame}
+
+\section{Semántica Operacional}
+\begin{frame}
+\frametitle{Semántica natural}
+
+La definición de la semántica de paso largo es casi igual que en~\cite{winskel_formal_semantics}.
+Las \enquote{reglas} de la traducción dirigida por sintaxis se formalizan mediante constructores.
+De esta forma podemos \enquote{reutilizar} gran parte de las demostraciones, mediante
+la inducción estructural sobre los constructores.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Constructores}
+La semántica de paso largo es una relación \(\tyfont{Com} \times \tyfont{State} \implies \tyfont{State} \implies \Prop\)
+con los siguientes constructores (\enquote{reglas}):
+\begin{align*}
+  \ImpSkip &: (\ImpSkip, s) \bigstep s \\
+  \funfont{ass} &: (v = a, s) \bigstep s[v \leftarrow a \ s] \\
+  \funfont{cat} &: \frac{
+    (c_1, s_1) \bigstep s_2 \quad (c_2, s_2) \bigstep s_3
+  }{
+    (\ImpConcat{c_1}{c_2}, s_1) \bigstep s_3
+  } \\
+  \funfont{ifFalse} &: \frac{b \ s_1 = \LeanFalse \quad (c_2, s_1) \bigstep s_2}
+    {(\ImpIfElse{b}{c_1}{c_2}, s_1) \bigstep s_2} \\
+  \funfont{ifTrue} &: \frac{b \ s_1 = \LeanTrue \quad (c_1, s_1) \bigstep s_2}
+{(\ImpIfElse{b}{c_1}{c_2}, s_1) \bigstep s_2} \\
+\funfont{whileFalse} &: \frac{b \ s = \LeanFalse}
+  {(\ImpWhile{b}{c}, s) \bigstep s} \\
+  \funfont{whileTrue} &: \frac{b \ s_1 = \LeanTrue \quad (c, s_1) \bigstep s_2 \quad
+  (\ImpWhile{b}{c}, s_2) \bigstep s_3}
+{(\ImpWhile{b}{c}, s_1) \bigstep s_3}
+\end{align*}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Definición en Lean}
+\begin{minted}[escapeinside={}]{lean4}
+inductive BigStep: Com × State → State → Prop
+  | skip: BigStep (∅, s) s
+  | ass: BigStep (ass v a, s) (s[v ← a s])
+  | cat (s'': State) (hcatl: BigStep (c, s) s'') 
+        (hcatr: BigStep (c', s'') s'):
+    BigStep (c++c', s) s'
+  | ifFalse (hcond: b s = false) 
+        (hifright: BigStep (c', s) s'):
+    BigStep (ifElse b _ c', s) s'
+  | ifTrue (hcond: b s) (hifleft: BigStep (c, s) s'):
+    BigStep (ifElse b c _, s) s'
+  | whileFalse (hcond: b s = false):
+    BigStep (whileLoop b c, s) s
+  | whileTrue (s'': State) (hcond: b s) 
+        (hwhilestep: BigStep (c, s) s'')
+        (hwhilerest: BigStep (whileLoop b c, s'') s'):
+    BigStep (whileLoop b c, s) s'
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Árboles de derivación 1}
+    Los \enquote{árboles de derivación} de~\cite{winskel_formal_semantics} se transforman
+    entonces en la aplicación sucesiva de constructores. Consideramos el siguiente ejemplo:
+\begin{minted}[escapeinside={}]{rust}
+x = 2;
+if x <= 1 {
+  y = 3
+} else {
+  z = 4
+}
+\end{minted}
+\end{frame}
+
+\begin{frame}
+\frametitle{Árboles de derivación 2}
+Para aligerar la notación denotaremos el programa como \(P\), y la estructura 
+\texttt{if} como \(\text{Ifelse}\), entonces:
+\[
+F \coloneqq \funfont{ifFalse}: \displaystyle{\frac{
+    \funfont{ass}: (\ImpAssign{z}{4} , s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+    }
+{
+    (\text{Ifelse}, s_0[x \leftarrow 2]) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+}}
+\]
+y el árbol completo es:
+\[
+\funfont{cat}: \frac{
+\funfont{ass}: (\ImpAssign{x}{2}, s_0) \bigstep s_0[x \leftarrow 2]
+\qquad
+F
+}{
+(P, s_0) \bigstep s_0[x \leftarrow 2][z \leftarrow 4]
+}
+\]
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Ejemplo de árbol de derivación en Lean}
+\begin{minted}[escapeinside={}]{lean4}
+private example: 
+  ([|x = 2; y = 1; while 2 <= x {y = y * x; x = x - 1}|], s0)
+    ==> s0["x" ← 2]["y" ← 1]["y" ← 2]["x" ← 1] 
+  := by
+  apply cat (s0["x" ← 2]["y" ← 1]) (cat (s0["x" ← 2]) ass ass)
+  apply whileTrue (s0["x" ← 2]["y" ← 1]["y" ← 2]["x" ← 1])
+  apply rfl
+  apply cat (s0["x" ← 2]["y" ← 1]["y" ← 2]) ass ass
+  apply whileFalse
+  apply rfl
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Reglas de reescritura}
+
+Vemos como podemos realizar una demostración usando la semántica de paso largo.
+
+\begin{minted}[escapeinside={}]{lean4}
+theorem if_eq': 
+  (ifElse b c c', s) ==> s' ↔ (cond (b s) c c', s) ==> s' 
+  := {
+    mp := fun hmp =>  match hmp with 
+      | ifTrue hc h 
+      | ifFalse hc h => hc ▸ h,
+    mpr := match hb: b s with 
+      | true => (ifTrue hb .) 
+      | false => (ifFalse hb .)
+  }
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Reglas de reescritura 2}
+
+\begin{minted}[escapeinside={}]{lean4}
+theorem while_eq: (whileLoop b c, s) ==> s' ↔
+  cond (b s) (∃s'', (c, s) ==> s'' ∧ (whileLoop b c, s'') ==> s') 
+    (s = s') := {
+    mp := fun hmp => match hmp with
+      | whileTrue s'' hc h hw => hc ▸ ⟨s'', h, hw⟩
+      | whileFalse hb => hb ▸ rfl,
+    mpr := match hb: b s with
+      | true => fun ⟨s'', h, hw⟩ => whileTrue s'' hb h hw
+      | false => (. ▸ whileFalse hb)
+  }
+\end{minted}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Desenrollado de bucles}
+
+\begin{minted}[escapeinside={}]{lean4}
+instance equiv: Setoid Com where
+  r c c' := ∀{s s': State}, (c, s) ==> s' ↔ (c', s) ==> s'
+  iseqv := ⟨fun _ => Iff.rfl, (Iff.symm .), (Iff.trans . .)⟩
+
+theorem loop_unfold: whileLoop b c ≈ ifElse b (c++whileLoop b c) ∅ 
+  := by
+  intro s _; rw [if_eq', while_eq]
+  match b s with
+  | false => exact skip_eq.symm
+  | true => exact ⟨fun ⟨_, hl, hr⟩ => cat _ hl hr,
+    fun (cat s'' hl hr) => ⟨s'', hl, hr⟩⟩
+\end{minted}
+
+\end{frame}
+
+\section{Semántica estructural}
+
+\begin{frame}
+\frametitle{Semántica estructural}
+
+Podemos definir la semántica estructural de forma similar.
+\[
+\begin{gathered}
+  \funfont{ass}: (\ImpAssign{v}{a}, s) \rightsquigarrow (\ImpSkip, s[v \leftarrow s]) \\
+  \funfont{skipCat}: (\ImpConcat{\ImpSkip}{c}, s) \rightsquigarrow (c, s) \qquad
+  \funfont{cat}: \frac{(c, s) \rightsquigarrow (c', s')}{(\ImpConcat{c}{c''}, s) \rightsquigarrow (c', c'', s')} \\
+  \funfont{ifElse}: (\ImpIfElse{b}{c}{c'}, s)
+    \rightsquigarrow (\LeanIfElse{b \ s}{c}{c'}, s) \\
+  \funfont{whileLoop}: (\ImpWhile{b}{c}, s)
+    \rightsquigarrow (\LeanIfElse{b \ s}{\ImpConcat{c}{\ImpWhile{b}{c}}}{\ImpSkip}, s) 
+\end{gathered}
+\]
+
+Para poder dar \enquote{más de un paso} tendremos que definir también la 
+\emph{clausura reflexiva transitiva} de la relación. Las demostraciones
+sobre esta clausura se harán mediante inducción en la \enquote{cabeza} o
+\enquote{cola} de la relación.
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Definición en Lean}
+\begin{minted}[escapeinside={}]{lean4}
+inductive SmallStep: Com × State → Com × State → Prop where
+  | ass: SmallStep (ass v a, s) (∅, s[v ← a s])
+  | skipCat: SmallStep (∅++c, s) (c, s)
+  | cat (hstep: SmallStep (c, s) (c', s')):
+    SmallStep (c++c'', s) (c'++c'', s')
+  | ifElse: SmallStep (ifElse b c c', s) (cond (b s) c c', s)
+  | whileLoop:
+    SmallStep (whileLoop b c, s) (cond (b s) (c++whileLoop b c) ∅, s)
+\end{minted}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Clausura reflexiva transitiva}
+La clausura reflexiva transitiva de una relación binaria \(\mathcal{R}\) es la
+  relación más pequeña que contiene \(\mathcal{R}\) y es tanto reflexiva como
+  transitiva. En concreto es un tipo inductivo 
+  \(\tyfont{ReflTrans}: (\alpha \to \alpha \to \Prop) \to
+  (\alpha \to \alpha \to \Prop)\) y la denotamos como
+  \(\mathcal{R}^* \coloneqq \tyfont{ReflTrans} \ \mathcal{R}\).
+
+  El tipo \(\tyfont{ReflTrans}\) tiene dos constructores:
+  \[
+    \funfont{refl}: a \mathcal{R}^* a
+    \qquad 
+    \funfont{tail}: \frac{
+      a \mathcal{R}^* b
+      \quad b \mathcal{R} c
+    }{a \mathcal{R}^* c}
+  \]
+\end{frame}
+
+\begin{frame}
+\frametitle{Árbol de derivación}
+Consideramos el programa \texttt{x = 1; while x <= 1 \{x = x + 1\}},
+  para facilitar la lectura denotaremos el bloque \enquote{while} como \(W\).
+  Un árbol de derivación parcial es:
+  \[
+    H \coloneqq
+    \funfont{head}: \displaystyle{\frac{
+        \funfont{skipcat}: (\ImpConcat{\ImpSkip}{W}, s_0[x \leftarrow 1]) \rightsquigarrow^* (W, s_0[x \leftarrow 1])
+        \qquad
+        \cdots
+      }{
+        (\ImpConcat{\ImpSkip}{W}, s_0[x \leftarrow 1]) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
+      }}
+  \]
+  y por tanto:    
+  \[
+    \funfont{head}: \frac{
+      \funfont{cat}: \displaystyle{\frac{
+        \funfont{ass}: (\ImpAssign{x}{1}, s_0) \rightsquigarrow (\ImpSkip, s_0[x \leftarrow 1])
+      }
+      {(\ImpConcat{\ImpAssign{x}{1}}{W}, s_0)
+      \rightsquigarrow
+      (\ImpConcat{\ImpSkip}{W}, s_0[x \leftarrow 1])
+      }}
+      \qquad
+      H
+    }{
+      (\ImpConcat{\ImpAssign{x}{1}}{W}, s_0) \rightsquigarrow^* (W, s_0[x \leftarrow 1][x \leftarrow 2])
+    }
+  \]
+  que hemos obtenido aplicando sucesivamente los constructores. Notamos que
+  dando \enquote{un paso más} llegaríamos al estado final del programa.
+\end{frame}
+
+\section{Semántica denotacional relacional}
+
+\begin{frame}
+\frametitle{Semántica denotacional relacional}
+
+La semántica denotacional necesita \emph{funciones parciales}, ya que hay programas que no acaban.
+
+Para poder desarrollar la semántica denotacional de \ImpName{} como en~\cite{winskel_formal_semantics},
+introducimos los conjuntos y la teoría de orden necesaria sobre los mismos. Además demostramos
+los teoremas de punto fijo de Knaster-Tarski y Kleene. 
+Añadimos a esta semántica el
+adjetivo \enquote{relacional} ya que analizaremos \emph{relaciones} en vez de \emph{funciones},
+este enfoque es tomado de~\cite{semantics_with_isabelle}.
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Semántica denotacional}
+\begin{minted}[escapeinside={}]{lean4}
+def eval (c: Com) (s: State): Option State :=
+  match c with
+  | skip => some s
+  | ass v a => some (s[v ← a s])
+  | cat c c' => eval c s >>= eval c'
+  | ifElse b c c' => eval (if b s then c else c') s
+  | whileLoop b c' => if b s then eval c' s >>= eval c else s
+partial_fixpoint
+\end{minted}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Funciones como relaciones}
+\begin{minted}[escapeinside={}]{lean4}
+def id: Set (α × α) := {p | p.1 = p.2}
+
+theorem mem_id: (a, b) ∈ id ↔ a = b :=
+  Iff.rfl
+
+def comp (f g: Set (α × α)): Set (α × α) :=
+  {(x, z) | ∃y, (x, y) ∈ f ∧ (y, z) ∈ g}
+
+infixl:90 " ○ " => SRel.comp
+
+theorem mem_comp: x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g :=
+  Iff.rfl
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Semántica denotacional}
+\begin{minted}[escapeinside={}]{lean4}
+private def W (b: Bexp) (f: Set (State × State)):
+  Set (State × State) → Set (State × State) :=
+  fun g => {(s, _) | b s}.ite (f ○ g) SRel.id
+  
+instance W.OrderHom (b: Bexp) (f: Set (State × State)):
+  Set (State × State) →o Set (State × State) :=
+    ⟨W b f, W.Monotone⟩
+
+def denote: Com → Set (State × State)
+  | skip => SRel.id
+  | ass v a => {(s, t) | t = s[v ← a s]}
+  | cat c c' => c.denote ○ c'.denote
+  | ifElse b c c' => {(s, _) | b s}.ite c.denote c'.denote
+  | whileLoop b c => (W.OrderHom b c.denote).lfp
+\end{minted}
+\end{frame}
+
+\section{Equivalencia}
+
+
+\begin{frame}[fragile]
+\frametitle{Equivalencia}
+
+La demostración de equivalencia se realiza en dos pasos.
+\begin{itemize}
+    \item Demostramos que la semántica natural implica la estructural y viceversa.
+    \item Demostramos que la semántica natural implica la denotacional y viceversa.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Estructural implica natural}
+\begin{minted}[escapeinside={}]{lean4}
+theorem BigStep.from_structural_step
+  (h: x ~> x') (h': x' ==> s'): x ==> s' := by
+  induction h generalizing s' with
+  | ass => exact (skip_eq.mp h') ▸ ass
+  | skipCat => exact cat _ skip h'
+  | cat _ ih => match h' with
+    | cat s' hcatl hccatr => exact cat s' (ih hcatl) hccatr
+  | ifElse => rw [if_eq']; exact h'
+  | whileLoop => rw [loop_unfold, if_eq']; exact h'
+
+theorem BigStep.from_structural (h: x ~>* (∅, s')): x ==> s' := by
+  induction h using ReflTrans.head_induction_on with
+  | refl => exact skip
+  | head hsingle _ hs' => exact from_structural_step hsingle hs'
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Denotacional implica natural}
+\begin{minted}[escapeinside={}]{lean4}
+theorem OrderHom.lfp_le [CompleteLattice α] {f: α →o α} (h: pfp f a):
+  lfp f ≤ a := CompleteLattice.Inf_le _ h
+
+theorem BigStep.from_denote (h: (s, s'') ∈ ⟦c⟧): (c, s) ==> s'' := by
+  induction c generalizing s s'' with
+  | skip => exact SRel.mem_id.mp h ▸ skip
+  | ass => exact h ▸ ass
+  | cat _ _ ihcatl ihcatr =>
+    exact match h with | ⟨s', hl, hr⟩ => cat s' (ihcatl hl) (ihcatr hr)
+  | ifElse _ _ _ ih1 ih2 =>
+    exact match h with
+    | .inl ⟨hs, hc⟩ => ifTrue hc (ih1 hs)
+    | .inr ⟨hs, hc⟩ => ifFalse (Bool.not_eq_true _ ▸ hc) (ih2 hs)
+  | whileLoop b c ih =>
+    have hle: ⟦whileLoop b c⟧ ≤ {(s, s'') | (whileLoop b c, s) ==> s''} :=
+      OrderHom.lfp_le fun (_, _) hmp =>
+        match hmp with
+        | .inl ⟨⟨s', hs, hrest⟩, hc⟩ =>
+          whileTrue s' hc (ih hs) hrest
+        | .inr ⟨hid, hc⟩ =>
+          (SRel.mem_id.mp hid) ▸ whileFalse (Bool.not_eq_true _ ▸ hc)
+
+    exact hle h
+\end{minted}
+\end{frame}
+
+\section{Bibliografía}
+
+\begin{frame}
+\frametitle{Bibliografía}
+\bibliographystyle{alpha}
+\bibliography{refs}
+\end{frame}
+
+\end{document}

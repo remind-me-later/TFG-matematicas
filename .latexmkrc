@@ -1,2 +1,2 @@
-@default_files = ('src/main.tex');
+@default_files = ('src/slides.tex');
 @pdf_mode = (1);
